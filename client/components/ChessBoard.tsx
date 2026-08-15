@@ -39,6 +39,15 @@ export default function ChessBoard() {
         options={{
           position: game.fen(),
           onPieceDrop: onDrop,
+
+          darkSquareStyle: {
+            backgroundColor: "#769656",
+          },
+
+          lightSquareStyle: {
+            backgroundColor: "#eeeed2",
+          },
+
         }}
       />
     </div>
