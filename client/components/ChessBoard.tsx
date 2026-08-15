@@ -53,3 +53,6 @@ export default function ChessBoard() {
     </div>
   );
 }
+
+// have to add tap and get position like mobile version 
+ 
