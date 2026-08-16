@@ -38,13 +38,10 @@ const friendshipSchema = new mongoose.Schema<FriendshipInterface>(
 );
 
 // Prevent the same user from sending a request to themselves
-friendshipSchema.pre("validate", function (next) {
-  if (this.requester.equals(this.receiver)) {
-    return next(new Error("A user cannot send a friend request to themselves"));
-  }
+friendshipSchema.path("receiver").validate(function (receiver) {
+  return !this.requester.equals(receiver);
+}, "A user cannot send a friend request to themselves");
 
-  next();
-});
 
 // Prevent duplicate friendship records
 friendshipSchema.index(
