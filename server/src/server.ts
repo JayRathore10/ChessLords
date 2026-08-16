@@ -1,8 +1,56 @@
-import { connectDB } from "./configs/db.config";
-import app from "./app";
+import express from "express";
+import http from "http";
+import cors from "cors";
+import { Server } from "socket.io";
+import { FRONTEND } from "./configs/env.config";
 
-const PORT = process.env.PORT || 3000;
+const app = express();
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+app.use(
+  cors({
+    origin: FRONTEND,
+    credentials: true,
+  })
+);
+
+app.use(express.json());
+
+const httpServer = http.createServer(app);
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: FRONTEND,
+    methods: ["GET", "POST" , "DELETE" , "PUT"],
+    credentials: true,
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("Player connected:", socket.id);
+
+  socket.on("joinGame", (gameId: string) => {
+    socket.join(`game:${gameId}`);
+
+    console.log(
+      `${socket.id} joined game:${gameId}`
+    );
+
+    socket.emit("joinedGame", {
+      gameId,
+    });
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Player disconnected:", socket.id);
+  });
+});
+
+app.get("/", (req, res) => {
+  res.json({
+    message: "ChessLord server is running",
+  });
+});
+
+httpServer.listen(5000, () => {
+  console.log("Server running on http://localhost:5000");
 });
