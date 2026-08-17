@@ -2,7 +2,7 @@ import express from "express";
 import http from "http";
 import cors from "cors";
 import { Server } from "socket.io";
-import { createChessGame  ,makeChessMove } from "./services/chess.service";
+import { getChessGame , createChessGame, makeChessMove } from "./services/chess.service";
 import { FRONTEND } from "./configs/env.config";
 
 const app = express();
@@ -32,7 +32,11 @@ io.on("connection", (socket) => {
   socket.on("joinGame", (gameId: string) => {
     socket.join(`game:${gameId}`);
 
-    createChessGame(gameId);
+    const existingGame = getChessGame(gameId);
+
+    if (!existingGame) {
+      createChessGame(gameId);
+    }
 
     console.log(
       `${socket.id} joined game:${gameId}`
