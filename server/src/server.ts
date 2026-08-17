@@ -2,9 +2,10 @@ import express from "express";
 import http from "http";
 import cors from "cors";
 import { Server } from "socket.io";
-import { getChessGame , createChessGame, makeChessMove } from "./services/chess.service";
+import { getChessGame, createChessGame, makeChessMove } from "./services/chess.service";
 import { FRONTEND } from "./configs/env.config";
 import gameRoutes from "./routes/game.routes";
+import { gameModel } from "./models/game.model";
 
 const app = express();
 
@@ -31,66 +32,212 @@ const io = new Server(httpServer, {
 io.on("connection", (socket) => {
   console.log("Player connected:", socket.id);
 
-  socket.on("joinGame", (gameId: string) => {
-    socket.join(`game:${gameId}`);
+  socket.on(
+    "joinGame",
+    async (gameId: string) => {
+      try {
+        const game =
+          await gameModel.findById(gameId);
 
-    const existingGame = getChessGame(gameId);
+        if (!game) {
+          socket.emit("gameError", {
+            message: "Game not found",
+          });
 
-    if (!existingGame) {
-      createChessGame(gameId);
-    }
+          return;
+        }
 
-    console.log(
-      `${socket.id} joined game:${gameId}`
-    );
+        socket.join(`game:${gameId}`);
 
-    socket.emit("joinedGame", {
-      gameId,
-    });
-  });
+        // Create live chess instance only
+        // if it doesn't already exist.
+        const existingGame =
+          getChessGame(gameId);
 
-  socket.on("makeMove", (data) => {
-    const {
-      gameId,
-      from,
-      to,
-    } = data;
+        if (!existingGame) {
+          createChessGame(
+            gameId,
+            game.currentPosition
+          );
+        }
 
-    console.log(
-      `Move request: ${from} → ${to}`
-    );
+        socket.emit("gameState", {
+          gameId: game._id.toString(),
 
-    const result = makeChessMove(
-      gameId,
-      from,
-      to
-    );
+          whitePlayer:
+            game.whitePlayer.toString(),
 
-    // Illegal move
-    if (!result.success) {
-      socket.emit("invalidMove", {
-        message: result.message,
-      });
+          blackPlayer:
+            game.blackPlayer.toString(),
 
-      return;
-    }
+          gameType:
+            game.gameType,
 
-    // Legal move
-    io.to(`game:${gameId}`).emit(
-      "moveMade",
-      {
-        from,
-        to,
-        move: result.move,
-        fen: result.fen,
-        turn: result.turn,
-        isCheck: result.isCheck,
-        isCheckmate: result.isCheckmate,
-        isDraw: result.isDraw,
-        isGameOver: result.isGameOver,
+          status:
+            game.status,
+
+          result:
+            game.result,
+
+          moves:
+            game.moves,
+
+          currentPosition:
+            game.currentPosition,
+
+          turn:
+            game.turn,
+
+          timeControl:
+            game.timeControl,
+
+          whiteTime:
+            game.whiteTime,
+
+          blackTime:
+            game.blackTime,
+        });
+
+        console.log(
+          `${socket.id} joined game:${gameId}`
+        );
+      } catch (error) {
+        console.error(
+          "Join game error:",
+          error
+        );
+
+        socket.emit("gameError", {
+          message:
+            "Failed to join game",
+        });
       }
-    );
-  });
+    }
+  );
+
+  socket.on(
+    "makeMove",
+    async (data) => {
+      try {
+        const {
+          gameId,
+          from,
+          to,
+        } = data;
+
+        const game =
+          await gameModel.findById(gameId);
+
+        if (!game) {
+          socket.emit("invalidMove", {
+            message: "Game not found",
+          });
+
+          return;
+        }
+
+        if (game.status !== "active") {
+          socket.emit("invalidMove", {
+            message: "Game is not active",
+          });
+
+          return;
+        }
+
+        const result = makeChessMove(
+          gameId,
+          from,
+          to
+        );
+
+        if (!result.success) {
+          socket.emit("invalidMove", {
+            message: result.message,
+          });
+
+          return;
+        }
+
+        // Save move
+        game.moves.push(
+          result.move!.san
+        );
+
+        // Save latest FEN
+        game.currentPosition =
+          result.fen!;
+
+        // Save whose turn it is
+        game.turn =
+          result.turn;
+
+        // Check game ending
+        if (result.isGameOver) {
+          game.status = "completed";
+
+          game.endedAt =
+            new Date();
+
+          if (result.isCheckmate) {
+            game.result =
+              result.turn === "white"
+                ? "black"
+                : "white";
+          } else {
+            game.result = "draw";
+          }
+        }
+
+        await game.save();
+
+        // Send move to both players
+        io.to(`game:${gameId}`).emit(
+          "moveMade",
+          {
+            from,
+            to,
+
+            move:
+              result.move,
+
+            fen:
+              result.fen,
+
+            turn:
+              result.turn,
+
+            isCheck:
+              result.isCheck,
+
+            isCheckmate:
+              result.isCheckmate,
+
+            isDraw:
+              result.isDraw,
+
+            isGameOver:
+              result.isGameOver,
+
+            status:
+              game.status,
+
+            result:
+              game.result,
+          }
+        );
+      } catch (error) {
+        console.error(
+          "Move error:",
+          error
+        );
+
+        socket.emit("gameError", {
+          message:
+            "Failed to make move",
+        });
+      }
+    }
+  );
 
   socket.on("disconnect", () => {
     console.log(

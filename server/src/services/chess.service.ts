@@ -2,6 +2,27 @@ import { Chess } from "chess.js";
 
 const games = new Map<string, Chess>();
 
+type MakeMoveResult =
+  | {
+      success: false;
+      message: string;
+    }
+  | {
+      success: true;
+      move: {
+        color: "w" | "b";
+        from: string;
+        to: string;
+        san: string;
+      };
+      fen: string;
+      turn: "white" | "black";
+      isCheck: boolean;
+      isCheckmate: boolean;
+      isDraw: boolean;
+      isGameOver: boolean;
+    };
+
 export const createChessGame = (
   gameId: string,
   fen?: string
@@ -25,7 +46,7 @@ export const makeChessMove = (
   gameId: string,
   from: string,
   to: string
-) => {
+): MakeMoveResult => {
   let chess = games.get(gameId);
 
   if (!chess) {
@@ -41,7 +62,12 @@ export const makeChessMove = (
     return {
       success: true,
 
-      move,
+      move: {
+        color: move.color,
+        from: move.from,
+        to: move.to,
+        san: move.san,
+      },
 
       fen: chess.fen(),
 
@@ -55,7 +81,8 @@ export const makeChessMove = (
       isCheckmate:
         chess.isCheckmate(),
 
-      isDraw: chess.isDraw(),
+      isDraw:
+        chess.isDraw(),
 
       isGameOver:
         chess.isGameOver(),
