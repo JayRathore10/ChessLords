@@ -2,6 +2,7 @@ import express from "express";
 import http from "http";
 import cors from "cors";
 import { Server } from "socket.io";
+import { createChessGame  ,makeChessMove } from "./services/chess.service";
 import { FRONTEND } from "./configs/env.config";
 
 const app = express();
@@ -28,33 +29,68 @@ const io = new Server(httpServer, {
 io.on("connection", (socket) => {
   console.log("Player connected:", socket.id);
 
-  // Join chess game
   socket.on("joinGame", (gameId: string) => {
     socket.join(`game:${gameId}`);
 
-    console.log(`${socket.id} joined game:${gameId}`);
+    createChessGame(gameId);
+
+    console.log(
+      `${socket.id} joined game:${gameId}`
+    );
 
     socket.emit("joinedGame", {
       gameId,
     });
   });
 
-  // Make chess move
   socket.on("makeMove", (data) => {
-    const { gameId, from, to } = data;
-
-    console.log(`Move in ${gameId}: ${from} → ${to}`);
-
-    // Send the move to both players in the game
-    io.to(`game:${gameId}`).emit("moveMade", {
+    const {
+      gameId,
       from,
       to,
-    });
+    } = data;
+
+    console.log(
+      `Move request: ${from} → ${to}`
+    );
+
+    const result = makeChessMove(
+      gameId,
+      from,
+      to
+    );
+
+    // Illegal move
+    if (!result.success) {
+      socket.emit("invalidMove", {
+        message: result.message,
+      });
+
+      return;
+    }
+
+    // Legal move
+    io.to(`game:${gameId}`).emit(
+      "moveMade",
+      {
+        from,
+        to,
+        move: result.move,
+        fen: result.fen,
+        turn: result.turn,
+        isCheck: result.isCheck,
+        isCheckmate: result.isCheckmate,
+        isDraw: result.isDraw,
+        isGameOver: result.isGameOver,
+      }
+    );
   });
 
-  // Player disconnected
   socket.on("disconnect", () => {
-    console.log("Player disconnected:", socket.id);
+    console.log(
+      "Player disconnected:",
+      socket.id
+    );
   });
 });
 
