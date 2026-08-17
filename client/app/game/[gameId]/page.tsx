@@ -1,6 +1,6 @@
 "use client";
 
-import React , { useEffect } from "react";
+import React, { useEffect } from "react";
 import { socket } from "@/lib/socket";
 
 interface GamePageProps {
@@ -22,22 +22,65 @@ export default function GamePage({
     const handleJoinedGame = (data: {
       gameId: string;
     }) => {
-      console.log("Joined game:", data.gameId);
-      console.log("Socket ID:", socket.id);
+      console.log(
+        "Joined game:",
+        data.gameId
+      );
+
+      console.log(
+        "Socket ID:",
+        socket.id
+      );
     };
 
     const handleMove = (move: {
       from: string;
       to: string;
+      fen: string;
+      turn: "w" | "b";
+      isCheck: boolean;
+      isCheckmate: boolean;
+      isDraw: boolean;
+      isGameOver: boolean;
     }) => {
       console.log(
-        `Opponent moved ${move.from} → ${move.to}`
+        `${move.from} → ${move.to}`
+      );
+
+      console.log(
+        "FEN:",
+        move.fen
+      );
+
+      console.log(
+        "Turn:",
+        move.turn
       );
     };
 
-    socket.on("joinedGame", handleJoinedGame);
+    const handleInvalidMove = (data: {
+      message: string;
+    }) => {
+      console.log(
+        "Invalid move:",
+        data.message
+      );
+    };
 
-    socket.on("moveMade", handleMove);
+    socket.on(
+      "joinedGame",
+      handleJoinedGame
+    );
+
+    socket.on(
+      "moveMade",
+      handleMove
+    );
+
+    socket.on(
+      "invalidMove",
+      handleInvalidMove
+    );
 
     return () => {
       socket.off(
@@ -45,7 +88,15 @@ export default function GamePage({
         handleJoinedGame
       );
 
-      socket.off("moveMade", handleMove);
+      socket.off(
+        "moveMade",
+        handleMove
+      );
+
+      socket.off(
+        "invalidMove",
+        handleInvalidMove
+      );
 
       socket.disconnect();
     };
@@ -69,9 +120,10 @@ export default function GamePage({
         Socket ID: {socket.id}
       </p>
 
-      <button onClick={makeMove}>
+      <button onClick={makeMove} className="bg-red-650 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition-colors">
         Move e2 → e4
       </button>
+
     </div>
   );
 }
