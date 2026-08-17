@@ -4,6 +4,7 @@ import cors from "cors";
 import { Server } from "socket.io";
 import { getChessGame , createChessGame, makeChessMove } from "./services/chess.service";
 import { FRONTEND } from "./configs/env.config";
+import gameRoutes from "./routes/game.routes";
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use("/api/games", gameRoutes);
 
 const httpServer = http.createServer(app);
 
