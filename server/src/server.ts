@@ -4,8 +4,10 @@ import cors from "cors";
 import { Server } from "socket.io";
 import { getChessGame, createChessGame, makeChessMove } from "./services/chess.service";
 import { FRONTEND } from "./configs/env.config";
-import gameRoutes from "./routes/game.routes";
+import {Request , Response} from "express";
 import { gameModel } from "./models/game.model";
+import gameRoutes from "./routes/game.routes";
+import authRoutes from "./routes/auth.routes";
 
 const app = express();
 
@@ -17,7 +19,12 @@ app.use(
 );
 
 app.use(express.json());
-app.use("/api/games", gameRoutes);
+app.use("/api/v1/games", gameRoutes);
+app.use("/api/v1/auth" ,authRoutes);
+
+app.get("/"  , (req : Request, res : Response)=>{
+  res.send("Hi, Jexts here!")
+})
 
 const httpServer = http.createServer(app);
 
@@ -238,7 +245,7 @@ io.on("connection", (socket) => {
       }
     }
   );
-  
+
   socket.on("disconnect", () => {
     console.log(
       "Player disconnected:",
