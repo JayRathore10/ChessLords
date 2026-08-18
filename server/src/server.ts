@@ -160,12 +160,12 @@ io.on("connection", (socket) => {
 
         // Save move
         game.moves.push(
-          result.move!.san
+          result.move.san
         );
 
         // Save latest FEN
         game.currentPosition =
-          result.fen!;
+          result.fen;
 
         // Save whose turn it is
         game.turn =
@@ -238,7 +238,7 @@ io.on("connection", (socket) => {
       }
     }
   );
-
+  
   socket.on("disconnect", () => {
     console.log(
       "Player disconnected:",
