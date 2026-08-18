@@ -4,5 +4,6 @@ dotenv.config({path : `.env.${process.env.NODE_ENV || 'development'}.local`});
 
 export const{
   FRONTEND  , 
-  MONGODB_URI
+  MONGODB_URI , 
+  JWT_SECRET
 } = process.env;

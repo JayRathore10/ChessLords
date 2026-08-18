@@ -3,7 +3,7 @@ import { loginUser, logoutUser, me, registerNewUser } from "../controllers/auth.
 import { isUserLoggedIn } from "../middleware/auth.middleware";
 
 export const authRouter = Router();
-
+au
 authRouter.post("/register" , registerNewUser);
 authRouter.post("/login" , loginUser);
 // protected route
