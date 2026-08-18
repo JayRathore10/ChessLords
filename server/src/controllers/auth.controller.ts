@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-import { userLoginSchema, userSchema } from "../validation/user.validation";
+import { userLoginSchema, userSchema } from "../validations/user.validation";
 import { JWT_SECRET, SALT_ROUND } from "../configs/env.config";
 import { authRequest } from "../types/authRequest.type";
 import { userModel } from "../models/user.model";
@@ -155,8 +155,13 @@ export const loginUser = async (
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    const userResponse = user.toObject();
-    delete userResponse.password;
+    const userResponse = {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    };
 
     return res.status(200).json({
       success: true,
