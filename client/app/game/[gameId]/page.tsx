@@ -127,3 +127,5 @@ export default function GamePage({
     </div>
   );
 }
+
+// have to add playeer turn and also the placeholder marks 
