@@ -9,6 +9,27 @@ interface GamePageProps {
   }>;
 }
 
+  const handleGameState = (game: {
+    gameId: string;
+    color: "white" | "black";
+    currentPosition: string;
+    turn: "white" | "black";
+    moves: string[];
+    status: string;
+  }) => {
+    console.log("Game state:", game);
+
+    console.log(
+      "I am playing:",
+      game.color
+    );
+
+    console.log(
+      "Current turn:",
+      game.turn
+    );
+  };
+
 export default function GamePage({
   params,
 }: GamePageProps) {
@@ -82,6 +103,11 @@ export default function GamePage({
       handleInvalidMove
     );
 
+    socket.on(
+      "gameState",
+      handleGameState
+    );
+
     return () => {
       socket.off(
         "joinedGame",
@@ -97,6 +123,8 @@ export default function GamePage({
         "invalidMove",
         handleInvalidMove
       );
+
+      socket.off("gameState", handleGameState);
 
       socket.disconnect();
     };
