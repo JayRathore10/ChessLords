@@ -4,7 +4,7 @@ import cors from "cors";
 import { Server } from "socket.io";
 import { getChessGame, createChessGame, makeChessMove } from "./services/chess.service";
 import { FRONTEND } from "./configs/env.config";
-import {Request , Response} from "express";
+import { Request, Response } from "express";
 import { gameModel } from "./models/game.model";
 import gameRoutes from "./routes/game.routes";
 import authRoutes from "./routes/auth.routes";
@@ -20,9 +20,9 @@ app.use(
 
 app.use(express.json());
 app.use("/api/v1/games", gameRoutes);
-app.use("/api/v1/auth" ,authRoutes);
+app.use("/api/v1/auth", authRoutes);
 
-app.get("/"  , (req : Request, res : Response)=>{
+app.get("/", (req: Request, res: Response) => {
   res.send("Hi, Jexts here!")
 })
 
@@ -41,8 +41,16 @@ io.on("connection", (socket) => {
 
   socket.on(
     "joinGame",
-    async (gameId: string) => {
+    async (data: {
+      gameId: string;
+      userId: string;
+    }) => {
       try {
+        const {
+          gameId,
+          userId,
+        } = data;
+
         const game =
           await gameModel.findById(gameId);
 
@@ -54,10 +62,33 @@ io.on("connection", (socket) => {
           return;
         }
 
+        const isWhite =
+          game.whitePlayer.toString() ===
+          userId;
+
+        const isBlack =
+          game.blackPlayer.toString() ===
+          userId;
+
+        if (!isWhite && !isBlack) {
+          socket.emit("gameError", {
+            message:
+              "You are not a player in this game",
+          });
+
+          return;
+        }
+
         socket.join(`game:${gameId}`);
 
-        // Create live chess instance only
-        // if it doesn't already exist.
+        // Store user information on socket
+        socket.data.userId = userId;
+        socket.data.gameId = gameId;
+
+        socket.data.color = isWhite
+          ? "white"
+          : "black";
+
         const existingGame =
           getChessGame(gameId);
 
@@ -70,6 +101,8 @@ io.on("connection", (socket) => {
 
         socket.emit("gameState", {
           gameId: game._id.toString(),
+
+          color: socket.data.color,
 
           whitePlayer:
             game.whitePlayer.toString(),
@@ -106,7 +139,7 @@ io.on("connection", (socket) => {
         });
 
         console.log(
-          `${socket.id} joined game:${gameId}`
+          `${userId} joined game ${gameId} as ${socket.data.color}`
         );
       } catch (error) {
         console.error(
@@ -124,13 +157,29 @@ io.on("connection", (socket) => {
 
   socket.on(
     "makeMove",
-    async (data) => {
+    async (data: {
+      gameId: string;
+      from: string;
+      to: string;
+    }) => {
       try {
         const {
           gameId,
           from,
           to,
         } = data;
+
+        // Make sure socket belongs to this game
+        if (
+          socket.data.gameId !== gameId
+        ) {
+          socket.emit("invalidMove", {
+            message:
+              "You are not in this game",
+          });
+
+          return;
+        }
 
         const game =
           await gameModel.findById(gameId);
@@ -145,7 +194,20 @@ io.on("connection", (socket) => {
 
         if (game.status !== "active") {
           socket.emit("invalidMove", {
-            message: "Game is not active",
+            message:
+              "Game is not active",
+          });
+
+          return;
+        }
+
+        // Check player's turn
+        if (
+          game.turn !== socket.data.color
+        ) {
+          socket.emit("invalidMove", {
+            message:
+              "It is not your turn",
           });
 
           return;
@@ -159,28 +221,26 @@ io.on("connection", (socket) => {
 
         if (!result.success) {
           socket.emit("invalidMove", {
-            message: result.message,
+            message:
+              result.message,
           });
 
           return;
         }
 
-        // Save move
         game.moves.push(
           result.move.san
         );
 
-        // Save latest FEN
         game.currentPosition =
           result.fen;
 
-        // Save whose turn it is
         game.turn =
           result.turn;
 
-        // Check game ending
         if (result.isGameOver) {
-          game.status = "completed";
+          game.status =
+            "completed";
 
           game.endedAt =
             new Date();
@@ -197,7 +257,6 @@ io.on("connection", (socket) => {
 
         await game.save();
 
-        // Send move to both players
         io.to(`game:${gameId}`).emit(
           "moveMade",
           {
