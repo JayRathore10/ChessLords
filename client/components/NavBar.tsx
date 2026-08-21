@@ -32,7 +32,7 @@ export default function Navbar() {
         </Link>
 
         <Link
-          href="/play"
+          href="/game"
           className="text-gray-300 hover:text-white transition"
         >
           Play
