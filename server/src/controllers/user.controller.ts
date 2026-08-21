@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Types } from "mongoose";
 import { userModel } from "../models/user.model";
+import { authRequest } from "../types/authRequest.type";
 
 // GET /api/users
 export const getAllUsers = async (req: Request, res: Response) => {
@@ -230,6 +231,76 @@ export const getUserStats = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch user statistics",
+    });
+  }
+};
+
+export const getMyProfile = async (
+  req: authRequest,
+  res: Response
+) => {
+  try {
+    const user = req.user;
+
+    return res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error("Get profile error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get profile",
+    });
+  }
+};
+
+export const updateMyProfile = async (
+  req: authRequest,
+  res: Response
+) => {
+  try {
+    const { name, username, profilePic } = req.body;
+
+    const user = await userModel.findByIdAndUpdate(
+      req.user?._id,
+      {
+        ...(name && { name }),
+        ...(username && { username }),
+        ...(profilePic && { profilePic }),
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user,
+    });
+  } catch (error: any) {
+    console.error("Update profile error:", error);
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Username already exists",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update profile",
     });
   }
 };

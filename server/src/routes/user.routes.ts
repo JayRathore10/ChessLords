@@ -4,11 +4,12 @@ import {
   getAllUsers,
   getUserById,
   getUserByUsername,
-  updateUser,
+  getMyProfile,
+  updateMyProfile,
   deleteUser,
   getUserStats,
+  
 } from "../controllers/user.controller";
-
 import {
   isUserLoggedIn,
   isAdminLoggedIn,
@@ -16,16 +17,17 @@ import {
 
 const router = Router();
 
-// Public routes
+// Public
 router.get("/", getAllUsers);
 router.get("/username/:username", getUserByUsername);
 router.get("/:id", getUserById);
 router.get("/:id/stats", getUserStats);
 
 // Logged-in user
-router.patch("/:id", isUserLoggedIn, updateUser);
+router.get("/me", isUserLoggedIn, getMyProfile);
+router.patch("/me", isUserLoggedIn, updateMyProfile);
 
-// Admin only
+// Admin
 router.delete("/:id", isAdminLoggedIn, deleteUser);
 
 export default router;
