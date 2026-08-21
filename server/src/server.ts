@@ -8,6 +8,7 @@ import { Request, Response } from "express";
 import { gameModel } from "./models/game.model";
 import gameRoutes from "./routes/game.routes";
 import authRoutes from "./routes/auth.routes";
+import userRoutes from "./routes/user.routes";
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use(
 app.use(express.json());
 app.use("/api/v1/games", gameRoutes);
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/users" , userRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hi, Jexts here!")
