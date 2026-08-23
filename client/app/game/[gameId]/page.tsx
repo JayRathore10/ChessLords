@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { socket } from "@/lib/socket";
+import ChessBoard from "@/components/chess/ChessBoard";
 
 interface GameState {
   gameId: string;
@@ -46,6 +47,11 @@ export default function GamePage({ params }: GamePageProps) {
     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
   );
 
+  const [lastMove, setLastMove] = useState<{
+    from: string;
+    to: string;
+  } | null>(null);
+
   const [moves, setMoves] = useState<string[]>([]);
 
   const [message, setMessage] = useState("");
@@ -53,7 +59,16 @@ export default function GamePage({ params }: GamePageProps) {
   useEffect(() => {
     socket.connect();
 
-    socket.emit("joinGame", gameId);
+    // Get stored userId if available, or fallback for guest
+    const storedUserId =
+      typeof window !== "undefined"
+        ? localStorage.getItem("userId") || "guest"
+        : "guest";
+
+    socket.emit("joinGame", {
+      gameId,
+      userId: storedUserId,
+    });
 
     const handleJoinedGame = (data: {
       gameId: string;
@@ -78,11 +93,9 @@ export default function GamePage({ params }: GamePageProps) {
     const handleMove = (move: MoveData) => {
       console.log(`${move.from} → ${move.to}`);
 
-      console.log("FEN:", move.fen);
-      console.log("Turn:", move.turn);
-
       setFen(move.fen);
       setTurn(move.turn);
+      setLastMove({ from: move.from, to: move.to });
 
       setMoves((prev) => [
         ...prev,
@@ -108,56 +121,35 @@ export default function GamePage({ params }: GamePageProps) {
       setMessage(data.message);
     };
 
-    socket.on(
-      "joinedGame",
-      handleJoinedGame
-    );
+    const handleGameError = (data: {
+      message: string;
+    }) => {
+      console.log("Game error:", data.message);
+      setMessage(data.message);
+    };
 
-    socket.on(
-      "gameState",
-      handleGameState
-    );
-
-    socket.on(
-      "moveMade",
-      handleMove
-    );
-
-    socket.on(
-      "invalidMove",
-      handleInvalidMove
-    );
+    socket.on("joinedGame", handleJoinedGame);
+    socket.on("gameState", handleGameState);
+    socket.on("moveMade", handleMove);
+    socket.on("invalidMove", handleInvalidMove);
+    socket.on("gameError", handleGameError);
 
     return () => {
-      socket.off(
-        "joinedGame",
-        handleJoinedGame
-      );
-
-      socket.off(
-        "gameState",
-        handleGameState
-      );
-
-      socket.off(
-        "moveMade",
-        handleMove
-      );
-
-      socket.off(
-        "invalidMove",
-        handleInvalidMove
-      );
+      socket.off("joinedGame", handleJoinedGame);
+      socket.off("gameState", handleGameState);
+      socket.off("moveMade", handleMove);
+      socket.off("invalidMove", handleInvalidMove);
+      socket.off("gameError", handleGameError);
 
       socket.disconnect();
     };
   }, [gameId]);
 
-  const makeMove = () => {
+  const handleMakeMove = (from: string, to: string) => {
     socket.emit("makeMove", {
       gameId,
-      from: "e2",
-      to: "e4",
+      from,
+      to,
     });
   };
 
@@ -224,95 +216,71 @@ export default function GamePage({ params }: GamePageProps) {
         {/* Main Game */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Chessboard Placeholder */}
-          <div className="lg:col-span-2">
-
-            <div className="aspect-square max-w-162.5 mx-auto bg-[#22252b] rounded-xl flex items-center justify-center">
-
-              <div className="text-center">
-                <p className="text-2xl font-bold">
-                  Chessboard
-                </p>
-
-                <p className="text-gray-400 mt-2">
-                  Board will be added here
-                </p>
-
-                <p className="text-xs text-gray-500 mt-4 break-all px-8">
-                  FEN: {fen}
-                </p>
-              </div>
-
-            </div>
+          {/* Chessboard */}
+          <div className="lg:col-span-2 flex flex-col items-center">
+            <ChessBoard
+              fen={fen}
+              orientation={playerColor === "black" ? "black" : "white"}
+              disabled={!isMyTurn || gameStatus === "completed"}
+              onMove={handleMakeMove}
+              lastMove={lastMove}
+            />
 
             {/* Turn Indicator */}
             <div className="mt-4 text-center">
-
               {isMyTurn ? (
-                <p className="text-lg font-semibold">
-                  Your turn
+                <p className="text-lg font-semibold text-green-400">
+                  ● Your turn ({playerColor?.toUpperCase()})
                 </p>
               ) : (
                 <p className="text-lg text-gray-400">
-                  Opponent&apos;s turn
+                  ○ Opponent&apos;s turn
                 </p>
               )}
-
             </div>
-
           </div>
 
           {/* Right Panel */}
-          <div className="bg-[#181b21] rounded-xl p-5">
+          <div className="bg-[#181b21] rounded-xl p-5 flex flex-col justify-between">
+            <div>
+              <h2 className="text-xl font-bold mb-4">
+                Game Info
+              </h2>
 
-            <h2 className="text-xl font-bold mb-4">
-              Game Info
-            </h2>
+              {/* Players */}
+              <div className="space-y-3 mb-6">
+                <div className="bg-[#22252b] rounded-lg p-3 flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-gray-400">White</p>
+                    <p className="font-semibold">
+                      {playerColor === "white" ? "You" : "Opponent"}
+                    </p>
+                  </div>
+                  {turn === "white" && (
+                    <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
+                  )}
+                </div>
 
-            {/* Players */}
-            <div className="space-y-3 mb-6">
-
-              <div className="bg-[#22252b] rounded-lg p-3">
-                <p className="text-sm text-gray-400">
-                  White
-                </p>
-
-                <p className="font-semibold">
-                  {playerColor === "white"
-                    ? "You"
-                    : "Opponent"}
-                </p>
+                <div className="bg-[#22252b] rounded-lg p-3 flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-gray-400">Black</p>
+                    <p className="font-semibold">
+                      {playerColor === "black" ? "You" : "Opponent"}
+                    </p>
+                  </div>
+                  {turn === "black" && (
+                    <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
+                  )}
+                </div>
               </div>
 
-              <div className="bg-[#22252b] rounded-lg p-3">
-                <p className="text-sm text-gray-400">
-                  Black
-                </p>
-
-                <p className="font-semibold">
-                  {playerColor === "black"
-                    ? "You"
-                    : "Opponent"}
-                </p>
-              </div>
-
+              {/* Message */}
+              {message && (
+                <div className="mb-4 bg-amber-500/10 border border-amber-500/30 text-amber-300 rounded-lg p-3 text-center font-medium">
+                  {message}
+                </div>
+              )}
             </div>
-
-            {/* Message */}
-            {message && (
-              <div className="mb-4 bg-red-500/10 border border-red-500/30 rounded-lg p-3">
-                {message}
-              </div>
-            )}
-
-            {/* Temporary Move */}
-            <button
-              onClick={makeMove}
-              disabled={!isMyTurn}
-              className="w-full bg-white text-black font-medium px-4 py-3 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Move e2 → e4
-            </button>
 
             {/* Move History */}
             <div className="mt-6">
