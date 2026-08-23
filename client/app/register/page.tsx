@@ -84,6 +84,7 @@ export default function RegisterPage() {
     try {
       await register(username.trim(), name.trim(), email.trim(), password);
       router.push("/");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || "Failed to create account. Please try again.");
     } finally {
@@ -92,18 +93,13 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4 py-8 bg-gradient-to-b from-[#0f1115] via-[#12151b] to-[#0a0c0f]">
+    <main className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4 py-8 bg-linear-to-b from-[#0f1115] via-[#12151b] to-[#0a0c0f]">
       {/* Background Decorative Glow */}
       <div className="absolute w-96 h-96 bg-[#babcbd]/10 rounded-full blur-3xl pointer-events-none -top-10 left-1/2 -translate-x-1/2" />
 
       <div className="w-full max-w-lg relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary-gradient p-0.5 shadow-lg shadow-black/40 mb-4">
-            <div className="w-full h-full bg-[#12141a] rounded-[14px] flex items-center justify-center">
-              <Crown className="w-7 h-7 text-[#babcbd]" />
-            </div>
-          </div>
           <h1 className="text-3xl font-extrabold tracking-tight text-white">
             Claim Your <span className="text-[#babcbd]">Crown</span>
           </h1>
