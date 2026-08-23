@@ -44,7 +44,7 @@ export default function RegisterPage() {
     if (/[^A-Za-z0-9]/.test(p)) score += 1;
 
     if (score <= 1) return { score: 25, label: "Weak", color: "bg-red-500" };
-    if (score <= 3) return { score: 65, label: "Medium", color: "bg-amber-500" };
+    if (score <= 3) return { score: 65, label: "Medium", color: "bg-[#babcbd]" };
     return { score: 100, label: "Strong", color: "bg-emerald-500" };
   }, [formData.password]);
 
@@ -84,7 +84,6 @@ export default function RegisterPage() {
     try {
       await register(username.trim(), name.trim(), email.trim(), password);
       router.push("/");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || "Failed to create account. Please try again.");
     } finally {
@@ -93,15 +92,20 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4 py-8 bg-linear-to-b from-[#0f1115] via-[#12151b] to-[#0a0c0f]">
+    <main className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4 py-8 bg-gradient-to-b from-[#0f1115] via-[#12151b] to-[#0a0c0f]">
       {/* Background Decorative Glow */}
-      <div className="absolute w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none -top-10 left-1/2 -translate-x-1/2" />
+      <div className="absolute w-96 h-96 bg-[#babcbd]/10 rounded-full blur-3xl pointer-events-none -top-10 left-1/2 -translate-x-1/2" />
 
       <div className="w-full max-w-lg relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary-gradient p-0.5 shadow-lg shadow-black/40 mb-4">
+            <div className="w-full h-full bg-[#12141a] rounded-[14px] flex items-center justify-center">
+              <Crown className="w-7 h-7 text-[#babcbd]" />
+            </div>
+          </div>
           <h1 className="text-3xl font-extrabold tracking-tight text-white">
-            Claim Your <span className="text-amber-500">Crown</span>
+            Claim Your <span className="text-[#babcbd]">Crown</span>
           </h1>
           <p className="text-gray-400 text-sm mt-2">
             Create an account to track ratings, play rated matches, and earn achievements.
@@ -109,7 +113,7 @@ export default function RegisterPage() {
         </div>
 
         {/* Register Card */}
-        <div className="bg-[#161920]/90 backdrop-blur-xl border border-gray-800/80 rounded-2xl p-6 sm:p-8 shadow-2xl shadow-black/60">
+        <div className="bg-[#161920]/90 backdrop-blur-xl border border-[#232732] rounded-2xl p-6 sm:p-8 shadow-2xl shadow-black/60">
           {error && (
             <div className="mb-6 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3 text-red-400 text-sm">
               <AlertCircle className="w-5 h-5 shrink-0" />
@@ -141,7 +145,7 @@ export default function RegisterPage() {
                     }
                     required
                     placeholder="Magnus Carlsen"
-                    className="w-full pl-10 pr-3 py-2.5 bg-[#0f1115] border border-gray-800 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-sm"
+                    className="w-full pl-10 pr-3 py-2.5 bg-[#0f1115] border border-[#232732] rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-[#babcbd] focus:ring-1 focus:ring-[#babcbd] transition text-sm"
                   />
                 </div>
               </div>
@@ -167,7 +171,7 @@ export default function RegisterPage() {
                     }
                     required
                     placeholder="grandmaster99"
-                    className="w-full pl-10 pr-3 py-2.5 bg-[#0f1115] border border-gray-800 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-sm"
+                    className="w-full pl-10 pr-3 py-2.5 bg-[#0f1115] border border-[#232732] rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-[#babcbd] focus:ring-1 focus:ring-[#babcbd] transition text-sm"
                   />
                 </div>
               </div>
@@ -194,7 +198,7 @@ export default function RegisterPage() {
                   }
                   required
                   placeholder="lord@chess.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-[#0f1115] border border-gray-800 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-sm"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#0f1115] border border-[#232732] rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-[#babcbd] focus:ring-1 focus:ring-[#babcbd] transition text-sm"
                 />
               </div>
             </div>
@@ -220,7 +224,7 @@ export default function RegisterPage() {
                   }
                   required
                   placeholder="Minimum 8 characters"
-                  className="w-full pl-10 pr-11 py-2.5 bg-[#0f1115] border border-gray-800 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-sm"
+                  className="w-full pl-10 pr-11 py-2.5 bg-[#0f1115] border border-[#232732] rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-[#babcbd] focus:ring-1 focus:ring-[#babcbd] transition text-sm"
                 />
                 <button
                   type="button"
@@ -246,7 +250,7 @@ export default function RegisterPage() {
                         passwordStrength.label === "Strong"
                           ? "text-emerald-400"
                           : passwordStrength.label === "Medium"
-                          ? "text-amber-400"
+                          ? "text-[#babcbd]"
                           : "text-red-400"
                       }`}
                     >
@@ -287,7 +291,7 @@ export default function RegisterPage() {
                   }
                   required
                   placeholder="Re-enter your password"
-                  className="w-full pl-10 pr-4 py-2.5 bg-[#0f1115] border border-gray-800 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-sm"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#0f1115] border border-[#232732] rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-[#babcbd] focus:ring-1 focus:ring-[#babcbd] transition text-sm"
                 />
               </div>
             </div>
@@ -297,10 +301,10 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3.5 px-4 bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-sm"
+                className="w-full py-3.5 px-4 bg-gradient-to-r from-[#babcbd] to-[#cfd1d2] hover:from-[#cfd1d2] hover:to-[#e4e5e6] text-[#0f1115] font-bold rounded-xl shadow-lg shadow-black/40 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-sm"
               >
                 {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-[#0f1115] border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
                     <span>Create Free Account</span>
@@ -312,12 +316,12 @@ export default function RegisterPage() {
           </form>
 
           {/* Footer separator */}
-          <div className="mt-6 pt-5 border-t border-gray-800/80 text-center">
+          <div className="mt-6 pt-5 border-t border-[#232732] text-center">
             <p className="text-sm text-gray-400">
               Already have a crown?{" "}
               <Link
                 href="/login"
-                className="text-amber-400 hover:text-amber-300 font-semibold transition"
+                className="text-[#babcbd] hover:text-white font-semibold transition"
               >
                 Log in
               </Link>

@@ -56,14 +56,14 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="w-full h-16 px-4 md:px-8 flex items-center justify-between border-b border-gray-800/80 bg-[#0f1115]/95 backdrop-blur-md sticky top-0 z-50">
+    <nav className="w-full h-16 px-4 md:px-8 flex items-center justify-between border-b border-[#232732] bg-[#0f1115]/95 backdrop-blur-md sticky top-0 z-50">
       {/* Brand / Logo */}
       <div className="flex items-center gap-8">
         <Link
           href="/"
           className="flex items-center gap-3 group transition-transform active:scale-95"
         >
-          <div className="relative w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center bg-gradient-to-br from-amber-400 via-amber-600 to-amber-800 shadow-md shadow-amber-950/40">
+          <div className="relative w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center bg-primary-gradient shadow-md shadow-black/40">
             <Image
               src="/logo.png"
               alt="ChessLord Logo"
@@ -74,8 +74,8 @@ export default function Navbar() {
             />
           </div>
 
-          <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
-            Chess<span className="text-amber-500">Lord</span>
+          <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-[#babcbd] to-gray-400 bg-clip-text text-transparent">
+            Chess<span className="text-[#babcbd]">Lord</span>
           </span>
         </Link>
 
@@ -107,8 +107,8 @@ export default function Navbar() {
         ) : user ? (
           <div className="flex items-center gap-3">
             {/* Rating Badge */}
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/25 rounded-full text-amber-400 text-xs font-semibold">
-              <Trophy className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-[#babcbd]/10 border border-[#babcbd]/25 rounded-full text-[#babcbd] text-xs font-semibold">
+              <Trophy className="w-3.5 h-3.5 text-[#babcbd]" />
               <span>{user.rating ?? 1200}</span>
             </div>
 
@@ -116,9 +116,9 @@ export default function Navbar() {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen((prev) => !prev)}
-                className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-[#181b21] hover:bg-[#20242c] border border-gray-800 transition-all active:scale-95"
+                className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-[#161920] hover:bg-[#1c202a] border border-[#232732] transition-all active:scale-95"
               >
-                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-600 to-amber-400 text-black font-bold flex items-center justify-center text-xs shadow-inner">
+                <div className="w-7 h-7 rounded-full bg-primary-gradient text-[#0f1115] font-bold flex items-center justify-center text-xs shadow-inner">
                   {user.name ? user.name[0].toUpperCase() : user.username[0].toUpperCase()}
                 </div>
                 <span className="text-sm font-medium text-gray-200 max-w-[120px] truncate">
@@ -133,8 +133,8 @@ export default function Navbar() {
 
               {/* Dropdown Menu */}
               {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-[#16181e] border border-gray-800 rounded-xl shadow-2xl py-1.5 text-sm z-50 animate-in fade-in zoom-in-95 duration-100">
-                  <div className="px-4 py-2.5 border-b border-gray-800/80">
+                <div className="absolute right-0 mt-2 w-56 bg-[#161920] border border-[#232732] rounded-xl shadow-2xl py-1.5 text-sm z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="px-4 py-2.5 border-b border-[#232732]">
                     <p className="text-xs text-gray-400">Signed in as</p>
                     <p className="font-semibold text-white truncate">{user.name || user.username}</p>
                     <p className="text-xs text-gray-400 truncate">{user.email}</p>
@@ -144,7 +144,7 @@ export default function Navbar() {
                     href="/profile"
                     className="flex items-center gap-2.5 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-white/5 transition"
                   >
-                    <UserIcon className="w-4 h-4 text-amber-400" />
+                    <UserIcon className="w-4 h-4 text-[#babcbd]" />
                     <span>My Profile</span>
                   </Link>
 
@@ -152,18 +152,18 @@ export default function Navbar() {
                     href="/game"
                     className="flex items-center gap-2.5 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-white/5 transition"
                   >
-                    <Swords className="w-4 h-4 text-blue-400" />
+                    <Swords className="w-4 h-4 text-[#babcbd]" />
                     <span>Play Online</span>
                   </Link>
 
                   {user.role === "admin" && (
-                    <div className="flex items-center gap-2.5 px-4 py-2.5 text-amber-400 text-xs font-semibold">
+                    <div className="flex items-center gap-2.5 px-4 py-2.5 text-[#babcbd] text-xs font-semibold">
                       <Shield className="w-4 h-4" />
                       <span>Admin Account</span>
                     </div>
                   )}
 
-                  <div className="border-t border-gray-800/80 my-1" />
+                  <div className="border-t border-[#232732] my-1" />
 
                   <button
                     onClick={handleLogout}
@@ -186,7 +186,7 @@ export default function Navbar() {
             </Link>
             <Link
               href="/register"
-              className="px-4 py-1.5 text-sm font-semibold bg-white text-black hover:bg-gray-200 rounded-lg shadow transition active:scale-95"
+              className="px-4 py-1.5 text-sm font-semibold bg-[#babcbd] hover:bg-[#cfd1d2] text-[#0f1115] rounded-lg shadow transition active:scale-95"
             >
               Sign Up
             </Link>
@@ -205,25 +205,25 @@ export default function Navbar() {
 
       {/* Mobile Menu Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden absolute top-16 left-0 w-full bg-[#12141a] border-b border-gray-800 px-6 py-5 flex flex-col gap-4 shadow-2xl z-50 animate-in slide-in-from-top duration-200">
+        <div className="md:hidden absolute top-16 left-0 w-full bg-[#12141a] border-b border-[#232732] px-6 py-5 flex flex-col gap-4 shadow-2xl z-50 animate-in slide-in-from-top duration-200">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={`text-base font-medium py-2 ${
-                pathname === link.href ? "text-amber-400 font-semibold" : "text-gray-300"
+                pathname === link.href ? "text-[#babcbd] font-semibold" : "text-gray-300"
               }`}
             >
               {link.name}
             </Link>
           ))}
 
-          <div className="border-t border-gray-800 pt-4">
+          <div className="border-t border-[#232732] pt-4">
             {user ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full bg-amber-500 text-black font-bold flex items-center justify-center text-xs">
+                    <div className="w-8 h-8 rounded-full bg-primary-gradient text-[#0f1115] font-bold flex items-center justify-center text-xs">
                       {user.username[0].toUpperCase()}
                     </div>
                     <div>
@@ -233,7 +233,7 @@ export default function Navbar() {
                   </div>
                   <Link
                     href="/profile"
-                    className="text-xs font-semibold text-amber-400 px-3 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20"
+                    className="text-xs font-semibold text-[#babcbd] px-3 py-1.5 rounded-md bg-[#babcbd]/10 border border-[#babcbd]/20"
                   >
                     Profile
                   </Link>
@@ -256,7 +256,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   href="/register"
-                  className="w-full py-2.5 text-center text-sm font-semibold text-black bg-white rounded-lg"
+                  className="w-full py-2.5 text-center text-sm font-semibold text-[#0f1115] bg-[#babcbd] hover:bg-[#cfd1d2] rounded-lg"
                 >
                   Sign Up
                 </Link>

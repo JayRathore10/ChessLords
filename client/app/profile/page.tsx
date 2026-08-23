@@ -58,7 +58,7 @@ export default function ProfilePage() {
   if (isLoading) {
     return (
       <main className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-[#0f1115]">
-        <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-3 border-[#babcbd] border-t-transparent rounded-full animate-spin" />
       </main>
     );
   }
@@ -66,7 +66,7 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <main className="min-h-[calc(100vh-64px)] flex flex-col items-center justify-center p-6 bg-[#0f1115] text-center">
-        <div className="w-16 h-16 rounded-2xl bg-[#181b21] border border-gray-800 flex items-center justify-center mb-4 text-amber-500">
+        <div className="w-16 h-16 rounded-2xl bg-[#161920] border border-[#232732] flex items-center justify-center mb-4 text-[#babcbd]">
           <UserIcon className="w-8 h-8" />
         </div>
         <h1 className="text-2xl font-bold text-white mb-2">
@@ -78,13 +78,13 @@ export default function ProfilePage() {
         <div className="flex items-center gap-3">
           <Link
             href="/login"
-            className="px-5 py-2.5 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 transition text-sm"
+            className="px-5 py-2.5 bg-[#babcbd] hover:bg-[#cfd1d2] text-[#0f1115] font-semibold rounded-xl transition text-sm shadow"
           >
             Log In
           </Link>
           <Link
             href="/register"
-            className="px-5 py-2.5 bg-[#181b21] border border-gray-800 text-white font-medium rounded-xl hover:bg-[#22252c] transition text-sm"
+            className="px-5 py-2.5 bg-[#161920] border border-[#232732] text-white font-medium rounded-xl hover:bg-[#1c202a] transition text-sm"
           >
             Sign Up
           </Link>
@@ -174,13 +174,13 @@ export default function ProfilePage() {
     <main className="min-h-[calc(100vh-64px)] p-4 md:p-8 bg-gradient-to-b from-[#0f1115] via-[#12151b] to-[#0a0c0f]">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Profile Banner Card */}
-        <div className="relative bg-[#161920] border border-gray-800/80 rounded-2xl p-6 sm:p-8 overflow-hidden shadow-2xl">
-          {/* Subtle chess accent light */}
-          <div className="absolute -right-16 -top-16 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative bg-[#161920] border border-[#232732] rounded-2xl p-6 sm:p-8 overflow-hidden shadow-2xl">
+          {/* Subtle platinum accent light */}
+          <div className="absolute -right-16 -top-16 w-64 h-64 bg-[#babcbd]/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10">
             {/* Avatar */}
-            <div className="w-24 h-24 rounded-2xl bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-300 text-black font-extrabold text-3xl flex items-center justify-center shadow-xl shadow-amber-950/40 border-2 border-white/10 shrink-0">
+            <div className="w-24 h-24 rounded-2xl bg-primary-gradient text-[#0f1115] font-extrabold text-3xl flex items-center justify-center shadow-xl shadow-black/40 border-2 border-white/10 shrink-0">
               {user.name ? user.name[0].toUpperCase() : user.username[0].toUpperCase()}
             </div>
 
@@ -190,7 +190,7 @@ export default function ProfilePage() {
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
                   {user.name || user.username}
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/25">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#babcbd]/10 text-[#babcbd] border border-[#babcbd]/25">
                   @{user.username}
                 </span>
                 {user.role === "admin" && (
@@ -204,8 +204,8 @@ export default function ProfilePage() {
 
               {/* Badges / Rating quick stats */}
               <div className="pt-2 flex flex-wrap items-center justify-center sm:justify-start gap-4">
-                <div className="flex items-center gap-1.5 text-amber-400 text-sm font-semibold">
-                  <Trophy className="w-4 h-4" />
+                <div className="flex items-center gap-1.5 text-[#babcbd] text-sm font-semibold">
+                  <Trophy className="w-4 h-4 text-[#babcbd]" />
                   <span>Rating: {user.rating ?? 1200}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-blue-400 text-sm font-semibold">
@@ -223,7 +223,7 @@ export default function ProfilePage() {
             <div className="shrink-0">
               <Link
                 href="/game"
-                className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-2 transition active:scale-95 text-sm"
+                className="px-5 py-2.5 bg-gradient-to-r from-[#babcbd] to-[#cfd1d2] hover:from-[#cfd1d2] hover:to-[#e4e5e6] text-[#0f1115] font-bold rounded-xl shadow-lg shadow-black/40 flex items-center gap-2 transition active:scale-95 text-sm"
               >
                 <Swords className="w-4 h-4" />
                 <span>Play a Game</span>
@@ -233,7 +233,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 border-b border-gray-800 pb-1">
+        <div className="flex items-center gap-2 border-b border-[#232732] pb-1">
           <button
             onClick={() => {
               setActiveTab("overview");
@@ -297,7 +297,7 @@ export default function ProfilePage() {
         {activeTab === "overview" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Stat 1: Total Played */}
-            <div className="bg-[#161920] border border-gray-800 rounded-xl p-5 space-y-1">
+            <div className="bg-[#161920] border border-[#232732] rounded-xl p-5 space-y-1">
               <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
                 Total Matches
               </p>
@@ -306,7 +306,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Stat 2: Won */}
-            <div className="bg-[#161920] border border-gray-800 rounded-xl p-5 space-y-1">
+            <div className="bg-[#161920] border border-[#232732] rounded-xl p-5 space-y-1">
               <p className="text-emerald-400 text-xs font-semibold uppercase tracking-wider">
                 Victories
               </p>
@@ -315,7 +315,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Stat 3: Lost */}
-            <div className="bg-[#161920] border border-gray-800 rounded-xl p-5 space-y-1">
+            <div className="bg-[#161920] border border-[#232732] rounded-xl p-5 space-y-1">
               <p className="text-red-400 text-xs font-semibold uppercase tracking-wider">
                 Defeats
               </p>
@@ -329,11 +329,11 @@ export default function ProfilePage() {
             </div>
 
             {/* Stat 4: Drawn */}
-            <div className="bg-[#161920] border border-gray-800 rounded-xl p-5 space-y-1">
-              <p className="text-amber-400 text-xs font-semibold uppercase tracking-wider">
+            <div className="bg-[#161920] border border-[#232732] rounded-xl p-5 space-y-1">
+              <p className="text-[#babcbd] text-xs font-semibold uppercase tracking-wider">
                 Draws
               </p>
-              <p className="text-3xl font-extrabold text-amber-400">{gamesDrawn}</p>
+              <p className="text-3xl font-extrabold text-[#babcbd]">{gamesDrawn}</p>
               <p className="text-xs text-gray-500">
                 {gamesPlayed > 0
                   ? Math.round((gamesDrawn / gamesPlayed) * 100)
@@ -343,9 +343,9 @@ export default function ProfilePage() {
             </div>
 
             {/* Detailed Performance Bar */}
-            <div className="sm:col-span-2 lg:col-span-4 bg-[#161920] border border-gray-800 rounded-xl p-6 space-y-4">
+            <div className="sm:col-span-2 lg:col-span-4 bg-[#161920] border border-[#232732] rounded-xl p-6 space-y-4">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Award className="w-5 h-5 text-amber-400" />
+                <Award className="w-5 h-5 text-[#babcbd]" />
                 <span>Performance Breakdown</span>
               </h3>
 
@@ -358,7 +358,7 @@ export default function ProfilePage() {
                       title={`Won: ${gamesWon}`}
                     />
                     <div
-                      className="bg-amber-500 h-full transition-all"
+                      className="bg-[#babcbd] h-full transition-all"
                       style={{ width: `${(gamesDrawn / gamesPlayed) * 100}%` }}
                       title={`Drawn: ${gamesDrawn}`}
                     />
@@ -375,7 +375,7 @@ export default function ProfilePage() {
                       Won ({gamesWon})
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#babcbd] inline-block" />
                       Drawn ({gamesDrawn})
                     </span>
                     <span className="flex items-center gap-1.5">
@@ -395,9 +395,9 @@ export default function ProfilePage() {
 
         {/* TAB 2: EDIT PROFILE */}
         {activeTab === "edit" && (
-          <div className="bg-[#161920] border border-gray-800 rounded-xl p-6 max-w-xl">
+          <div className="bg-[#161920] border border-[#232732] rounded-xl p-6 max-w-xl">
             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <Edit3 className="w-5 h-5 text-amber-400" />
+              <Edit3 className="w-5 h-5 text-[#babcbd]" />
               <span>Edit Account Information</span>
             </h3>
 
@@ -413,7 +413,7 @@ export default function ProfilePage() {
                     setProfileForm((prev) => ({ ...prev, name: e.target.value }))
                   }
                   required
-                  className="w-full px-4 py-2.5 bg-[#0f1115] border border-gray-800 rounded-xl text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-sm"
+                  className="w-full px-4 py-2.5 bg-[#0f1115] border border-[#232732] rounded-xl text-white focus:outline-none focus:border-[#babcbd] focus:ring-1 focus:ring-[#babcbd] transition text-sm"
                 />
               </div>
 
@@ -431,7 +431,7 @@ export default function ProfilePage() {
                     }))
                   }
                   required
-                  className="w-full px-4 py-2.5 bg-[#0f1115] border border-gray-800 rounded-xl text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-sm"
+                  className="w-full px-4 py-2.5 bg-[#0f1115] border border-[#232732] rounded-xl text-white focus:outline-none focus:border-[#babcbd] focus:ring-1 focus:ring-[#babcbd] transition text-sm"
                 />
               </div>
 
@@ -439,7 +439,7 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl shadow transition active:scale-95 disabled:opacity-50 flex items-center gap-2 text-sm"
+                  className="px-6 py-2.5 bg-[#babcbd] hover:bg-[#cfd1d2] text-[#0f1115] font-bold rounded-xl shadow transition active:scale-95 disabled:opacity-50 flex items-center gap-2 text-sm"
                 >
                   <Save className="w-4 h-4" />
                   <span>{isSubmitting ? "Saving..." : "Save Changes"}</span>
@@ -451,9 +451,9 @@ export default function ProfilePage() {
 
         {/* TAB 3: SECURITY (CHANGE PASSWORD) */}
         {activeTab === "security" && (
-          <div className="bg-[#161920] border border-gray-800 rounded-xl p-6 max-w-xl">
+          <div className="bg-[#161920] border border-[#232732] rounded-xl p-6 max-w-xl">
             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <Lock className="w-5 h-5 text-amber-400" />
+              <Lock className="w-5 h-5 text-[#babcbd]" />
               <span>Update Password</span>
             </h3>
 
@@ -473,7 +473,7 @@ export default function ProfilePage() {
                   }
                   required
                   placeholder="••••••••"
-                  className="w-full px-4 py-2.5 bg-[#0f1115] border border-gray-800 rounded-xl text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-sm"
+                  className="w-full px-4 py-2.5 bg-[#0f1115] border border-[#232732] rounded-xl text-white focus:outline-none focus:border-[#babcbd] focus:ring-1 focus:ring-[#babcbd] transition text-sm"
                 />
               </div>
 
@@ -492,7 +492,7 @@ export default function ProfilePage() {
                   }
                   required
                   placeholder="Minimum 6 characters"
-                  className="w-full px-4 py-2.5 bg-[#0f1115] border border-gray-800 rounded-xl text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-sm"
+                  className="w-full px-4 py-2.5 bg-[#0f1115] border border-[#232732] rounded-xl text-white focus:outline-none focus:border-[#babcbd] focus:ring-1 focus:ring-[#babcbd] transition text-sm"
                 />
               </div>
 
@@ -511,7 +511,7 @@ export default function ProfilePage() {
                   }
                   required
                   placeholder="Re-enter new password"
-                  className="w-full px-4 py-2.5 bg-[#0f1115] border border-gray-800 rounded-xl text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-sm"
+                  className="w-full px-4 py-2.5 bg-[#0f1115] border border-[#232732] rounded-xl text-white focus:outline-none focus:border-[#babcbd] focus:ring-1 focus:ring-[#babcbd] transition text-sm"
                 />
               </div>
 
@@ -519,7 +519,7 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl shadow transition active:scale-95 disabled:opacity-50 flex items-center gap-2 text-sm"
+                  className="px-6 py-2.5 bg-[#babcbd] hover:bg-[#cfd1d2] text-[#0f1115] font-bold rounded-xl shadow transition active:scale-95 disabled:opacity-50 flex items-center gap-2 text-sm"
                 >
                   <Lock className="w-4 h-4" />
                   <span>{isSubmitting ? "Updating..." : "Update Password"}</span>

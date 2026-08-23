@@ -276,7 +276,7 @@ export default function GamePage({ params }: GamePageProps) {
 
               {/* Message */}
               {message && (
-                <div className="mb-4 bg-amber-500/10 border border-amber-500/30 text-amber-300 rounded-lg p-3 text-center font-medium">
+                <div className="mb-4 bg-[#babcbd]/10 border border-[#babcbd]/30 text-white rounded-lg p-3 text-center font-medium">
                   {message}
                 </div>
               )}
