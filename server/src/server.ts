@@ -1,6 +1,7 @@
 import express from "express";
 import http from "http";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { Server } from "socket.io";
 import { getChessGame, createChessGame, makeChessMove } from "./services/chess.service";
 import { FRONTEND } from "./configs/env.config";
@@ -14,11 +15,12 @@ const app = express();
 
 app.use(
   cors({
-    origin: FRONTEND,
+    origin: FRONTEND || "http://localhost:3000",
     credentials: true,
   })
 );
 
+app.use(cookieParser());
 app.use(express.json());
 app.use("/api/v1/games", gameRoutes);
 app.use("/api/v1/auth", authRoutes);

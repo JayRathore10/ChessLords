@@ -46,7 +46,7 @@ export const registerNewUser = async (
     }
 
     // Hash password
-    const salt = await bcrypt.genSalt(Number(SALT_ROUND));
+    const salt = await bcrypt.genSalt(Number(SALT_ROUND) || 10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create user
@@ -61,6 +61,7 @@ export const registerNewUser = async (
     const token = jwt.sign(
       {
         userId: user._id.toString(),
+        email: user.email,
         role: user.role,
       },
       JWT_SECRET as string,
@@ -72,9 +73,8 @@ export const registerNewUser = async (
     // Store JWT in HTTP-only cookie
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      partitioned: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -84,18 +84,24 @@ export const registerNewUser = async (
       email: user.email,
       name: user.name,
       role: user.role,
+      rating: user.rating,
+      profilePic: user.profilePic,
+      gamesPlayed: user.gamesPlayed,
+      gamesWon: user.gamesWon,
+      gamesLost: user.gamesLost,
+      gamesDrawn: user.gamesDrawn,
     };
 
     return res.status(201).json({
       success: true,
       message: "User registered successfully",
+      token,
       user: userResponse,
     });
   } catch (err) {
     next(err);
   }
 };
-
 
 export const loginUser = async (
   req: Request,
@@ -139,6 +145,7 @@ export const loginUser = async (
     const token = jwt.sign(
       {
         userId: user._id.toString(),
+        email: user.email,
         role: user.role,
       },
       JWT_SECRET as string,
@@ -149,9 +156,8 @@ export const loginUser = async (
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      partitioned: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -161,11 +167,18 @@ export const loginUser = async (
       email: user.email,
       name: user.name,
       role: user.role,
+      rating: user.rating,
+      profilePic: user.profilePic,
+      gamesPlayed: user.gamesPlayed,
+      gamesWon: user.gamesWon,
+      gamesLost: user.gamesLost,
+      gamesDrawn: user.gamesDrawn,
     };
 
     return res.status(200).json({
       success: true,
       message: "Login successful",
+      token,
       user: userResponse,
     });
   } catch (err) {
@@ -181,9 +194,8 @@ export const logoutUser = async (
   try {
     res.clearCookie("token", {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      partitioned: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     });
 
     return res.status(200).json({
@@ -201,7 +213,6 @@ export const me = async (
   next: NextFunction
 ) => {
   try {
-    // User is already authenticated by isUserLoggedIn
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -212,6 +223,57 @@ export const me = async (
     return res.status(200).json({
       success: true,
       user: req.user,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const changePassword = async (
+  req: authRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password and new password are required",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "New password must be at least 6 characters long",
+      });
+    }
+
+    const user = await userModel.findById(req.user?._id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    const salt = await bcrypt.genSalt(Number(SALT_ROUND) || 10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
     });
   } catch (err) {
     next(err);

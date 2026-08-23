@@ -6,18 +6,18 @@ This document outlines all pending and incomplete tasks across the ChessLord app
 
 ## Part 1: Authentication & User Management
 
-- [ ] **Auth Pages & UI**
-  - [ ] Build User Registration Page (`client/app/register/page.tsx`).
-  - [ ] Build User Login Page (`client/app/login/page.tsx`).
-  - [ ] Implement form validations (email format, password strength, username uniqueness check).
-- [ ] **State & Session Management**
-  - [ ] Create global Auth Context / Zustand store to manage user session and JWT tokens.
-  - [ ] Implement Axios / Fetch interceptor to handle token refresh via `refreshToken.model.ts` on `401 Unauthorized`.
-  - [ ] Update [Navbar.tsx](file:///E:/chess-lords/client/components/NavBar.tsx) to dynamically render user profile, avatar, rating, and Logout button when authenticated.
-- [ ] **Profile & User Settings**
-  - [ ] Build User Profile Page (`client/app/profile/page.tsx`).
-  - [ ] Implement avatar upload / selection and bio/username updates (`PATCH /api/v1/users/me`).
-  - [ ] Add change password / security settings flow.
+- [x] **Auth Pages & UI**
+  - [x] Build User Registration Page (`client/app/register/page.tsx`).
+  - [x] Build User Login Page (`client/app/login/page.tsx`).
+  - [x] Implement form validations (email format, password strength, username uniqueness check).
+- [x] **State & Session Management**
+  - [x] Create global Auth Context / Zustand store to manage user session and JWT tokens.
+  - [x] Implement Axios / Fetch interceptor to handle token refresh via `refreshToken.model.ts` on `401 Unauthorized`.
+  - [x] Update [Navbar.tsx](file:///E:/chess-lords/client/components/NavBar.tsx) to dynamically render user profile, avatar, rating, and Logout button when authenticated.
+- [x] **Profile & User Settings**
+  - [x] Build User Profile Page (`client/app/profile/page.tsx`).
+  - [x] Implement avatar upload / selection and bio/username updates (`PATCH /api/v1/users/me`).
+  - [x] Add change password / security settings flow.
 
 ---
 
