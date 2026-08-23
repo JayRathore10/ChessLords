@@ -11,7 +11,6 @@ import {
   Lock,
   Eye,
   EyeOff,
-  Crown,
   ArrowRight,
   AlertCircle,
 } from "lucide-react";
