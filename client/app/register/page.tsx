@@ -14,7 +14,6 @@ import {
   Crown,
   ArrowRight,
   AlertCircle,
-  CheckCircle2,
 } from "lucide-react";
 
 export default function RegisterPage() {
@@ -85,6 +84,7 @@ export default function RegisterPage() {
     try {
       await register(username.trim(), name.trim(), email.trim(), password);
       router.push("/");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || "Failed to create account. Please try again.");
     } finally {
@@ -93,18 +93,13 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4 py-8 bg-gradient-to-b from-[#0f1115] via-[#12151b] to-[#0a0c0f]">
+    <main className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4 py-8 bg-linear-to-b from-[#0f1115] via-[#12151b] to-[#0a0c0f]">
       {/* Background Decorative Glow */}
       <div className="absolute w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none -top-10 left-1/2 -translate-x-1/2" />
 
       <div className="w-full max-w-lg relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-400 p-0.5 shadow-lg shadow-amber-500/20 mb-4">
-            <div className="w-full h-full bg-[#12141a] rounded-[14px] flex items-center justify-center">
-              <Crown className="w-7 h-7 text-amber-400" />
-            </div>
-          </div>
           <h1 className="text-3xl font-extrabold tracking-tight text-white">
             Claim Your <span className="text-amber-500">Crown</span>
           </h1>
@@ -302,7 +297,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-sm"
+                className="w-full py-3.5 px-4 bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-sm"
               >
                 {isLoading ? (
                   <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
