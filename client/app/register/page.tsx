@@ -296,7 +296,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3.5 px-4 bg-gradient-to-r from-[#babcbd] to-[#cfd1d2] hover:from-[#cfd1d2] hover:to-[#e4e5e6] text-[#0f1115] font-bold rounded-xl shadow-lg shadow-black/40 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-sm"
+                className="w-full py-3.5 px-4 bg-linear-to-r from-[#babcbd] to-[#cfd1d2] hover:from-[#cfd1d2] hover:to-[#e4e5e6] text-[#0f1115] font-bold rounded-xl shadow-lg shadow-black/40 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-sm"
               >
                 {isLoading ? (
                   <div className="w-5 h-5 border-2 border-[#0f1115] border-t-transparent rounded-full animate-spin" />
