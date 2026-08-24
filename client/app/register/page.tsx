@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import axios from "axios";
 import {
   User as UserIcon,
   AtSign,
@@ -17,7 +17,6 @@ import {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register } = useAuth();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -98,48 +97,65 @@ export default function RegisterPage() {
   }, [formData.password]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  e.preventDefault();
+  setError(null);
 
-    const { name, username, email, password, confirmPassword } = formData;
+  const { name, username, email, password, confirmPassword } = formData;
 
-    if (!name.trim() || !username.trim() || !email.trim() || !password) {
-      setError("Please fill in all required fields.");
-      return;
+  if (!name.trim() || !username.trim() || !email.trim() || !password) {
+    setError("Please fill in all required fields.");
+    return;
+  }
+
+  if (username.length < 3 || username.length > 20) {
+    setError("Username must be between 3 and 20 characters.");
+    return;
+  }
+
+  if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+    setError("Username can only contain letters, numbers, and underscores.");
+    return;
+  }
+
+  if (password.length < 8) {
+    setError("Password must be at least 8 characters long.");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    setError("Passwords do not match.");
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    const response = await axios.post(
+      "http://localhost:5000/api/v1/auth/register",
+      {
+        name: name.trim(),
+        username: username.trim(),
+        email: email.trim(),
+        password,
+      }
+    );
+
+    console.log("Registration successful:", response.data);
+
+    router.push("/login");
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      setError(
+        err.response?.data?.message ||
+        "Failed to create account. Please try again."
+      );
+    } else {
+      setError("Something went wrong. Please try again.");
     }
-
-    if (username.length < 3 || username.length > 20) {
-      setError("Username must be between 3 and 20 characters.");
-      return;
-    }
-
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      setError("Username can only contain letters, numbers, and underscores.");
-      return;
-    }
-
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters long.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      await register(username.trim(), name.trim(), email.trim(), password);
-      router.push("/");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message || "Failed to create account. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <main className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4 py-8 bg-linear-to-b from-[#0f1115] via-[#12151b] to-[#0a0c0f]">

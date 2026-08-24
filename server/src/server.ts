@@ -10,6 +10,7 @@ import { gameModel } from "./models/game.model";
 import gameRoutes from "./routes/game.routes";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
+import { connectDB } from "./configs/db.config";
 
 const app = express();
 
@@ -324,5 +325,6 @@ app.get("/", (req, res) => {
 });
 
 httpServer.listen(5000, () => {
+  connectDB();
   console.log("ChessLord server running on http://localhost:5000");
 });
