@@ -8,7 +8,6 @@ import {
   User as UserIcon,
   Trophy,
   Swords,
-  Shield,
   Lock,
   Edit3,
   CheckCircle2,
@@ -19,6 +18,7 @@ import {
 } from "lucide-react";
 
 export default function ProfilePage() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const router = useRouter();
   const { user, isLoading, updateProfile, changePassword } = useAuth();
 
@@ -48,6 +48,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProfileForm({
         name: user.name || "",
         username: user.username || "",
@@ -114,6 +115,7 @@ export default function ProfilePage() {
         type: "success",
         text: "Profile updated successfully!",
       });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setStatusMessage({
         type: "error",
@@ -160,6 +162,7 @@ export default function ProfilePage() {
         newPassword: "",
         confirmPassword: "",
       });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setStatusMessage({
         type: "error",
@@ -171,7 +174,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <main className="min-h-[calc(100vh-64px)] p-4 md:p-8 bg-gradient-to-b from-[#0f1115] via-[#12151b] to-[#0a0c0f]">
+    <main className="min-h-[calc(100vh-64px)] p-4 md:p-8 bg-linear-to-b from-[#0f1115] via-[#12151b] to-[#0a0c0f]">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Profile Banner Card */}
         <div className="relative bg-[#161920] border border-[#232732] rounded-2xl p-6 sm:p-8 overflow-hidden shadow-2xl">
@@ -223,7 +226,7 @@ export default function ProfilePage() {
             <div className="shrink-0">
               <Link
                 href="/game"
-                className="px-5 py-2.5 bg-gradient-to-r from-[#babcbd] to-[#cfd1d2] hover:from-[#cfd1d2] hover:to-[#e4e5e6] text-[#0f1115] font-bold rounded-xl shadow-lg shadow-black/40 flex items-center gap-2 transition active:scale-95 text-sm"
+                className="px-5 py-2.5 bg-linear-to-r from-[#babcbd] to-[#cfd1d2] hover:from-[#cfd1d2] hover:to-[#e4e5e6] text-[#0f1115] font-bold rounded-xl shadow-lg shadow-black/40 flex items-center gap-2 transition active:scale-95 text-sm"
               >
                 <Swords className="w-4 h-4" />
                 <span>Play a Game</span>
