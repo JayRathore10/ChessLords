@@ -1,11 +1,15 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from "react";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 
-"lucide-react";
-import axios  from "axios";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from
+  "lucide-react";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -44,49 +48,52 @@ export default function LoginPage() {
   }, [isHovered]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError(null);
+    e.preventDefault();
+    setError(null);
 
-  if (!formData.email.trim() || !formData.password) {
-    setError("Please fill in all fields");
-    return;
-  }
-
-  setIsLoading(true);
-
-  try {
-    const response = await axios.post(
-      "http://localhost:5000/api/v1/auth/login",
-      {
-        email: formData.email.trim(),
-        password: formData.password,
-      }
-    );
-
-    // Have to remove this line ;
-    console.log("Login successful:", response.data);
-
-    // Example:
-    // const { accessToken, user } = response.data;
-
-    // Save token if your backend returns one
-    // localStorage.setItem("accessToken", accessToken);
-
-    // Redirect after successful login
-    // router.push("/");
-  } catch (err: unknown) {
-    if (axios.isAxiosError(err)) {
-      setError(
-        err.response?.data?.message ||
-        "Failed to log in. Please check your credentials."
-      );
-    } else {
-      setError("Something went wrong. Please try again.");
+    if (!formData.email.trim() || !formData.password) {
+      setError("Please fill in all fields");
+      return;
     }
-  } finally {
-    setIsLoading(false);
-  }
-};
+
+    setIsLoading(true);
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/v1/auth/login",
+        {
+          email: formData.email.trim(),
+          password: formData.password,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
+      // Have to remove this line ;
+      console.log("Login successful:", response.data);
+
+      // Example:
+      // const { accessToken, user } = response.data;
+
+      // Save token if your backend returns one
+      // localStorage.setItem("accessToken", accessToken);
+
+      // Redirect after successful login
+      router.push("/");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setError(
+          err.response?.data?.message ||
+          "Failed to log in. Please check your credentials."
+        );
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <main className="relative min-h-[calc(100vh-64px)] overflow-hidden flex items-center justify-center p-4 bg-linear-to-b from-[#0f1115] via-[#12151b] to-[#0a0c0f]">
@@ -111,7 +118,7 @@ export default function LoginPage() {
       </div>
 
       <div className="right-chess-piece-container">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/black-hr-2.png"
           alt="Chess piece"
