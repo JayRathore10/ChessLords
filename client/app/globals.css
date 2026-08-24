@@ -24,6 +24,28 @@
   --success: #22c55e;
   --danger: #ef4444;
   --info: #3b82f6;
+  --warning: #f59e0b;
+
+  /* Game Mode Theme Variables */
+  --game-bullet: #f59e0b;
+  --game-bullet-bg: rgba(245, 158, 11, 0.12);
+  --game-bullet-border: rgba(245, 158, 11, 0.28);
+
+  --game-blitz: #eab308;
+  --game-blitz-bg: rgba(234, 179, 8, 0.12);
+  --game-blitz-border: rgba(234, 179, 8, 0.28);
+
+  --game-rapid: #10b981;
+  --game-rapid-bg: rgba(16, 185, 129, 0.12);
+  --game-rapid-border: rgba(16, 185, 129, 0.28);
+
+  --game-classical: #3b82f6;
+  --game-classical-bg: rgba(59, 130, 246, 0.12);
+  --game-classical-border: rgba(59, 130, 246, 0.28);
+
+  --game-custom: #a855f7;
+  --game-custom-bg: rgba(168, 85, 247, 0.12);
+  --game-custom-border: rgba(168, 85, 247, 0.28);
 }
 
 @theme inline {
@@ -42,6 +64,12 @@
   --color-surface-card: var(--surface-card);
   --color-surface-card-hover: var(--surface-card-hover);
   --color-surface-border: var(--surface-border);
+
+  --color-game-bullet: var(--game-bullet);
+  --color-game-blitz: var(--game-blitz);
+  --color-game-rapid: var(--game-rapid);
+  --color-game-classical: var(--game-classical);
+  --color-game-custom: var(--game-custom);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -74,4 +102,57 @@ body {
 
 .glow-primary {
   box-shadow: 0 0 25px rgba(186, 188, 189, 0.18);
+}
+
+.glow-bullet {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+}
+
+.glow-blitz {
+  box-shadow: 0 0 20px rgba(234, 179, 8, 0.25);
+}
+
+.glow-rapid {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+}
+
+.glow-classical {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
+}
+
+.glow-custom {
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
+}
+
+/* Matchmaking Radar Animation */
+@keyframes radar-ping {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
+
+.animate-radar-ping {
+  animation: radar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
 }

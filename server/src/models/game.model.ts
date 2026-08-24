@@ -3,12 +3,21 @@ import mongoose, { Document, Types } from "mongoose";
 export interface GameInterface extends Document {
   _id: Types.ObjectId;
 
-  whitePlayer: Types.ObjectId;
-  blackPlayer: Types.ObjectId;
+  whitePlayer?: Types.ObjectId;
+  blackPlayer?: Types.ObjectId;
+
+  whitePlayerName?: string;
+  blackPlayerName?: string;
+  whitePlayerRating?: number;
+  blackPlayerRating?: number;
+
+  inviteCode?: string;
+  isPrivate?: boolean;
+  isPassAndPlay?: boolean;
 
   gameType: "casual" | "rated";
 
-  status: "waiting" | "active" | "completed" | "abandoned";
+  status: "waiting" | "active" | "completed" | "abandoned" | "aborted";
 
   result: "white" | "black" | "draw" | "none";
 
@@ -23,6 +32,7 @@ export interface GameInterface extends Document {
   timeControl: {
     initialTime: number; // seconds
     increment: number;   // seconds
+    name?: string;
   };
 
   // Remaining time in seconds
@@ -41,13 +51,49 @@ const gameSchema = new mongoose.Schema<GameInterface>(
     whitePlayer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "White player is required"],
+      required: false,
     },
 
     blackPlayer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "Black player is required"],
+      required: false,
+    },
+
+    whitePlayerName: {
+      type: String,
+      default: "White",
+    },
+
+    blackPlayerName: {
+      type: String,
+      default: "Black",
+    },
+
+    whitePlayerRating: {
+      type: Number,
+      default: 1200,
+    },
+
+    blackPlayerRating: {
+      type: Number,
+      default: 1200,
+    },
+
+    inviteCode: {
+      type: String,
+      index: true,
+      sparse: true,
+    },
+
+    isPrivate: {
+      type: Boolean,
+      default: false,
+    },
+
+    isPassAndPlay: {
+      type: Boolean,
+      default: false,
     },
 
     gameType: {
@@ -58,7 +104,7 @@ const gameSchema = new mongoose.Schema<GameInterface>(
 
     status: {
       type: String,
-      enum: ["waiting", "active", "completed", "abandoned"],
+      enum: ["waiting", "active", "completed", "abandoned", "aborted"],
       default: "waiting",
     },
 
@@ -96,6 +142,11 @@ const gameSchema = new mongoose.Schema<GameInterface>(
         type: Number,
         default: 0,
         min: 0,
+      },
+
+      name: {
+        type: String,
+        default: "Custom",
       },
     },
 

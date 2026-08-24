@@ -23,17 +23,17 @@ This document outlines all pending and incomplete tasks across the ChessLord app
 
 ## Part 2: Game Creation, Lobby & Matchmaking
 
-- [ ] **Landing Page & Play Hub**
-  - [ ] Build modern landing page in [client/app/page.tsx](file:///E:/chess-lords/client/app/page.tsx) with hero section, quick play button, and game mode selector.
-  - [ ] Build Play / Lobby Page (`client/app/game/page.tsx`) with game options (Bullet, Blitz, Rapid, Custom).
-- [ ] **Matchmaking Queue System**
-  - [ ] Implement server-side matchmaking queue (pairing players based on rating and selected time control).
-  - [ ] Add client-side "Searching for opponent..." modal with cancel button and matchmaking timer.
-  - [ ] Emit match found event and automatically route players to `/game/:gameId`.
-- [ ] **Custom Games & Room Invites**
-  - [ ] Build "Play with a Friend" modal allowing custom time controls and color selection.
-  - [ ] Generate shareable invite links (`/game/:gameId?join=code`) for direct private matches.
-  - [ ] Allow guest play or pass-and-play mode.
+- [x] **Landing Page & Play Hub**
+  - [x] Build modern landing page in [client/app/page.tsx](file:///E:/chess-lords/client/app/page.tsx) with hero section, quick play button, and game mode selector.
+  - [x] Build Play / Lobby Page (`client/app/game/page.tsx`) with game options (Bullet, Blitz, Rapid, Custom).
+- [x] **Matchmaking Queue System**
+  - [x] Implement server-side matchmaking queue (pairing players based on rating and selected time control).
+  - [x] Add client-side "Searching for opponent..." modal with cancel button and matchmaking timer.
+  - [x] Emit match found event and automatically route players to `/game/:gameId`.
+- [x] **Custom Games & Room Invites**
+  - [x] Build "Play with a Friend" modal allowing custom time controls and color selection.
+  - [x] Generate shareable invite links (`/game/:gameId?join=code`) for direct private matches.
+  - [x] Allow guest play or pass-and-play mode.
 
 ---
 
@@ -41,21 +41,21 @@ This document outlines all pending and incomplete tasks across the ChessLord app
 
 - [ ] **Pawn Promotion Selection Modal**
   - [ ] Create modal / overlay prompt to choose Queen, Rook, Bishop, or Knight upon pawn reaching the last rank.
-- [ ] **Clocks & Timers**
-  - [ ] Implement real-time countdown clocks for White and Black players with increment support (e.g. 3+2, 10+0).
+- [x] **Clocks & Timers**
+  - [x] Implement real-time countdown clocks for White and Black players with increment support (e.g. 3+2, 10+0).
   - [ ] Sync clock state with server timestamps to prevent client-side desync or tampering.
   - [ ] Implement automatic timeout handling (flagging player when clock reaches 0:00).
-- [ ] **Game Actions & Controls**
-  - [ ] Add "Resign" button with confirmation modal.
-  - [ ] Add "Offer Draw" / "Accept Draw" / "Decline Draw" socket flow.
-  - [ ] Add "Abort Game" option if no moves have been played.
-- [ ] **Move History & Notation**
-  - [ ] Format move list in standard algebraic notation (SAN) with move numbers.
+- [x] **Game Actions & Controls**
+  - [x] Add "Resign" button with confirmation modal.
+  - [x] Add "Offer Draw" / "Accept Draw" / "Decline Draw" socket flow.
+  - [x] Add "Abort Game" option if no moves have been played.
+- [x] **Move History & Notation**
+  - [x] Format move list in standard algebraic notation (SAN) with move numbers.
   - [ ] Add interactive move navigation (click on past moves to view board state history).
   - [ ] Add PGN / FEN export and copy buttons.
-- [ ] **Captured Pieces & Material Balance**
-  - [ ] Display captured pieces for White and Black alongside player profiles.
-  - [ ] Calculate and display material difference advantage (e.g., `+3`, `+1`).
+- [x] **Captured Pieces & Material Balance**
+  - [x] Display captured pieces for White and Black alongside player profiles.
+  - [x] Calculate and display material difference advantage (e.g., `+3`, `+1`).
 - [ ] **Audio & Sound Effects**
   - [ ] Add audio effects for moves, captures, castling, checks, checkmates, low-time alerts, and game-over sound.
 

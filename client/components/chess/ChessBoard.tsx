@@ -13,6 +13,7 @@ export interface ChessBoardProps {
   fen?: string;
   orientation?: "white" | "black";
   disabled?: boolean;
+  isPassAndPlay?: boolean;
   onMove?: (from: string, to: string, promotion?: string) => boolean | void;
   lastMove?: { from: string; to: string } | null;
   className?: string;
@@ -22,6 +23,7 @@ export default function ChessBoard({
   fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
   orientation = "white",
   disabled = false,
+  isPassAndPlay = false,
   onMove,
   lastMove = null,
   className = "",
@@ -143,6 +145,11 @@ export default function ChessBoard({
     const isWhitePiece = piece.pieceType.startsWith("w") || piece.pieceType === piece.pieceType.toUpperCase();
     const pieceColor = isWhitePiece ? "w" : "b";
     const activeColor = game.turn(); // 'w' or 'b'
+    
+    if (isPassAndPlay) {
+      return pieceColor === activeColor;
+    }
+
     // Allow dragging only current turn pieces matching orientation
     return (
       pieceColor === activeColor &&
