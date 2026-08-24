@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from "react";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 
+"lucide-react";
+import axios  from "axios";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -42,29 +44,49 @@ export default function LoginPage() {
   }, [isHovered]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  e.preventDefault();
+  setError(null);
 
-    if (!formData.email.trim() || !formData.password) {
-      setError("Please fill in all fields");
-      return;
-    }
+  if (!formData.email.trim() || !formData.password) {
+    setError("Please fill in all fields");
+    return;
+  }
 
-    setIsLoading(true);
+  setIsLoading(true);
 
-    try {
-      // Simulate login - replace with your actual login logic
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log("Login successful");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
+  try {
+    const response = await axios.post(
+      "http://localhost:5000/api/v1/auth/login",
+      {
+        email: formData.email.trim(),
+        password: formData.password,
+      }
+    );
+
+    // Have to remove this line ;
+    console.log("Login successful:", response.data);
+
+    // Example:
+    // const { accessToken, user } = response.data;
+
+    // Save token if your backend returns one
+    // localStorage.setItem("accessToken", accessToken);
+
+    // Redirect after successful login
+    // router.push("/");
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err)) {
       setError(
-        err.message || "Failed to log in. Please check your credentials."
+        err.response?.data?.message ||
+        "Failed to log in. Please check your credentials."
       );
-    } finally {
-      setIsLoading(false);
+    } else {
+      setError("Something went wrong. Please try again.");
     }
-  };
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <main className="relative min-h-[calc(100vh-64px)] overflow-hidden flex items-center justify-center p-4 bg-linear-to-b from-[#0f1115] via-[#12151b] to-[#0a0c0f]">
