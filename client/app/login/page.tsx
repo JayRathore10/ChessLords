@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useState, useRef, useEffect } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from "lucide-react";
 
@@ -18,23 +19,23 @@ export default function LoginPage() {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!chessPieceRef.current) return;
-      
+
       const rect = chessPieceRef.current.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
-      
+
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
-      
+
       const rotateY = ((mouseX - centerX) / centerX) * 5;
       const rotateX = ((mouseY - centerY) / centerY) * 5;
-      
+
       chessPieceRef.current.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) ${isHovered ? 'scale(1.05)' : 'scale(1)'}`;
     };
 
     const currentRef = chessPieceRef.current;
     currentRef?.addEventListener('mousemove', handleMouseMove);
-    
+
     return () => {
       currentRef?.removeEventListener('mousemove', handleMouseMove);
     };
@@ -72,17 +73,27 @@ export default function LoginPage() {
       <div className="absolute w-96 h-96 bg-[#babcbd]/10 rounded-full blur-3xl pointer-events-none -top-10 left-1/2 -translate-x-1/2" />
 
       {/* Chess Piece - Now peeking from left side */}
-      <div 
+      <div
         ref={chessPieceRef}
         className="chess-piece-container"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/*eslint-disable-next-line @next/next/no-img-element*/}
+
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/black-2.png"
           alt="Chess piece"
           className="chess-piece"
+        />
+      </div>
+
+      <div className="right-chess-piece-container">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/black-hr-2.png"
+          alt="Chess piece"
+          className="right-chess-piece"
         />
       </div>
 
@@ -227,8 +238,8 @@ export default function LoginPage() {
       <style jsx>{`
         .chess-piece-container {
           position: absolute;
-          left: -100px;
-          bottom: -20px;
+          left: -50px;
+          bottom: 50px;
           width: 350px;
           height: 500px;
           z-index: 1;
@@ -258,6 +269,37 @@ export default function LoginPage() {
             drop-shadow(0 0 30px rgba(186, 188, 189, 0.18));
         }
 
+        /* Right side chess piece styles */
+        .right-chess-piece-container {
+          position: absolute;
+          right: -40px;
+          top: 0px;
+          width: 350px;
+          height: 400px;
+          z-index: 1;
+          pointer-events: auto;
+        }
+
+        .right-chess-piece {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          transform: rotate(15deg) translateY(20px);
+          filter: 
+            drop-shadow(0 25px 30px rgba(0, 0, 0, 0.5))
+            drop-shadow(0 0 25px rgba(186, 188, 189, 0.12));
+          transition: 
+            transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+            filter 0.4s ease;
+        }
+
+        .right-chess-piece-container:hover .right-chess-piece {
+          transform: rotate(12deg) translateY(15px) translateX(-10px);
+          filter: 
+            drop-shadow(0 30px 40px rgba(0, 0, 0, 0.6))
+            drop-shadow(0 0 30px rgba(186, 188, 189, 0.18));
+        }
+
         @media (max-width: 768px) {
           .chess-piece-container {
             left: -80px;
@@ -268,10 +310,21 @@ export default function LoginPage() {
           .chess-piece {
             transform: rotate(-12deg) translateY(15px);
           }
+          
+          .right-chess-piece-container {
+            right: -80px;
+            width: 280px;
+            height: 400px;
+          }
+          
+          .right-chess-piece {
+            transform: rotate(12deg) translateY(15px);
+          }
         }
 
         @media (max-width: 480px) {
-          .chess-piece-container {
+          .chess-piece-container,
+          .right-chess-piece-container {
             display: none;
           }
         }
