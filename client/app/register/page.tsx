@@ -83,7 +83,7 @@ export default function RegisterPage() {
     try {
       await register(username.trim(), name.trim(), email.trim(), password);
       router.push("/");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || "Failed to create account. Please try again.");
     } finally {
@@ -95,6 +95,26 @@ export default function RegisterPage() {
     <main className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4 py-8 bg-linear-to-b from-[#0f1115] via-[#12151b] to-[#0a0c0f]">
       {/* Background Decorative Glow */}
       <div className="absolute w-96 h-96 bg-[#babcbd]/10 rounded-full blur-3xl pointer-events-none -top-10 left-1/2 -translate-x-1/2" />
+
+      {/* Left Chess Piece */}
+      <div className="register-left-piece">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/white-rk.png"
+          alt="Chess piece"
+          className="register-left-image"
+        />
+      </div>
+
+      {/* Right Chess Piece */}
+      <div className="register-right-piece">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/white-queen.png"
+          alt="Chess piece"
+          className="register-right-image"
+        />
+      </div>
 
       <div className="w-full max-w-lg relative z-10">
         {/* Header */}
@@ -241,13 +261,12 @@ export default function RegisterPage() {
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-gray-500">Strength:</span>
                     <span
-                      className={`font-semibold ${
-                        passwordStrength.label === "Strong"
-                          ? "text-emerald-400"
-                          : passwordStrength.label === "Medium"
+                      className={`font-semibold ${passwordStrength.label === "Strong"
+                        ? "text-emerald-400"
+                        : passwordStrength.label === "Medium"
                           ? "text-[#babcbd]"
                           : "text-red-400"
-                      }`}
+                        }`}
                     >
                       {passwordStrength.label}
                     </span>
@@ -324,6 +343,112 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .register-left-piece {
+  position: absolute;
+  left: -50px;
+  bottom: 50px;
+  width: 350px;
+  height: 400px;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.register-left-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+
+  transform: rotate(-15deg) translateY(20px);
+
+  filter:
+    drop-shadow(0 25px 30px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 0 25px rgba(186, 188, 189, 0.12));
+
+  transition:
+    transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    filter 0.4s ease;
+
+}
+
+/* Left piece hover */
+.register-left-piece:hover .register-left-image {
+  transform: rotate(-10deg) translateY(-5px) translateX(8px) scale(1.05);
+
+  filter:
+    drop-shadow(0 30px 40px rgba(0, 0, 0, 0.6))
+    drop-shadow(0 0 30px rgba(186, 188, 189, 0.18));
+
+  animation: leftFloat 4s ease-in-out infinite;
+}
+
+
+/* RIGHT PIECE */
+
+.register-right-piece {
+  position: absolute;
+  right: -40px;
+  top: 30px;
+  width: 350px;
+  height: 400px;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.register-right-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+
+  transform: rotate(15deg) translateY(20px);
+
+  filter:
+    drop-shadow(0 25px 30px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 0 25px rgba(186, 188, 189, 0.12));
+
+  transition:
+    transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    filter 0.4s ease;
+}
+
+/* Right piece hover */
+.register-right-piece:hover .register-right-image {
+  transform: rotate(10deg) translateY(-1px) translateX(-1px) scale(1.0);
+
+  filter:
+    drop-shadow(0 30px 40px rgba(0, 0, 0, 0.6))
+    drop-shadow(0 0 30px rgba(186, 188, 189, 0.18));
+   
+  animation: rightFloat 4s ease-in-out infinite;
+}
+
+
+/* Floating animations */
+
+@keyframes leftFloat {
+  0%,
+  100% {
+    transform: rotate(-15deg) translateY(20px);
+  }
+
+  50% {
+    transform: rotate(-13deg) translateY(5px);
+  }
+}
+
+@keyframes rightFloat {
+  0%,
+  100% {
+    transform: rotate(15deg) translateY(20px);
+  }
+
+  50% {
+    transform: rotate(13deg) translateY(5px);
+  }
+}
+     `}</style>
+
     </main>
   );
 }
