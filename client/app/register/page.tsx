@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   User as UserIcon,
   AtSign,
@@ -30,6 +30,56 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const [hoveredPiece, setHoveredPiece] = useState<"left" | "right" | null>(null);
+
+  const leftPieceRef = useRef<HTMLDivElement>(null);
+  const rightPieceRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const addParallax = (
+      element: HTMLDivElement | null,
+      piece: "left" | "right"
+    ) => {
+      if (!element) return;
+
+      const handleMouseMove = (e: MouseEvent) => {
+        const rect = element.getBoundingClientRect();
+
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        const rotateY = ((mouseX - centerX) / centerX) * 5;
+        const rotateX = ((mouseY - centerY) / centerY) * 5;
+
+        const scale = hoveredPiece === piece ? 1.05 : 1;
+
+        element.style.transform = `
+        perspective(1000px)
+        rotateX(${rotateX}deg)
+        rotateY(${rotateY}deg)
+        scale(${scale})
+      `;
+      };
+
+      element.addEventListener("mousemove", handleMouseMove);
+
+      return () => {
+        element.removeEventListener("mousemove", handleMouseMove);
+      };
+    };
+
+    const removeLeft = addParallax(leftPieceRef.current, "left");
+    const removeRight = addParallax(rightPieceRef.current, "right");
+
+    return () => {
+      removeLeft?.();
+      removeRight?.();
+    };
+  }, [hoveredPiece]);
 
   // Password strength calculation
   const passwordStrength = useMemo(() => {
@@ -97,7 +147,12 @@ export default function RegisterPage() {
       <div className="absolute w-96 h-96 bg-[#babcbd]/10 rounded-full blur-3xl pointer-events-none -top-10 left-1/2 -translate-x-1/2" />
 
       {/* Left Chess Piece */}
-      <div className="register-left-piece">
+      <div
+        ref={leftPieceRef}
+        className="register-left-piece"
+        onMouseEnter={() => setHoveredPiece("left")}
+        onMouseLeave={() => setHoveredPiece(null)}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/white-rk.png"
@@ -107,7 +162,12 @@ export default function RegisterPage() {
       </div>
 
       {/* Right Chess Piece */}
-      <div className="register-right-piece">
+      <div
+        ref={rightPieceRef}
+        className="register-right-piece"
+        onMouseEnter={() => setHoveredPiece("right")}
+        onMouseLeave={() => setHoveredPiece(null)}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/white-queen.png"
@@ -345,14 +405,27 @@ export default function RegisterPage() {
       </div>
 
       <style jsx>{`
-        .register-left-piece {
+        .register-left-piece,
+.register-right-piece {
   position: absolute;
+  z-index: 1;
+  pointer-events: auto;
+
+  transform-style: preserve-3d;
+
+  transition:
+    transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* LEFT */
+
+.register-left-piece {
   left: -50px;
   bottom: 50px;
   width: 350px;
   height: 400px;
-  z-index: 1;
-  pointer-events: auto;
+
+  transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
 }
 
 .register-left-image {
@@ -369,31 +442,26 @@ export default function RegisterPage() {
   transition:
     transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
     filter 0.4s ease;
-
 }
 
-/* Left piece hover */
 .register-left-piece:hover .register-left-image {
-  transform: rotate(-10deg) translateY(-5px) translateX(8px) scale(1.05);
+  transform: rotate(-12deg) translateY(15px) translateX(10px);
 
   filter:
     drop-shadow(0 30px 40px rgba(0, 0, 0, 0.6))
     drop-shadow(0 0 30px rgba(186, 188, 189, 0.18));
-
-  animation: leftFloat 4s ease-in-out infinite;
 }
 
 
-/* RIGHT PIECE */
+/* RIGHT */
 
 .register-right-piece {
-  position: absolute;
   right: -40px;
   top: 30px;
   width: 350px;
   height: 400px;
-  z-index: 1;
-  pointer-events: auto;
+
+  transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
 }
 
 .register-right-image {
@@ -412,42 +480,14 @@ export default function RegisterPage() {
     filter 0.4s ease;
 }
 
-/* Right piece hover */
 .register-right-piece:hover .register-right-image {
-  transform: rotate(10deg) translateY(-1px) translateX(-1px) scale(1.0);
+  transform: rotate(12deg) translateY(15px) translateX(-10px);
 
   filter:
     drop-shadow(0 30px 40px rgba(0, 0, 0, 0.6))
     drop-shadow(0 0 30px rgba(186, 188, 189, 0.18));
-   
-  animation: rightFloat 4s ease-in-out infinite;
 }
-
-
-/* Floating animations */
-
-@keyframes leftFloat {
-  0%,
-  100% {
-    transform: rotate(-15deg) translateY(20px);
-  }
-
-  50% {
-    transform: rotate(-13deg) translateY(5px);
-  }
-}
-
-@keyframes rightFloat {
-  0%,
-  100% {
-    transform: rotate(15deg) translateY(20px);
-  }
-
-  50% {
-    transform: rotate(13deg) translateY(5px);
-  }
-}
-     `}</style>
+      `}</style>
 
     </main>
   );
