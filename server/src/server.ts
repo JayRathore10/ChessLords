@@ -26,7 +26,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use("/api/v1/games", gameRoutes);
 app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/users" , userRoutes);
+app.use("/api/v1/users", userRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hi, Jexts here!")
@@ -137,19 +137,19 @@ io.on("connection", (socket) => {
           const whitePlayerInfo = isCurrentWhite
             ? { id: userId, name: username, rating, socketId: socket.id }
             : {
-                id: opponent.userId,
-                name: opponent.username,
-                rating: opponent.rating,
-                socketId: opponent.socketId,
-              };
+              id: opponent.userId,
+              name: opponent.username,
+              rating: opponent.rating,
+              socketId: opponent.socketId,
+            };
 
           const blackPlayerInfo = isCurrentWhite
             ? {
-                id: opponent.userId,
-                name: opponent.username,
-                rating: opponent.rating,
-                socketId: opponent.socketId,
-              }
+              id: opponent.userId,
+              name: opponent.username,
+              rating: opponent.rating,
+              socketId: opponent.socketId,
+            }
             : { id: userId, name: username, rating, socketId: socket.id };
 
           const validWhiteId = mongoose.Types.ObjectId.isValid(whitePlayerInfo.id)
@@ -686,6 +686,64 @@ io.on("connection", (socket) => {
       console.error("Abort game error:", err);
     }
   });
+
+  // ─── TIMEOUT HANDLER ───────────────────────────────────────────────────────
+  socket.on(
+    "gameTimeout",
+    async (data: {
+      gameId: string;
+      winner: "white" | "black";
+      loser: "white" | "black";
+    }) => {
+      try {
+        const { gameId, winner, loser } = data;
+
+        // Make sure this socket belongs to this game
+        if (socket.data.gameId !== gameId) {
+          return;
+        }
+
+        const game = await gameModel.findById(gameId);
+
+        if (!game || game.status !== "active") {
+          return;
+        }
+
+        // Make sure the reported loser is actually the player
+        // whose turn it currently is.
+        if (game.turn !== loser) {
+          return;
+        }
+
+        // Set the expired player's clock to zero
+        if (loser === "white") {
+          game.whiteTime = 0;
+        } else {
+          game.blackTime = 0;
+        }
+
+        // End the game
+        game.status = "completed";
+        game.result = winner;
+        game.endedAt = new Date();
+
+        await game.save();
+
+        // Tell both players
+        io.to(`game:${gameId}`).emit("gameOver", {
+          result: winner,
+          reason: "timeout",
+          winner,
+        });
+
+        console.log(
+          `[Game] ${loser} ran out of time in game ${gameId}. ${winner} wins.`
+        );
+      } catch (err) {
+        console.error("Timeout error:", err);
+      }
+    }
+  );
 
   socket.on("disconnect", () => {
     removeFromQueue(socket.id);

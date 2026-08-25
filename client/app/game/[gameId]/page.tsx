@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { socket } from "@/lib/socket";
 import { useAuth } from "@/lib/auth-context";
@@ -174,18 +174,67 @@ export default function GamePage({ params }: GamePageProps) {
   const moveListRef = useRef<HTMLDivElement>(null);
 
   // ─── Clock tick ──────────────────────────────────────────────────────────
+  // const startClock = useCallback(
+  //   (currentTurn: "white" | "black") => {
+  //     if (clockRef.current) clearInterval(clockRef.current);
+  //     clockRef.current = setInterval(() => {
+  //       if (currentTurn === "white") {
+  //         setWhiteTime((t) => Math.max(0, t - 1));
+  //       } else {
+  //         setBlackTime((t) => Math.max(0, t - 1));
+  //       }
+  //     }, 1000);
+  //   },
+  //   []
+  // );
+
   const startClock = useCallback(
     (currentTurn: "white" | "black") => {
-      if (clockRef.current) clearInterval(clockRef.current);
+      if (clockRef.current) {
+        clearInterval(clockRef.current);
+      }
+
       clockRef.current = setInterval(() => {
         if (currentTurn === "white") {
-          setWhiteTime((t) => Math.max(0, t - 1));
+          setWhiteTime((t) => {
+            if (t <= 1) {
+              // White's time is over → Black wins
+              clearInterval(clockRef.current!);
+              clockRef.current = null;
+
+              socket.emit("gameTimeout", {
+                gameId,
+                winner: "black",
+                loser: "white",
+              });
+
+              return 0;
+            }
+
+            return t - 1;
+          });
         } else {
-          setBlackTime((t) => Math.max(0, t - 1));
+          setBlackTime((t) => {
+            if (t <= 1) {
+              // Black's time is over → White wins
+              clearInterval(clockRef.current!);
+              clockRef.current = null;
+
+              socket.emit("gameTimeout", {
+                gameId,
+                winner: "white",
+                loser: "black",
+              });
+
+              return 0;
+            }
+
+            return t - 1;
+          });
         }
       }, 1000);
     },
-    []
+    [gameId]
   );
 
   const stopClock = useCallback(() => {
@@ -439,11 +488,10 @@ export default function GamePage({ params }: GamePageProps) {
           </Link>
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
-                gameType === "rated"
-                  ? "bg-[var(--game-blitz-bg)] text-[var(--game-blitz)] border border-[var(--game-blitz-border)]"
-                  : "bg-[var(--surface-card)] text-gray-400 border border-[var(--surface-border)]"
-              }`}
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${gameType === "rated"
+                ? "bg-[var(--game-blitz-bg)] text-[var(--game-blitz)] border border-[var(--game-blitz-border)]"
+                : "bg-[var(--surface-card)] text-gray-400 border border-[var(--surface-border)]"
+                }`}
             >
               {gameType}
             </span>
@@ -458,7 +506,7 @@ export default function GamePage({ params }: GamePageProps) {
 
         {/* Waiting for Opponent Banner */}
         {gameStatus === "waiting" && inviteCode && (
-          <div className="mb-4 p-4 bg-[var(--surface-card)] border border-[var(--primary-border)] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="mb-4 p-4 bg-surface-card border border-[var(--primary-border)] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-[var(--primary)]">
                 Waiting for your opponent to join…
@@ -642,21 +690,19 @@ export default function GamePage({ params }: GamePageProps) {
                         {idx + 1}.
                       </span>
                       <span
-                        className={`px-2 py-0.5 rounded font-mono ${
-                          sanMoves.length - 1 === idx * 2
-                            ? "bg-[var(--primary-muted)] text-[var(--primary)] font-semibold"
-                            : "text-gray-300"
-                        }`}
+                        className={`px-2 py-0.5 rounded font-mono ${sanMoves.length - 1 === idx * 2
+                          ? "bg-[var(--primary-muted)] text-[var(--primary)] font-semibold"
+                          : "text-gray-300"
+                          }`}
                       >
                         {white}
                       </span>
                       {black && (
                         <span
-                          className={`px-2 py-0.5 rounded font-mono ${
-                            sanMoves.length - 1 === idx * 2 + 1
-                              ? "bg-[var(--primary-muted)] text-[var(--primary)] font-semibold"
-                              : "text-gray-300"
-                          }`}
+                          className={`px-2 py-0.5 rounded font-mono ${sanMoves.length - 1 === idx * 2 + 1
+                            ? "bg-[var(--primary-muted)] text-[var(--primary)] font-semibold"
+                            : "text-gray-300"
+                            }`}
                         >
                           {black}
                         </span>
@@ -685,11 +731,10 @@ export default function GamePage({ params }: GamePageProps) {
             {/* Turn Indicator (online) */}
             {!isPassAndPlay && gameStatus === "active" && (
               <div
-                className={`rounded-2xl p-3 text-center text-sm font-bold border transition-all ${
-                  isMyTurn
-                    ? "bg-[var(--success)]/10 border-[var(--success)]/30 text-[var(--success)]"
-                    : "bg-[var(--surface-card)] border-[var(--surface-border)] text-gray-500"
-                }`}
+                className={`rounded-2xl p-3 text-center text-sm font-bold border transition-all ${isMyTurn
+                  ? "bg-[var(--success)]/10 border-[var(--success)]/30 text-[var(--success)]"
+                  : "bg-[var(--surface-card)] border-[var(--surface-border)] text-gray-500"
+                  }`}
               >
                 {isMyTurn ? "● Your Turn" : "○ Opponent's Turn"}
               </div>
@@ -710,13 +755,15 @@ export default function GamePage({ params }: GamePageProps) {
               <h2 className="text-2xl font-extrabold text-white">
                 {gameOver.reason === "checkmate"
                   ? "Checkmate!"
-                  : gameOver.reason === "resignation"
-                  ? "Game Over"
-                  : gameOver.reason === "agreement"
-                  ? "Draw by Agreement"
-                  : gameOver.reason === "aborted"
-                  ? "Game Aborted"
-                  : "Game Over"}
+                  : gameOver.reason === "timeout"
+                    ? "Time Out!"
+                    : gameOver.reason === "resignation"
+                      ? "Game Over"
+                      : gameOver.reason === "agreement"
+                        ? "Draw by Agreement"
+                        : gameOver.reason === "aborted"
+                          ? "Game Aborted"
+                          : "Game Over"}
               </h2>
 
               {gameOver.result === "draw" ? (
@@ -727,9 +774,8 @@ export default function GamePage({ params }: GamePageProps) {
                 <p className="text-gray-400 mt-2">
                   {gameOver.reason === "resignation"
                     ? `${gameOver.result === playerColor ? "You resigned." : "Opponent resigned."}`
-                    : `${
-                        gameOver.winner === "white" ? whiteName : blackName
-                      } wins!`}
+                    : `${gameOver.winner === "white" ? whiteName : blackName
+                    } wins!`}
                 </p>
               )}
             </div>
@@ -843,20 +889,18 @@ function PlayerStrip({
 }: PlayerStripProps) {
   return (
     <div
-      className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${
-        isActive
-          ? "bg-[var(--surface-card)] border-[var(--primary-border)] shadow-md"
-          : "bg-[var(--surface-main)]/50 border-[var(--surface-border)]"
-      }`}
+      className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${isActive
+        ? "bg-[var(--surface-card)] border-[var(--primary-border)] shadow-md"
+        : "bg-[var(--surface-main)]/50 border-[var(--surface-border)]"
+        }`}
     >
       <div className="flex items-center gap-2.5 min-w-0">
         {/* Avatar */}
         <div
-          className={`w-8 h-8 rounded-full flex-shrink-0 border-2 flex items-center justify-center text-xs font-black ${
-            side === "white"
-              ? "bg-white text-gray-800 border-gray-300"
-              : "bg-gray-800 text-white border-gray-600"
-          }`}
+          className={`w-8 h-8 rounded-full flex-shrink-0 border-2 flex items-center justify-center text-xs font-black ${side === "white"
+            ? "bg-white text-gray-800 border-gray-300"
+            : "bg-gray-800 text-white border-gray-600"
+            }`}
         >
           {name[0]?.toUpperCase() ?? "?"}
         </div>
@@ -889,11 +933,10 @@ function PlayerStrip({
 
       {/* Clock */}
       <div
-        className={`px-3 py-1.5 rounded-lg font-mono text-base tabular-nums ${clockClass} ${
-          isActive
-            ? "bg-[var(--primary-muted)] border border-[var(--primary-border)]"
-            : "bg-[var(--surface-main)]/60 border border-[var(--surface-border)]"
-        }`}
+        className={`px-3 py-1.5 rounded-lg font-mono text-base tabular-nums ${clockClass} ${isActive
+          ? "bg-[var(--primary-muted)] border border-[var(--primary-border)]"
+          : "bg-[var(--surface-main)]/60 border border-[var(--surface-border)]"
+          }`}
       >
         {formatTime(time)}
       </div>
