@@ -132,7 +132,7 @@ const PIECE_SYMBOLS: Record<string, string> = {
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function GamePage({ params }: GamePageProps) {
   const { gameId } = React.use(params);
-  const router = useRouter();
+  // const router = useRouter();
   const { user } = useAuth();
 
   // Board & game state
