@@ -1,0 +1,16 @@
+E:\chess-lords\AGY.md
+E:\chess-lords\README.md
+E:\chess-lords\client\AGENTS.md
+E:\chess-lords\client\CLAUDE.md
+E:\chess-lords\client\README.md
+E:\chess-lords\taskList.md
+E:\chess-lords\client\public\file.svg
+E:\chess-lords\client\public\globe.svg
+E:\chess-lords\client\public\images\black-2.png
+E:\chess-lords\client\public\images\black-hr-2.png
+E:\chess-lords\client\public\images\white-queen.png
+E:\chess-lords\client\public\images\white-rk.png
+E:\chess-lords\client\public\logo.png
+E:\chess-lords\client\public\next.svg
+E:\chess-lords\client\public\vercel.svg
+E:\chess-lords\client\public\window.svg
