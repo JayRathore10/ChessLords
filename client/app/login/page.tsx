@@ -108,8 +108,7 @@ export default function LoginPage() {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/black-2.png"
           alt="Chess piece"

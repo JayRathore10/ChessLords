@@ -249,9 +249,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ============================
-          FEATURES GRID
-      ============================ */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-[var(--surface-border)]">
         <div className="text-center mb-12">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-3">
