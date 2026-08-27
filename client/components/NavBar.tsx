@@ -40,6 +40,7 @@ export default function Navbar() {
 
   // Close menus on path change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDropdownOpen(false);
     setMobileMenuOpen(false);
   }, [pathname]);
@@ -74,7 +75,7 @@ export default function Navbar() {
             />
           </div>
 
-          <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-[#babcbd] to-gray-400 bg-clip-text text-transparent">
+          <span className="text-xl font-extrabold tracking-tight bg-linear-to-r from-white via-[#babcbd] to-gray-400 bg-clip-text text-transparent">
             Chess<span className="text-[#babcbd]">Lord</span>
           </span>
         </Link>
@@ -121,7 +122,7 @@ export default function Navbar() {
                 <div className="w-7 h-7 rounded-full bg-primary-gradient text-[#0f1115] font-bold flex items-center justify-center text-xs shadow-inner">
                   {user.name ? user.name[0].toUpperCase() : user.username[0].toUpperCase()}
                 </div>
-                <span className="text-sm font-medium text-gray-200 max-w-[120px] truncate">
+                <span className="text-sm font-medium text-gray-200 max-w-30 truncate">
                   {user.username}
                 </span>
                 <ChevronDown
