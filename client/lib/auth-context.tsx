@@ -100,29 +100,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 
   const login = async (email: string, password: string) => {
-  const res = await axios.post(
-    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/auth/login`,
-    {
-      email,
-      password,
-    },
-    {
-      withCredentials: true,
+    const res = await axios.post(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/auth/login`,
+      {
+        email,
+        password,
+      },
+      {
+        withCredentials: true,
+      }
+    );
+
+    if (res.data.success && res.data.user) {
+      setUser(res.data.user);
+
+      if (res.data.token) {
+        setToken(res.data.token);
+        localStorage.setItem("token", res.data.token);
+      }
+
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+      localStorage.setItem("userId", res.data.user._id);
     }
-  );
-
-  if (res.data.success && res.data.user) {
-    setUser(res.data.user);
-
-    if (res.data.token) {
-      setToken(res.data.token);
-      localStorage.setItem("token", res.data.token);
-    }
-
-    localStorage.setItem("user", JSON.stringify(res.data.user));
-    localStorage.setItem("userId", res.data.user._id);
-  }
-};
+  };
 
   const register = async (
     username: string,
@@ -130,24 +130,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string
   ) => {
-    const res = await apiFetch<{
-      success: boolean;
-      token?: string;
-      user: User;
-      message?: string;
-    }>("/auth/register", {
-      method: "POST",
-      data: { username, name, email, password },
-    });
-
-    if (res.success && res.user) {
-      setUser(res.user);
-      if (res.token) {
-        setToken(res.token);
-        localStorage.setItem("token", res.token);
+    const res = await axios.post(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/auth/register`,
+      {
+        username,
+        name,
+        email,
+        password,
+      },
+      {
+        withCredentials: true,
       }
-      localStorage.setItem("user", JSON.stringify(res.user));
-      localStorage.setItem("userId", res.user._id);
+    );
+
+    if (res.data.success && res.data.user) {
+      setUser(res.data.user);
+
+      if (res.data.token) {
+        setToken(res.data.token);
+        localStorage.setItem("token", res.data.token);
+      }
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify(res.data.user)
+      );
+
+      localStorage.setItem(
+        "userId",
+        res.data.user._id
+      );
     }
   };
 
