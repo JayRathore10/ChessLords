@@ -57,5 +57,3 @@ export default function HomePage() {
     </main>
   );
 }
-
-// Have to fix the login and sign up button glich while first time login 
