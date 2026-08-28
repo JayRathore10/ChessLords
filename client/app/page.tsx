@@ -57,3 +57,8 @@ export default function HomePage() {
     </main>
   );
 }
+
+
+// Have to Add color to chessBoard 
+// have to make the game end when player leaves 
+// have to add live chart to the user 
