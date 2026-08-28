@@ -245,7 +245,7 @@ export default function ChessBoard({
           showNotation: true,
           animationDurationInMs: 250,
           darkSquareStyle: {
-            backgroundColor: "#739552",
+            backgroundColor: "#A1A3A4",
           },
           lightSquareStyle: {
             backgroundColor: "#ebecd0",
