@@ -44,7 +44,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <main className="flex-1 bg-[var(--surface-main)] text-[var(--foreground)]">
+    <main className="flex-1 bg-surface-main text-foreground">
       <HeroSection user={user} stats={stats} />
 
       <GameModes />
