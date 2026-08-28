@@ -71,17 +71,6 @@ export default function LoginPage() {
           withCredentials: true,
         }
       );
-
-      // Have to remove this line ;
-      console.log("Login successful:", response.data);
-
-      // Example:
-      // const { accessToken, user } = response.data;
-
-      // Save token if your backend returns one
-      // localStorage.setItem("accessToken", accessToken);
-
-      // Redirect after successful login
       router.push("/");
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
