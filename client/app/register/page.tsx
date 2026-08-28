@@ -15,6 +15,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 
+const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
 export default function RegisterPage() {
   const router = useRouter();
 
@@ -127,11 +129,11 @@ export default function RegisterPage() {
     return;
   }
 
-  setIsLoading(true);
+  setIsLoading(true)
 
   try {
     const response = await axios.post(
-      "http://localhost:5000/api/v1/auth/register",
+      `${backendURL}/api/v1/auth/register` , 
       {
         name: name.trim(),
         username: username.trim(),
