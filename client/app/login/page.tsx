@@ -3,14 +3,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from
   "lucide-react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
-
-const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
-  
+
   const router = useRouter();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -61,23 +60,15 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post(
-        `${backendURL}/api/v1/auth/login` , 
-        {
-          email: formData.email.trim(),
-          password: formData.password,
-        },
-        {
-          withCredentials: true,
-        }
+      await login(
+        formData.email.trim(),
+        formData.password
       );
+
       router.push("/");
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        setError(
-          err.response?.data?.message ||
-          "Failed to log in. Please check your credentials."
-        );
+      if (err instanceof Error) {
+        setError(err.message);
       } else {
         setError("Something went wrong. Please try again.");
       }
@@ -99,7 +90,7 @@ export default function LoginPage() {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/black-2.png"
           alt="Chess piece"
