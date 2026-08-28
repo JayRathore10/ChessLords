@@ -7,8 +7,6 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { apiFetch, ApiError } from "./api";
-
 import axios from "axios";
 
 export interface User {
@@ -30,60 +28,93 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
+
   login: (email: string, password: string) => Promise<void>;
+
   register: (
     username: string,
     name: string,
     email: string,
     password: string
   ) => Promise<void>;
+
   logout: () => Promise<void>;
+
   updateProfile: (data: {
     name?: string;
     username?: string;
     profilePic?: string;
   }) => Promise<void>;
+
   changePassword: (
     currentPassword: string,
     newPassword: string
   ) => Promise<void>;
+
   refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+export function AuthProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Initialize auth state from localStorage and /api/v1/auth/me
+  // Initialize auth state
   const refreshUser = useCallback(async () => {
     try {
       const storedToken = localStorage.getItem("token");
       const storedUser = localStorage.getItem("user");
 
+      // Restore token from localStorage
       if (storedToken) {
         setToken(storedToken);
       }
 
+      // Restore user from localStorage
       if (storedUser) {
         try {
           setUser(JSON.parse(storedUser));
         } catch {
-          // invalid stored user JSON
+          localStorage.removeItem("user");
         }
       }
 
-      // Fetch fresh user data from server
-      const res = await apiFetch<{ success: boolean; user: User }>("/auth/me");
-      if (res.success && res.user) {
-        setUser(res.user);
-        localStorage.setItem("user", JSON.stringify(res.user));
-        localStorage.setItem("userId", res.user._id);
+      // Fetch fresh user data from backend
+      const res = await axios.get(
+        `${backendURL}/api/v1/auth/me`,
+        {
+          withCredentials: true,
+          headers: storedToken
+            ? {
+                Authorization: `Bearer ${storedToken}`,
+              }
+            : undefined,
+        }
+      );
+
+      if (res.data.success && res.data.user) {
+        setUser(res.data.user);
+
+        localStorage.setItem(
+          "user",
+          JSON.stringify(res.data.user)
+        );
+
+        localStorage.setItem(
+          "userId",
+          res.data.user._id
+        );
       }
     } catch {
-      // If fetching fails (e.g. not logged in), clear user state if no valid session
+      // If there is no valid token, clear auth state
       if (!localStorage.getItem("token")) {
         setUser(null);
         setToken(null);
@@ -98,10 +129,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser();
   }, [refreshUser]);
 
-
-  const login = async (email: string, password: string) => {
+  // LOGIN
+  const login = async (
+    email: string,
+    password: string
+  ) => {
     const res = await axios.post(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/auth/login`,
+      `${backendURL}/api/v1/auth/login`,
       {
         email,
         password,
@@ -116,14 +150,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (res.data.token) {
         setToken(res.data.token);
-        localStorage.setItem("token", res.data.token);
+
+        localStorage.setItem(
+          "token",
+          res.data.token
+        );
       }
 
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      localStorage.setItem("userId", res.data.user._id);
+      localStorage.setItem(
+        "user",
+        JSON.stringify(res.data.user)
+      );
+
+      localStorage.setItem(
+        "userId",
+        res.data.user._id
+      );
     }
   };
 
+  // REGISTER
   const register = async (
     username: string,
     name: string,
@@ -131,7 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string
   ) => {
     const res = await axios.post(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/auth/register`,
+      `${backendURL}/api/v1/auth/register`,
       {
         username,
         name,
@@ -148,7 +194,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (res.data.token) {
         setToken(res.data.token);
-        localStorage.setItem("token", res.data.token);
+
+        localStorage.setItem(
+          "token",
+          res.data.token
+        );
       }
 
       localStorage.setItem(
@@ -163,48 +213,77 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // LOGOUT
   const logout = async () => {
     try {
-      await apiFetch("/auth/logout", { method: "POST" });
+      await axios.post(
+        `${backendURL}/api/v1/auth/logout`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
     } catch {
       // Ignore logout request errors
     } finally {
       setUser(null);
       setToken(null);
+
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       localStorage.removeItem("userId");
     }
   };
 
+  // UPDATE PROFILE
   const updateProfile = async (data: {
     name?: string;
     username?: string;
     profilePic?: string;
   }) => {
-    const res = await apiFetch<{
-      success: boolean;
-      user: User;
-      message?: string;
-    }>("/users/me", {
-      method: "PATCH",
+    const res = await axios.patch(
+      `${backendURL}/api/v1/users/me`,
       data,
-    });
+      {
+        withCredentials: true,
+        headers: token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : undefined,
+      }
+    );
 
-    if (res.success && res.user) {
-      setUser((prev) => ({ ...(prev || {}), ...res.user }));
-      localStorage.setItem("user", JSON.stringify({ ...(user || {}), ...res.user }));
+    if (res.data.success && res.data.user) {
+      setUser(res.data.user);
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify(res.data.user)
+      );
     }
   };
 
+  // CHANGE PASSWORD
   const changePassword = async (
     currentPassword: string,
     newPassword: string
   ) => {
-    await apiFetch("/auth/change-password", {
-      method: "POST",
-      data: { currentPassword, newPassword },
-    });
+    await axios.post(
+      `${backendURL}/api/v1/auth/change-password`,
+      {
+        currentPassword,
+        newPassword,
+      },
+      {
+        withCredentials: true,
+        headers: token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : undefined,
+      }
+    );
   };
 
   return (
@@ -228,8 +307,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
+
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error(
+      "useAuth must be used within an AuthProvider"
+    );
   }
+
   return context;
 }
