@@ -6,8 +6,10 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
-export default function LoginPage() {
+const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
+export default function LoginPage() {
+  
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -60,7 +62,7 @@ export default function LoginPage() {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/v1/auth/login",
+        `${backendURL}/api/v1/auth/login` , 
         {
           email: formData.email.trim(),
           password: formData.password,
