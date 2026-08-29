@@ -131,7 +131,7 @@ export default function ProfilePage() {
         type: "success",
         text: "Profile updated successfully!",
       });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setStatusMessage({
         type: "error",
@@ -249,10 +249,17 @@ export default function ProfilePage() {
         {activeTab === "edit" && (
           <EditProfileForm
             name={profileForm.name}
+            profilePic={user.profilePic}
             setName={(name) =>
               setProfileForm((prev) => ({
                 ...prev,
                 name,
+              }))
+            }
+            setProfilePic={(file) =>
+              setProfileForm((prev) => ({
+                ...prev,
+                profilePic: file,
               }))
             }
             isSubmitting={isSubmitting}
