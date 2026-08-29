@@ -27,9 +27,12 @@ export default function ProfilePage() {
   >("overview");
 
   // Edit Profile Form State
-  const [profileForm, setProfileForm] = useState({
+  const [profileForm, setProfileForm] = useState<{
+    name: string;
+    profilePic: File | null;
+  }>({
     name: "",
-    profilePicture: "",
+    profilePic: null,
   });
 
   // Security Form State
@@ -52,7 +55,7 @@ export default function ProfilePage() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setProfileForm({
         name: user.name || "",
-        profilePicture: user.profilePic || "",
+        profilePic: null,
       });
     }
   }, [user]);
@@ -121,14 +124,14 @@ export default function ProfilePage() {
     try {
       await updateProfile({
         name: profileForm.name.trim(),
-        profilePic: profileForm.profilePicture,
+        profilePic: profileForm.profilePic || undefined,
       });
 
       setStatusMessage({
         type: "success",
         text: "Profile updated successfully!",
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setStatusMessage({
         type: "error",
@@ -213,9 +216,9 @@ export default function ProfilePage() {
 
         {/* Navigation Tabs */}
         <ProfileTabs
-  activeTab={activeTab}
-  setActiveTab={setActiveTab}
-/>
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
 
         {/* Status Message */}
         <ProfileStatusMessage

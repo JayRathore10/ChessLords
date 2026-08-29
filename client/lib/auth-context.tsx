@@ -42,8 +42,7 @@ interface AuthContextType {
 
   updateProfile: (data: {
     name?: string;
-    username?: string;
-    profilePic?: string;
+    profilePic?: File;
   }) => Promise<void>;
 
   changePassword: (
@@ -94,8 +93,8 @@ export function AuthProvider({
           withCredentials: true,
           headers: storedToken
             ? {
-                Authorization: `Bearer ${storedToken}`,
-              }
+              Authorization: `Bearer ${storedToken}`,
+            }
             : undefined,
         }
       );
@@ -238,19 +237,30 @@ export function AuthProvider({
   // UPDATE PROFILE
   const updateProfile = async (data: {
     name?: string;
-    username?: string;
-    profilePic?: string;
+    profilePic?: File;
   }) => {
+    const formData = new FormData();
+
+    if (data.name !== undefined) {
+      formData.append("name", data.name);
+    }
+
+    if (data.profilePic) {
+      formData.append("profilePic", data.profilePic);
+    }
+
     const res = await axios.patch(
       `${backendURL}/api/v1/users/me`,
-      data,
+      formData,
       {
         withCredentials: true,
-        headers: token
-          ? {
+        headers: {
+          ...(token
+            ? {
               Authorization: `Bearer ${token}`,
             }
-          : undefined,
+            : {}),
+        },
       }
     );
 
@@ -279,8 +289,8 @@ export function AuthProvider({
         withCredentials: true,
         headers: token
           ? {
-              Authorization: `Bearer ${token}`,
-            }
+            Authorization: `Bearer ${token}`,
+          }
           : undefined,
       }
     );
