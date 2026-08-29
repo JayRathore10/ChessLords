@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import axios from "axios";
 import {
   User as UserIcon,
   AtSign,
@@ -15,8 +14,6 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-
-const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export default function RegisterPage() {
   const router = useRouter();

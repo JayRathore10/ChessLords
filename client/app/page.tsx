@@ -59,6 +59,6 @@ export default function HomePage() {
 }
 
 
-// Have to Add color to chessBoard 
+// Have to add pawn become queen,knight , rook at the end 
 // have to make the game end when player leaves 
 // have to add live chart to the user 
