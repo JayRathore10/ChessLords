@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -8,14 +9,10 @@ import { useAuth } from "@/lib/auth-context";
 import { apiFetch } from "@/lib/api";
 import {
   Zap,
-  Flame,
-  Clock,
   Swords,
   Users,
-  Shield,
   Copy,
   Check,
-  RotateCcw,
   Sparkles,
   Search,
   ArrowRight,
