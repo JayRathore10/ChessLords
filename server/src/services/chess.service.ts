@@ -4,24 +4,24 @@ const games = new Map<string, Chess>();
 
 type MakeMoveResult =
   | {
-      success: false;
-      message: string;
-    }
+    success: false;
+    message: string;
+  }
   | {
-      success: true;
-      move: {
-        color: "w" | "b";
-        from: string;
-        to: string;
-        san: string;
-      };
-      fen: string;
-      turn: "white" | "black";
-      isCheck: boolean;
-      isCheckmate: boolean;
-      isDraw: boolean;
-      isGameOver: boolean;
+    success: true;
+    move: {
+      color: "w" | "b";
+      from: string;
+      to: string;
+      san: string;
     };
+    fen: string;
+    turn: "white" | "black";
+    isCheck: boolean;
+    isCheckmate: boolean;
+    isDraw: boolean;
+    isGameOver: boolean;
+  };
 
 export const createChessGame = (
   gameId: string,
@@ -45,7 +45,8 @@ export const getChessGame = (
 export const makeChessMove = (
   gameId: string,
   from: string,
-  to: string
+  to: string,
+  promotion?: "q" | "r" | "b" | "n"
 ): MakeMoveResult => {
   let chess = games.get(gameId);
 
@@ -57,6 +58,7 @@ export const makeChessMove = (
     const move = chess.move({
       from,
       to,
+      promotion,
     });
 
     return {
@@ -78,14 +80,11 @@ export const makeChessMove = (
 
       isCheck: chess.isCheck(),
 
-      isCheckmate:
-        chess.isCheckmate(),
+      isCheckmate: chess.isCheckmate(),
 
-      isDraw:
-        chess.isDraw(),
+      isDraw: chess.isDraw(),
 
-      isGameOver:
-        chess.isGameOver(),
+      isGameOver: chess.isGameOver(),
     };
   } catch {
     return {

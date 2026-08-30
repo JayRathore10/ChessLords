@@ -443,90 +443,77 @@ io.on("connection", (socket) => {
       gameId: string;
       from: string;
       to: string;
+      promotion?: "q" | "r" | "b" | "n";
     }) => {
       try {
         const {
           gameId,
           from,
           to,
+          promotion,
         } = data;
 
         // Make sure socket belongs to this game
-        if (
-          socket.data.gameId !== gameId
-        ) {
+        if (socket.data.gameId !== gameId) {
           socket.emit("invalidMove", {
-            message:
-              "You are not in this game",
+            message: "You are not in this game",
           });
-
           return;
         }
 
-        const game =
-          await gameModel.findById(gameId);
+        const game = await gameModel.findById(gameId);
 
         if (!game) {
           socket.emit("invalidMove", {
             message: "Game not found",
           });
-
           return;
         }
 
         if (game.status !== "active") {
           socket.emit("invalidMove", {
-            message:
-              "Game is not active",
+            message: "Game is not active",
           });
-
           return;
         }
 
-        // Check player's turn (allow both if pass and play)
+        // Check player's turn
         if (
           !game.isPassAndPlay &&
           game.turn !== socket.data.color
         ) {
           socket.emit("invalidMove", {
-            message:
-              "It is not your turn",
+            message: "It is not your turn",
           });
-
           return;
         }
 
+        // Make chess move
         const result = makeChessMove(
           gameId,
           from,
-          to
+          to,
+          promotion
         );
 
         if (!result.success) {
           socket.emit("invalidMove", {
-            message:
-              result.message,
+            message: result.message,
           });
-
           return;
         }
 
-        game.moves.push(
-          result.move.san
-        );
+        // Save move
+        game.moves.push(result.move.san);
 
-        game.currentPosition =
-          result.fen;
+        game.currentPosition = result.fen;
 
-        game.turn =
-          result.turn;
+        game.turn = result.turn;
 
+        // Check game over
         if (result.isGameOver) {
-          game.status =
-            "completed";
-
-          game.endedAt =
-            new Date();
+          game.status = "completed";
+          game.endedAt = new Date();
 
           if (result.isCheckmate) {
             game.result =
@@ -540,23 +527,21 @@ io.on("connection", (socket) => {
 
         await game.save();
 
+        // Send updated game state to both players
         io.to(`game:${gameId}`).emit(
           "moveMade",
           {
             from,
             to,
+            promotion,
 
-            move:
-              result.move,
+            move: result.move,
 
-            fen:
-              result.fen,
+            fen: result.fen,
 
-            turn:
-              result.turn,
+            turn: result.turn,
 
-            isCheck:
-              result.isCheck,
+            isCheck: result.isCheck,
 
             isCheckmate:
               result.isCheckmate,
@@ -574,6 +559,7 @@ io.on("connection", (socket) => {
               game.result,
           }
         );
+
       } catch (error) {
         console.error(
           "Move error:",

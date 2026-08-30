@@ -81,28 +81,35 @@ export default function ChessBoard({
   const handlePromotion = (promotion: "q" | "r" | "b" | "n") => {
     if (!promotionMove) return;
 
+    const { from, to } = promotionMove;
+
     try {
+      // Validate and make the promotion move locally
       const move = game.move({
-        from: promotionMove.from,
-        to: promotionMove.to,
+        from: from as Square,
+        to: to as Square,
         promotion,
       });
 
-      if (!move) return;
+      console.log("Promotion move:", move);
 
-      if (onMove) {
-        onMove(
-          promotionMove.from,
-          promotionMove.to,
-          promotion
-        );
+      if (!move) {
+        console.log("Promotion move was illegal");
+        return;
       }
 
+      // Tell parent about the move
+      if (onMove) {
+        onMove(from, to, promotion);
+      }
+
+      // Clear promotion state
       setPromotionMove(null);
       setSelectedSquare(null);
       setLegalMoveSquares([]);
+
     } catch (error) {
-      console.error("Promotion failed:", error);
+      console.error("Promotion error:", error);
     }
   };
 
@@ -114,7 +121,7 @@ export default function ChessBoard({
     if (disabled || !targetSquare) return false;
 
     try {
-      // Check if this move is a pawn promotion
+      // Check promotion FIRST
       if (isPromotionMove(sourceSquare, targetSquare)) {
         setPromotionMove({
           from: sourceSquare,
@@ -124,6 +131,7 @@ export default function ChessBoard({
         return false;
       }
 
+      // Normal move
       const move = game.move({
         from: sourceSquare,
         to: targetSquare,
@@ -139,7 +147,8 @@ export default function ChessBoard({
       setLegalMoveSquares([]);
 
       return true;
-    } catch {
+    } catch (error) {
+      console.error("Move error:", error);
       return false;
     }
   };
@@ -151,6 +160,7 @@ export default function ChessBoard({
     if (selectedSquare) {
       if (legalMoveSquares.includes(square)) {
         try {
+          // Promotion
           if (isPromotionMove(selectedSquare, square)) {
             setPromotionMove({
               from: selectedSquare,
@@ -160,6 +170,7 @@ export default function ChessBoard({
             return;
           }
 
+          // Normal move
           const move = game.move({
             from: selectedSquare,
             to: square,
@@ -167,25 +178,25 @@ export default function ChessBoard({
 
           if (move) {
             if (onMove) {
-              onMove(selectedSquare, square, "q");
+              onMove(selectedSquare, square);
             }
+
             setSelectedSquare(null);
             setLegalMoveSquares([]);
+
             return;
           }
-        } catch {
-          // invalid move fallback
+        } catch (error) {
+          console.error("Move error:", error);
         }
       }
 
-      // If user clicked the same square, deselect
       if (selectedSquare === square) {
         setSelectedSquare(null);
         setLegalMoveSquares([]);
         return;
       }
     }
-
     // Check if clicked square has a piece belonging to active turn
     const pieceOnSquare = game.get(square as Square);
     const isPieceTurn = pieceOnSquare && pieceOnSquare.color === game.turn();
@@ -353,7 +364,7 @@ export default function ChessBoard({
           squareStyles,
           showNotation: true,
           animationDurationInMs: 250,
-           darkSquareStyle: {
+          darkSquareStyle: {
             backgroundColor: "#A1A3A4",
           },
           lightSquareStyle: {
