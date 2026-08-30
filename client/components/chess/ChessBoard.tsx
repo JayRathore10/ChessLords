@@ -40,6 +40,10 @@ export default function ChessBoard({
 
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [legalMoveSquares, setLegalMoveSquares] = useState<string[]>([]);
+  const [promotionMove, setPromotionMove] = useState<{
+    from: string;
+    to: string;
+  } | null>(null);
 
   // Clear selection if fen changes or board gets disabled
   useEffect(() => {
@@ -61,6 +65,47 @@ export default function ChessBoard({
     [game]
   );
 
+  const isPromotionMove = (from: string, to: string): boolean => {
+    const piece = game.get(from as Square);
+
+    if (!piece || piece.type !== "p") return false;
+
+    const targetRank = to[1];
+
+    return (
+      (piece.color === "w" && targetRank === "8") ||
+      (piece.color === "b" && targetRank === "1")
+    );
+  };
+
+  const handlePromotion = (promotion: "q" | "r" | "b" | "n") => {
+    if (!promotionMove) return;
+
+    try {
+      const move = game.move({
+        from: promotionMove.from,
+        to: promotionMove.to,
+        promotion,
+      });
+
+      if (!move) return;
+
+      if (onMove) {
+        onMove(
+          promotionMove.from,
+          promotionMove.to,
+          promotion
+        );
+      }
+
+      setPromotionMove(null);
+      setSelectedSquare(null);
+      setLegalMoveSquares([]);
+    } catch (error) {
+      console.error("Promotion failed:", error);
+    }
+  };
+
   // Handle Drag & Drop move
   const handlePieceDrop = ({
     sourceSquare,
@@ -69,27 +114,35 @@ export default function ChessBoard({
     if (disabled || !targetSquare) return false;
 
     try {
+      // Check if this move is a pawn promotion
+      if (isPromotionMove(sourceSquare, targetSquare)) {
+        setPromotionMove({
+          from: sourceSquare,
+          to: targetSquare,
+        });
+
+        return false;
+      }
+
       const move = game.move({
         from: sourceSquare,
         to: targetSquare,
-        promotion: "q",
       });
 
       if (!move) return false;
 
-      // Notify parent of successful move
       if (onMove) {
-        onMove(sourceSquare, targetSquare, "q");
+        onMove(sourceSquare, targetSquare);
       }
 
       setSelectedSquare(null);
       setLegalMoveSquares([]);
+
       return true;
     } catch {
       return false;
     }
   };
-
   // Handle Square click (Tap to move)
   const handleSquareClick = ({ square }: SquareHandlerArgs) => {
     if (disabled) return;
@@ -98,10 +151,18 @@ export default function ChessBoard({
     if (selectedSquare) {
       if (legalMoveSquares.includes(square)) {
         try {
+          if (isPromotionMove(selectedSquare, square)) {
+            setPromotionMove({
+              from: selectedSquare,
+              to: square,
+            });
+
+            return;
+          }
+
           const move = game.move({
             from: selectedSquare,
             to: square,
-            promotion: "q",
           });
 
           if (move) {
@@ -145,7 +206,7 @@ export default function ChessBoard({
     const isWhitePiece = piece.pieceType.startsWith("w") || piece.pieceType === piece.pieceType.toUpperCase();
     const pieceColor = isWhitePiece ? "w" : "b";
     const activeColor = game.turn(); // 'w' or 'b'
-    
+
     if (isPassAndPlay) {
       return pieceColor === activeColor;
     }
@@ -232,7 +293,55 @@ export default function ChessBoard({
   }, [selectedSquare, legalMoveSquares, lastMove, inCheckKingSquare, game]);
 
   return (
-    <div className={`w-full max-w-155 aspect-square mx-auto shadow-2xl rounded-xl overflow-hidden bg-[#1f2228] p-2 border border-gray-800/80 ${className}`}>
+    <div
+      className={`relative w-full max-w-155 aspect-square mx-auto shadow-2xl rounded-xl overflow-hidden bg-[#1f2228] p-2 border border-gray-800/80 ${className}`}
+    >
+
+      {/* STEP 6: Promotion UI */}
+      {promotionMove && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-[#1f2228] rounded-xl p-4 shadow-2xl border border-gray-700">
+
+            <p className="text-white text-center mb-3 font-semibold">
+              Promote pawn to
+            </p>
+
+            <div className="flex gap-3">
+
+              <button
+                onClick={() => handlePromotion("q")}
+                className="w-16 h-16 text-5xl bg-gray-800 hover:bg-gray-700 rounded-lg"
+              >
+                ♕
+              </button>
+
+              <button
+                onClick={() => handlePromotion("r")}
+                className="w-16 h-16 text-5xl bg-gray-800 hover:bg-gray-700 rounded-lg"
+              >
+                ♖
+              </button>
+
+              <button
+                onClick={() => handlePromotion("b")}
+                className="w-16 h-16 text-5xl bg-gray-800 hover:bg-gray-700 rounded-lg"
+              >
+                ♗
+              </button>
+
+              <button
+                onClick={() => handlePromotion("n")}
+                className="w-16 h-16 text-5xl bg-gray-800 hover:bg-gray-700 rounded-lg"
+              >
+                ♘
+              </button>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chess board */}
       <Chessboard
         options={{
           position: fen,
@@ -244,7 +353,7 @@ export default function ChessBoard({
           squareStyles,
           showNotation: true,
           animationDurationInMs: 250,
-          darkSquareStyle: {
+           darkSquareStyle: {
             backgroundColor: "#A1A3A4",
           },
           lightSquareStyle: {
@@ -266,6 +375,7 @@ export default function ChessBoard({
           },
         }}
       />
+
     </div>
   );
 }
