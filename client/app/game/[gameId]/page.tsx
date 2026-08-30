@@ -475,7 +475,7 @@ export default function GamePage({ params }: GamePageProps) {
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <main className="min-h-screen bg-[var(--surface-main)] text-[var(--foreground)]">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3">
 
         {/* Top Bar */}
         <div className="flex items-center justify-between mb-4">

@@ -309,7 +309,7 @@ export default function ChessBoard({
 
   return (
     <div
-      className={`relative w-full max-w-155 aspect-square mx-auto shadow-2xl rounded-xl overflow-hidden bg-[#1f2228] p-2 border border-gray-800/80 ${className}`}
+      className={`relative w-full max-w-121 aspect-square mx-auto shadow-2xl rounded-xl overflow-hidden bg-[#1f2228] p-2 border border-gray-800/80 ${className}`}
     >
 
       {/* STEP 6: Promotion UI */}

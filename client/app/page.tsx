@@ -58,6 +58,5 @@ export default function HomePage() {
   );
 }
 
-
 // 2.have to make the game end when player leaves 
 // 3. have to add live chart to the user 
