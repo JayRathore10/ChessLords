@@ -59,6 +59,5 @@ export default function HomePage() {
 }
 
 
-// 1. Have to add pawn become queen,knight , rook at the end 
 // 2.have to make the game end when player leaves 
 // 3. have to add live chart to the user 

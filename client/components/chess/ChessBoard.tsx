@@ -303,6 +303,10 @@ export default function ChessBoard({
     return styles;
   }, [selectedSquare, legalMoveSquares, lastMove, inCheckKingSquare, game]);
 
+  const promotionColor = promotionMove
+    ? new Chess(fen).get(promotionMove.from as Square)?.color
+    : null;
+
   return (
     <div
       className={`relative w-full max-w-155 aspect-square mx-auto shadow-2xl rounded-xl overflow-hidden bg-[#1f2228] p-2 border border-gray-800/80 ${className}`}
@@ -312,41 +316,50 @@ export default function ChessBoard({
       {promotionMove && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-[#1f2228] rounded-xl p-4 shadow-2xl border border-gray-700">
-
             <p className="text-white text-center mb-3 font-semibold">
               Promote pawn to
             </p>
 
             <div className="flex gap-3">
-
               <button
                 onClick={() => handlePromotion("q")}
-                className="w-16 h-16 text-5xl bg-gray-800 hover:bg-gray-700 rounded-lg"
+                className={`w-16 h-16 text-5xl rounded-lg ${promotionColor === "w"
+                    ? "bg-black text-white hover:bg-gray-900"
+                    : "bg-white text-black hover:bg-gray-200"
+                  }`}
               >
-                ♕
+                {promotionColor === "w" ? "♕" : "♛"}
               </button>
 
               <button
                 onClick={() => handlePromotion("r")}
-                className="w-16 h-16 text-5xl bg-gray-800 hover:bg-gray-700 rounded-lg"
+                className={`w-16 h-16 text-5xl rounded-lg ${promotionColor === "w"
+                    ? "bg-black text-white hover:bg-gray-900"
+                    : "bg-white text-black hover:bg-gray-200"
+                  }`}
               >
-                ♖
+                {promotionColor === "w" ? "♖" : "♜"}
               </button>
 
               <button
                 onClick={() => handlePromotion("b")}
-                className="w-16 h-16 text-5xl bg-gray-800 hover:bg-gray-700 rounded-lg"
+                className={`w-16 h-16 text-5xl rounded-lg ${promotionColor === "w"
+                    ? "bg-black text-white hover:bg-gray-900"
+                    : "bg-white text-black hover:bg-gray-200"
+                  }`}
               >
-                ♗
+                {promotionColor === "w" ? "♗" : "♝"}
               </button>
 
               <button
                 onClick={() => handlePromotion("n")}
-                className="w-16 h-16 text-5xl bg-gray-800 hover:bg-gray-700 rounded-lg"
+                className={`w-16 h-16 text-5xl rounded-lg ${promotionColor === "w"
+                    ? "bg-black text-white hover:bg-gray-900"
+                    : "bg-white text-black hover:bg-gray-200"
+                  }`}
               >
-                ♘
+                {promotionColor === "w" ? "♘" : "♞"}
               </button>
-
             </div>
           </div>
         </div>
