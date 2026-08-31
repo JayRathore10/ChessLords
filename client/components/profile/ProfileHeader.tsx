@@ -16,6 +16,13 @@ export default function ProfileHeader({
   gamesPlayed,
   winRate,
 }: ProfileHeaderProps) {
+
+  const profileImage = user.profilePic
+    ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${user.profilePic}`
+    : null;
+
+  console.log(profileImage);
+
   return (
     <div className="relative bg-[#161920] border border-[#232732] rounded-2xl p-6 sm:p-8 overflow-hidden shadow-2xl">
       {/* Subtle platinum accent light */}
@@ -23,10 +30,19 @@ export default function ProfileHeader({
 
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10">
         {/* Avatar */}
-        <div className="w-24 h-24 rounded-2xl bg-primary-gradient text-[#0f1115] font-extrabold text-3xl flex items-center justify-center shadow-xl shadow-black/40 border-2 border-white/10 shrink-0">
-          {user.name
-            ? user.name[0].toUpperCase()
-            : user.username[0].toUpperCase()}
+        <div className="w-24 h-24 rounded-2xl overflow-hidden bg-primary-gradient text-[#0f1115] font-extrabold text-3xl flex items-center justify-center shadow-xl shadow-black/40 border-2 border-white/10 shrink-0">
+          {user.profilePic ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profileImage as string}
+              alt={user.name || user.username}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            user.name
+              ? user.name[0].toUpperCase()
+              : user.username[0].toUpperCase()
+          )}
         </div>
 
         {/* User Details */}

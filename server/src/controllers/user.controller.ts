@@ -263,20 +263,41 @@ export const updateMyProfile = async (
   res: Response
 ) => {
   try {
-    const { name, username, profilePic } = req.body;
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
 
-    const user = await userModel.findByIdAndUpdate(
-      req.user?._id,
-      {
-        ...(name && { name }),
-        ...(username && { username }),
-        ...(profilePic && { profilePic }),
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    ).select("-password");
+    const { name } = req.body;
+
+    const updateData: {
+      name?: string;
+      profilePic?: string;
+    } = {};
+
+    if (name !== undefined) {
+      updateData.name = name;
+    }
+
+    // Multer has successfully uploaded the image
+    if (req.file) {
+      updateData.profilePic = `/images/${req.file.filename}`;
+    }
+
+    console.log("UPDATE DATA:", updateData);
+
+    const user = await userModel
+      .findByIdAndUpdate(
+        req.user._id,
+        updateData,
+        {
+          new: true,
+          runValidators: true,
+        }
+      )
+      .select("-password");
 
     if (!user) {
       return res.status(404).json({
@@ -290,15 +311,8 @@ export const updateMyProfile = async (
       message: "Profile updated successfully",
       user,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Update profile error:", error);
-
-    if (error.code === 11000) {
-      return res.status(409).json({
-        success: false,
-        message: "Username already exists",
-      });
-    }
 
     return res.status(500).json({
       success: false,
