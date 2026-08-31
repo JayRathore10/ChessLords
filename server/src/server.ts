@@ -22,8 +22,19 @@ app.use(
   })
 );
 
-app.use(cookieParser());
 app.use(express.json());
+app.use(express.urlencoded({extended : true}));
+// app.use("/images", express.static("public/images"));
+app.use(
+  "/images",
+  express.static("public/images", {
+    setHeaders: (res) => {
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    },
+  })
+);
+app.use(cookieParser());
+
 app.use("/api/v1/games", gameRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
