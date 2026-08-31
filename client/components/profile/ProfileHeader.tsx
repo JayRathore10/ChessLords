@@ -20,9 +20,6 @@ export default function ProfileHeader({
   const profileImage = user.profilePic
     ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${user.profilePic}`
     : null;
-
-  console.log(profileImage);
-
   return (
     <div className="relative bg-[#161920] border border-[#232732] rounded-2xl p-6 sm:p-8 overflow-hidden shadow-2xl">
       {/* Subtle platinum accent light */}
