@@ -14,6 +14,7 @@ import {
   isUserLoggedIn,
   isAdminLoggedIn,
 } from "../middleware/auth.middleware";
+import { upload } from "../utils/upload.utility";
 
 const router = Router();
 
@@ -25,7 +26,7 @@ router.get("/:id/stats", getUserStats);
 
 // Logged-in user
 router.get("/me", isUserLoggedIn, getMyProfile);
-router.patch("/me", isUserLoggedIn, updateMyProfile);
+router.patch("/me", isUserLoggedIn, upload.single("profilePic") , updateMyProfile);
 
 // Admin
 router.delete("/:id", isAdminLoggedIn, deleteUser);
