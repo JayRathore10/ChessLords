@@ -97,31 +97,40 @@ export const getUserByUsername = async (
 };
 
 // PATCH /api/users/:id
-export const updateUser = async (req: Request, res: Response) => {
+export const updateUser = async (req: authRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const userId = req.user?._id;
 
-    if (!Types.ObjectId.isValid(id)) {
+    if (!userId || !Types.ObjectId.isValid(userId)) {
       return res.status(400).json({
         success: false,
         message: "Invalid user ID",
       });
     }
 
-    const { username, name, profilePic } = req.body;
+    const { name } = req.body;
 
-    const user = await userModel.findByIdAndUpdate(
-      id,
-      {
-        ...(username && { username }),
-        ...(name && { name }),
-        ...(profilePic && { profilePic }),
-      },
-      {
+    const updateData: {
+      name?: string;
+      profilePic?: string;
+    } = {};
+
+    // Update name only if provided
+    if (name !== undefined) {
+      updateData.name = name;
+    }
+
+    // Update profile picture if a file was uploaded
+    if (req.file) {
+      updateData.profilePic = req.file.path;
+    }
+
+    const user = await userModel
+      .findByIdAndUpdate(userId, updateData, {
         new: true,
         runValidators: true,
-      }
-    ).select("-password");
+      })
+      .select("-password");
 
     if (!user) {
       return res.status(404).json({
@@ -132,22 +141,15 @@ export const updateUser = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      message: "User updated successfully",
+      message: "Profile updated successfully",
       user,
     });
   } catch (error: any) {
     console.error("Update user error:", error);
 
-    if (error.code === 11000) {
-      return res.status(409).json({
-        success: false,
-        message: "Username or email already exists",
-      });
-    }
-
     return res.status(500).json({
       success: false,
-      message: "Failed to update user",
+      message: "Failed to update profile",
     });
   }
 };
