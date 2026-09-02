@@ -62,7 +62,6 @@ export default function HomePage() {
 // also have to set the waiting time for it. 
 // 3. have to add live chart to the user 
 // 5. have to add designs to the frontpage
-// 6. make passwoerd chnage workking 
 // 7. Have to add loading screen 
 // 8. Have to module the server.ts
 
