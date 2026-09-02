@@ -192,6 +192,7 @@ export default function GameLobbyPage() {
   useEffect(() => {
     const tabParam = searchParams.get("tab");
     if (tabParam === "friend" || tabParam === "pass" || tabParam === "quick") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveTab(tabParam);
     }
     const joinCode = searchParams.get("join");
@@ -273,6 +274,7 @@ export default function GameLobbyPage() {
   // Handle Search timer
   useEffect(() => {
     if (isSearching) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSearchSeconds(0);
       searchTimerRef.current = setInterval(() => {
         setSearchSeconds((prev) => prev + 1);
