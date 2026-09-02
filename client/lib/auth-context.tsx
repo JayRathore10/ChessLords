@@ -181,7 +181,7 @@ export function AuthProvider({
       );
     }
   };
-  
+
   // REGISTER
   const register = async (
     username: string,
@@ -189,39 +189,53 @@ export function AuthProvider({
     email: string,
     password: string
   ) => {
-    const res = await axios.post(
-      `${backendURL}/api/v1/auth/register`,
-      {
-        username,
-        name,
-        email,
-        password,
-      },
-      {
-        withCredentials: true,
-      }
-    );
+    try {
+      const res = await axios.post(
+        `${backendURL}/api/v1/auth/register`,
+        {
+          username,
+          name,
+          email,
+          password,
+        },
+        {
+          withCredentials: true,
+        }
+      );
 
-    if (res.data.success && res.data.user) {
-      setUser(res.data.user);
+      if (res.data.success && res.data.user) {
+        setUser(res.data.user);
 
-      if (res.data.token) {
-        setToken(res.data.token);
+        if (res.data.token) {
+          setToken(res.data.token);
+
+          localStorage.setItem(
+            "token",
+            res.data.token
+          );
+        }
 
         localStorage.setItem(
-          "token",
-          res.data.token
+          "user",
+          JSON.stringify(res.data.user)
+        );
+
+        localStorage.setItem(
+          "userId",
+          res.data.user._id
         );
       }
 
-      localStorage.setItem(
-        "user",
-        JSON.stringify(res.data.user)
-      );
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          error.response?.data?.message ||
+          "Registration failed. Please try again."
+        );
+      }
 
-      localStorage.setItem(
-        "userId",
-        res.data.user._id
+      throw new Error(
+        "Something went wrong. Please try again."
       );
     }
   };
