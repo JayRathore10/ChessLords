@@ -1,4 +1,4 @@
-// ESLint configuration
+  // ESLint configuration
 
 export default [
   {
