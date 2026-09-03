@@ -64,4 +64,3 @@ export default function HomePage() {
 // 5. have to add designs to the frontpage
 // 7. Have to add loading screen 
 // 8. Have to module the server.ts
-
