@@ -231,6 +231,10 @@ export const setupMatchmakingSocket = (io: Server, socket: Socket) => {
   );
 
   socket.on("leaveQueue", () => {
-
+    const removed = removeFromQueue(socket.id);
+    if (removed) {
+      socket.emit("queueLeft", { success: true });
+    }
   });
+
 };
