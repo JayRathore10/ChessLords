@@ -65,3 +65,4 @@ export default function HomePage() {
 // 7. Have to add loading screen 
 // 8. Have to module the server.ts
 // 9. Have to remove the check notification and invalid move notification 
+// 10. Have to shift timmer to the side name take 
