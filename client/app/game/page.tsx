@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 
 import LobbyHeader from "@/components/lobby/LobbyHeader";
+import LobbyTabs from "@/components/lobby/LobbyTabs";
+import MatchmakingModal from "@/components/lobby/MatchmakingModal";
 
 interface TimeControlOption {
   id: string;
@@ -433,12 +435,6 @@ export default function GameLobbyPage() {
     }
   };
 
-  const formatTimer = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
   return (
     <main className="min-h-screen bg-[var(--surface-main)] text-[var(--foreground)] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -449,46 +445,10 @@ export default function GameLobbyPage() {
         />    
 
         {/* Mode Navigation Tabs */}
-        <div className="grid grid-cols-3 gap-2 p-1.5 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl">
-          <button
-            onClick={() => setActiveTab("quick")}
-            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
-              activeTab === "quick"
-                ? "bg-[var(--primary)] text-[var(--surface-main)] shadow-md"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <Zap className="w-4 h-4" />
-            <span className="hidden sm:inline">Quick Match</span>
-            <span className="sm:hidden">Online</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("friend")}
-            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
-              activeTab === "friend"
-                ? "bg-[var(--primary)] text-[var(--surface-main)] shadow-md"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span className="hidden sm:inline">Play with a Friend</span>
-            <span className="sm:hidden">Friend</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("pass")}
-            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
-              activeTab === "pass"
-                ? "bg-[var(--primary)] text-[var(--surface-main)] shadow-md"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <Tv className="w-4 h-4" />
-            <span className="hidden sm:inline">Pass & Play</span>
-            <span className="sm:hidden">Local</span>
-          </button>
-        </div>
+       <LobbyTabs
+          activeTab={activeTab}  
+          setActiveTab={setActiveTab}
+       />
 
         {/* TAB 1: QUICK MATCH / MATCHMAKING */}
         {activeTab === "quick" && (
@@ -1018,45 +978,17 @@ export default function GameLobbyPage() {
       </div>
 
       {/* MATCHMAKING RADAR SEARCH MODAL / OVERLAY */}
-      {isSearching && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-3xl p-8 text-center space-y-6 shadow-2xl relative overflow-hidden">
-            
-            {/* Animated Radar Background */}
-            <div className="relative w-36 h-36 mx-auto flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full border border-[var(--primary)]/20 animate-radar-ping" />
-              <div className="absolute inset-4 rounded-full border border-[var(--primary)]/30 animate-pulse" />
-              <div className="w-24 h-24 rounded-full bg-primary-gradient/10 border border-[var(--primary-border)] flex items-center justify-center text-3xl shadow-inner">
-                <Crown className="w-10 h-10 text-[var(--primary)] animate-bounce" />
-              </div>
-            </div>
-
-            {/* Searching text & timer */}
-            <div className="space-y-1.5">
-              <h3 className="text-2xl font-extrabold text-white">
-                Searching for Opponent...
-              </h3>
-              <p className="text-sm text-gray-400">
-                Mode:{" "}
-                <span className="font-semibold text-white">
-                  {isCustomTc ? `${customMinutes}+${customIncrement}` : selectedTc.name} ({gameType.toUpperCase()})
-                </span>
-              </p>
-              <p className="text-xl font-mono font-bold text-[var(--primary)] pt-2">
-                {formatTimer(searchSeconds)}
-              </p>
-            </div>
-
-            {/* Cancel Button */}
-            <button
-              onClick={handleCancelSearch}
-              className="w-full py-3.5 rounded-xl font-bold bg-white/10 hover:bg-red-500/20 hover:text-red-300 text-gray-300 border border-white/10 transition active:scale-95 cursor-pointer"
-            >
-              Cancel Matchmaking
-            </button>
-          </div>
-        </div>
-      )}
+      <MatchmakingModal
+        isSearching={isSearching}
+        searchSeconds={searchSeconds}
+        gameType={gameType}
+        timeControlName={
+          isCustomTc
+            ? `${customMinutes}+${customIncrement}`
+            : selectedTc.name
+        }
+        onCancel={handleCancelSearch}
+      />
     </main>
   );
 }
