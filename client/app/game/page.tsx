@@ -9,7 +9,6 @@ import { useAuth } from "@/lib/auth-context";
 import { apiFetch } from "@/lib/api";
 import {
   Zap,
-  Swords,
   Users,
   Copy,
   Check,
@@ -446,7 +445,7 @@ export default function GameLobbyPage() {
         
         {/* Lobby Top Header */}
         <LobbyHeader
-            lobbyStats={lobbyStats}
+          lobbyStats={lobbyStats}
         />    
 
         {/* Mode Navigation Tabs */}
