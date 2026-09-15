@@ -132,14 +132,14 @@ interface QuickMatchProps {
   setCustomIncrement: React.Dispatch<React.SetStateAction<number>>;
 
   handleStartSearch: () => void;
-  user: User;
+  user: User | null;
 }
 
 const QuickMatch = ({
   setGameType,
   gameType,
   selectedTc,
-  setSelectedTc,
+  setSelectedTc,i
   isCustomTc,
   setIsCustomTc,
   customMinutes,
