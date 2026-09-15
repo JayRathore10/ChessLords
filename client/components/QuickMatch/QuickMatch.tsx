@@ -3,6 +3,7 @@ import { Compass , Zap , Sliders , Trophy } from "lucide-react";
 import Link from "next/link";
 
 import TimeControlGrid from "./TimeControlGrid";
+import CustomTimeControl from "./CustomTimeControl";
 
 interface TimeControlOption {
   id: string;
@@ -244,7 +245,7 @@ const QuickMatch = ({
 
             {/* Custom Time Control Configurator Slider */}
             {isCustomTc && (
-            <TimeControlGrid
+            <CustomTimeControl
               customMinutes={customMinutes} 
               customIncrement={customIncrement}
               setCustomMinutes={setCustomMinutes} 
