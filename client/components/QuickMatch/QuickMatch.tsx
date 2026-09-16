@@ -1,10 +1,10 @@
 import { User } from "@/lib/auth-context";
-import { Compass, Zap ,  Trophy } from "lucide-react";
-import Link from "next/link";
+import { Compass, Zap } from "lucide-react";
 
 import TimeControlGrid from "./TimeControlGrid";
 import CustomTimeControl from "./CustomTimeControl";
 import GameModeInfo from "./GameModesInfo";
+import GameTypeSelector from "./GameTypeSelector";
 
 export interface TimeControlOption {
   id: string;
@@ -69,28 +69,10 @@ const QuickMatch = ({
             </div>
 
             {/* Rated / Casual Mode Selector */}
-            <div className="flex items-center bg-[var(--surface-main)] border border-[var(--surface-border)] rounded-xl p-1 text-xs font-semibold">
-              <button
-                onClick={() => setGameType("rated")}
-                className={`px-3 py-1.5 rounded-lg transition ${
-                  gameType === "rated"
-                    ? "bg-[var(--primary)] text-[var(--surface-main)] shadow"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Rated
-              </button>
-              <button
-                onClick={() => setGameType("casual")}
-                className={`px-3 py-1.5 rounded-lg transition ${
-                  gameType === "casual"
-                    ? "bg-white/15 text-white"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Casual
-              </button>
-            </div>
+            <GameTypeSelector
+              gameType={gameType}
+              setGameType={setGameType}
+            />
           </div>
 
           {/* Preset Time Controls Grid */}
@@ -122,7 +104,7 @@ const QuickMatch = ({
               {isCustomTc
                 ? `${customMinutes}+${customIncrement}`
                 : selectedTc.name}{" "}
-              ({gameType.toUpperCase()})
+              ({gameType.toUpperCase()})  
             </span>
           </button>
         </div>
