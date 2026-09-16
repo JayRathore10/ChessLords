@@ -5,6 +5,7 @@ import TimeControlGrid from "./TimeControlGrid";
 import CustomTimeControl from "./CustomTimeControl";
 import GameModeInfo from "./GameModesInfo";
 import GameTypeSelector from "./GameTypeSelector";
+import PlayerStatsCard from "./PlayerStatsCard";
 
 export interface TimeControlOption {
   id: string;
@@ -15,7 +16,7 @@ export interface TimeControlOption {
   icon: string;
   colorClass: string;
   popular?: boolean;
-};
+}
 
 interface QuickMatchProps {
   selectedTc: TimeControlOption;
@@ -69,10 +70,7 @@ const QuickMatch = ({
             </div>
 
             {/* Rated / Casual Mode Selector */}
-            <GameTypeSelector
-              gameType={gameType}
-              setGameType={setGameType}
-            />
+            <GameTypeSelector gameType={gameType} setGameType={setGameType} />
           </div>
 
           {/* Preset Time Controls Grid */}
@@ -104,16 +102,17 @@ const QuickMatch = ({
               {isCustomTc
                 ? `${customMinutes}+${customIncrement}`
                 : selectedTc.name}{" "}
-              ({gameType.toUpperCase()})  
+              ({gameType.toUpperCase()})
             </span>
           </button>
         </div>
       </div>
 
       {/* Right 1 Col: User Stats & Game Modes Info */}
-      <GameModeInfo
-      user = {user}
-      />
+      <div className="space-y-6">
+        <PlayerStatsCard user={user} />
+        <GameModeInfo/>
+      </div>
     </div>
   );
 };
