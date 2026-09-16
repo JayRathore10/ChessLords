@@ -1,6 +1,6 @@
 import { Sliders } from "lucide-react";
-import { TimeControlOption } from "@/app/game/page";
-import { TIME_CONTROLS } from "@/app/game/page";
+import { TimeControlOption } from "@/lib/timeControls";
+import { TIME_CONTROLS } from "@/lib/timeControls";
 
 interface TimeControlGridProps{
   selectedTc: TimeControlOption;

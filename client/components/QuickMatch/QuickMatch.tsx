@@ -6,7 +6,7 @@ import CustomTimeControl from "./CustomTimeControl";
 import GameModeInfo from "./GameModesInfo";
 import GameTypeSelector from "./GameTypeSelector";
 import PlayerStatsCard from "./PlayerStatsCard";
-import { TimeControlOption } from "@/app/game/page";
+import { TimeControlOption } from "@/lib/timeControls";
 
 
 interface QuickMatchProps {
