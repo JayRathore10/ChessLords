@@ -6,17 +6,8 @@ import CustomTimeControl from "./CustomTimeControl";
 import GameModeInfo from "./GameModesInfo";
 import GameTypeSelector from "./GameTypeSelector";
 import PlayerStatsCard from "./PlayerStatsCard";
+import { TimeControlOption } from "@/app/game/page";
 
-export interface TimeControlOption {
-  id: string;
-  name: string;
-  category: "bullet" | "blitz" | "rapid" | "classical";
-  initialTime: number; // seconds
-  increment: number; // seconds
-  icon: string;
-  colorClass: string;
-  popular?: boolean;
-}
 
 interface QuickMatchProps {
   selectedTc: TimeControlOption;
@@ -94,7 +85,7 @@ const QuickMatch = ({
           {/* Quick Play CTA Button */}
           <button
             onClick={handleStartSearch}
-            className="w-full py-4 rounded-xl font-extrabold text-base bg-primary-gradient text-[var(--surface-main)] hover:opacity-95 shadow-xl glow-primary transition-all active:scale-[0.98] flex items-center justify-center gap-2.5 cursor-pointer"
+            className="w-full py-4 rounded-xl font-extrabold text-base bg-primary-gradient text-[var(--surface-main)] hover:opacity-95 shadow-xl glow-primary transition-all active:scale-[0.98] flex items-center justify-center gap-2.5 cursor-pointer" 
           >
             <Zap className="w-5 h-5 fill-current" />
             <span>

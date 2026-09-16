@@ -22,7 +22,7 @@ import LobbyTabs from "@/components/lobby/LobbyTabs";
 import MatchmakingModal from "@/components/lobby/MatchmakingModal";
 import QuickMatch from "@/components/QuickMatch/QuickMatch";
 
-interface TimeControlOption {
+export interface TimeControlOption {
   id: string;
   name: string;
   category: "bullet" | "blitz" | "rapid" | "classical";
@@ -33,7 +33,7 @@ interface TimeControlOption {
   popular?: boolean;
 }
 
-const TIME_CONTROLS: TimeControlOption[] = [
+export const TIME_CONTROLS: TimeControlOption[] = [
   // Bullet
   {
     id: "bullet-1-0",
