@@ -2,36 +2,34 @@ import Link from "next/link";
 import { Share2, Check, Copy } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 
-interface TimeControl {
-  id: string;
-  name: string;
-  category: string;
-  initialTime: number;
-  increment: number;
-  icon: string;
-  colorClass: string;
-}
+import type { Dispatch, SetStateAction } from "react";
+import type { TimeControlOption } from "@/types"; // change path if needed
 
 interface CreateRoomProps {
-  friendColor: "white" | "black" | "random";
-  setFriendColor: Dispatch<SetStateAction<"white" | "black" | "random">>;
+  // Play with a friend
+  friendColor: "random" | "white" | "black";
+  setFriendColor: Dispatch<
+    SetStateAction<"random" | "white" | "black">
+  >;
+
+  // Time control
+  selectedTc: TimeControlOption;
+  setSelectedTc: Dispatch<SetStateAction<TimeControlOption>>;
 
   isCustomTc: boolean;
   setIsCustomTc: Dispatch<SetStateAction<boolean>>;
 
-  selectedTc: TimeControl;
-  setSelectedTc: Dispatch<SetStateAction<TimeControl>>;
-
+  // Created room
   createdRoomCode: string | null;
-  createdRoomGameId: string;
+  createdRoomGameId: string | null;
+  isCreatingRoom: boolean;
 
+  // Copy states
   copiedLink: boolean;
   copiedCode: boolean;
 
-  isCreatingRoom: boolean;
-
+  // Functions
   handleCreateFriendRoom: () => void;
-
   copyToClipboard: (
     text: string,
     type: "code" | "link"
@@ -183,9 +181,7 @@ export const CreateRoom = ({
           {/* Room Code Badge */}
           <div className="p-3 bg-[var(--surface-card)] rounded-xl border border-[var(--surface-border)] flex items-center justify-between">
             <div>
-              <p className="text-[10px] text-gray-400 uppercase">
-                Room Code
-              </p>
+              <p className="text-[10px] text-gray-400 uppercase">Room Code</p>
 
               <p className="text-2xl font-mono font-black text-white tracking-widest">
                 {createdRoomCode}
@@ -193,9 +189,7 @@ export const CreateRoom = ({
             </div>
 
             <button
-              onClick={() =>
-                copyToClipboard(createdRoomCode, "code")
-              }
+              onClick={() => copyToClipboard(createdRoomCode, "code")}
               className="p-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition"
             >
               {copiedCode ? (
