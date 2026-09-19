@@ -257,7 +257,7 @@ export default function GameLobbyPage() {
   };
 
   // Join Game with Room Code
-  const 
+  const
   = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!joinRoomCodeInput.trim()) return;
@@ -360,16 +360,35 @@ export default function GameLobbyPage() {
             setFriendColor={setFriendColor}
             friendColor={friendColor}
             setSelectedTc={setSelectedTc}
-            isCreatingRoom={isCreatingRoom}
             selectedTc={selectedTc}
+            isCustomTc={isCustomTc}
+            setIsCustomTc={setIsCustomTc}
+
+            isCreatingRoom={isCreatingRoom}
+            setIsCreatingRoom={setIsCreatingRoom}
+
             createdRoomGameId={createdRoomGameId}
             createdRoomCode={createdRoomCode}
+
             copiedLink={copiedLink}
-            copyToClipboard={copyToClipboard}
+            setCopiedLink={setCopiedLink}
+
             copiedCode={copiedCode}
+            setCopiedCode={setCopiedCode}
+
+            copyToClipboard={copyToClipboard}
+
             handleCreateFriendRoom={handleCreateFriendRoom}
             handleJoinFriendRoom={handleJoinFriendRoom}
-            setIsCustomTc={setIsCustomTc}
+
+            joinRoomCodeInput={joinRoomCodeInput}
+            setJoinRoomCodeInput={setJoinRoomCodeInput}
+
+            isJoiningRoom={isJoiningRoom}
+            setIsJoiningRoom={setIsJoiningRoom}
+
+            joinRoomError={joinRoomError}
+            setJoinRoomError={setJoinRoomError}
           />
         )}
 
