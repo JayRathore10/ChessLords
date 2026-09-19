@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { Share2, Check, Copy } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
-
-import type { Dispatch, SetStateAction } from "react";
-import type { TimeControlOption } from "@/types"; // change path if needed
+import type { TimeControlOption } from "@/lib/timeControls"; // change path if needed
 
 interface CreateRoomProps {
   // Play with a friend
