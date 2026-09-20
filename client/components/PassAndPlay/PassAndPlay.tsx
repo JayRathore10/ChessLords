@@ -16,7 +16,7 @@ interface PassAndPlayProps {
   isStartingPassPlay: boolean;
 }
 
-export const PassAndPlay = ({
+const PassAndPlay = ({
   p1Name,
   setP1Name,
   p2Name,
@@ -119,3 +119,4 @@ export const PassAndPlay = ({
   );
 };
 
+export default PassAndPlay;
