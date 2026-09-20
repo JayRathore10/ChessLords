@@ -17,7 +17,7 @@ interface FriendGameProps {
   copyToClipboard: (text: string, type: "code" | "link") => void;
 
   handleCreateFriendRoom: () => void;
-  handleJoinFriendRoom: () => Promise<void>;
+  handleJoinFriendRoom: (e: React.FormEvent) => Promise<void>;
 
   isCustomTc: boolean;
   setIsCustomTc: Dispatch<SetStateAction<boolean>>;

@@ -14,7 +14,7 @@ import LobbyHeader from "@/components/lobby/LobbyHeader";
 import LobbyTabs from "@/components/lobby/LobbyTabs";
 import MatchmakingModal from "@/components/lobby/MatchmakingModal";
 import QuickMatch from "@/components/QuickMatch/QuickMatch";
-import FriendGame from "@/components/friendGame/FriendGame";
+import FriendGame from "@/components/FriendGame/FriendGame";
 
 import { TIME_CONTROLS } from "@/lib/timeControls";
 import { TimeControlOption } from "@/lib/timeControls";
@@ -257,8 +257,7 @@ export default function GameLobbyPage() {
   };
 
   // Join Game with Room Code
-  const
-  = async (e: React.FormEvent) => {
+  const handleJoinFriendRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!joinRoomCodeInput.trim()) return;
 
