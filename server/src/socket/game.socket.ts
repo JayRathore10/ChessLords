@@ -303,7 +303,7 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
       }
     }
   );
-
+ 
   // --- RESIGN HANDLER ---
   socket.on("resign", async (data: { gameId: string }) => {
     try {
