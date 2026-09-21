@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { socket } from "@/lib/socket";
 import { useAuth } from "@/lib/auth-context";
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "@/lib/api"; 
 
 import LobbyHeader from "@/components/lobby/LobbyHeader";
 import LobbyTabs from "@/components/lobby/LobbyTabs";

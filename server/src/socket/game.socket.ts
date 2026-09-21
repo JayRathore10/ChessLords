@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import { makeChessMove } from "../services/chess.service";
 
 export const setupGameSocket = (io: Server, socket: Socket) => {
+  // Socket for JoinGame
   socket.on(
     "joinGame",
     async (data: {
@@ -165,6 +166,7 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
     }
   );
 
+  // Socket for MakeMove
   socket.on(
     "makeMove",
     async (data: {

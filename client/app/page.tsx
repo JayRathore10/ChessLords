@@ -59,6 +59,7 @@ export default function HomePage() {
 }
 
 // 2.have to make the game end when player leaves 
+// {Also have to find out how much work left}
 // also have to set the waiting time for it. 
 // 3. have to add live chart to the user 
 // 5. have to add designs to the frontpage
