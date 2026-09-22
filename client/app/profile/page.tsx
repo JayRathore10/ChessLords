@@ -202,6 +202,8 @@ export default function ProfilePage() {
   //   setActiveTab(tab);
   //   setStatusMessage(null);
   // };
+  // 
+  // Have to Add security
 
   return (
     <main className="min-h-[calc(100vh-64px)] p-4 md:p-8 bg-linear-to-b from-[#0f1115] via-[#12151b] to-[#0a0c0f]">
