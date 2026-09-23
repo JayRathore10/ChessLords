@@ -115,7 +115,10 @@ function parseCaptured(moves: string[]): {
   return { whiteCaptured, blackCaptured };
 }
 
-function materialDiff(whiteCaptured: string[], blackCaptured: string[]): number {
+function materialDiff(
+  whiteCaptured: string[],
+  blackCaptured: string[],
+): number {
   const wVal = whiteCaptured.reduce((a, p) => a + (PIECE_VALUES[p] || 1), 0);
   const bVal = blackCaptured.reduce((a, p) => a + (PIECE_VALUES[p] || 1), 0);
   return wVal - bVal;
@@ -136,11 +139,17 @@ export default function GamePage({ params }: GamePageProps) {
   const { user } = useAuth();
 
   // Board & game state
-  const [playerColor, setPlayerColor] = useState<"white" | "black" | null>(null);
+  const [playerColor, setPlayerColor] = useState<"white" | "black" | null>(
+    null,
+  );
   const [turn, setTurn] = useState<"white" | "black" | null>(null);
   const [gameStatus, setGameStatus] = useState<string>("waiting");
-  const [fen, setFen] = useState("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
+  const [fen, setFen] = useState(
+    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+  );
+  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(
+    null,
+  );
   const [sanMoves, setSanMoves] = useState<string[]>([]);
   const [isPassAndPlay, setIsPassAndPlay] = useState(false);
   const [message, setMessage] = useState("");
@@ -167,7 +176,9 @@ export default function GamePage({ params }: GamePageProps) {
   // Resign / draw confirmation modals
   const [showResignModal, setShowResignModal] = useState(false);
   const [showDrawModal, setShowDrawModal] = useState(false);
-  const [drawOfferedBy, setDrawOfferedBy] = useState<"white" | "black" | null>(null);
+  const [drawOfferedBy, setDrawOfferedBy] = useState<"white" | "black" | null>(
+    null,
+  );
   const [drawPending, setDrawPending] = useState(false); // waiting for opponent
 
   // Move history scroll
@@ -234,7 +245,7 @@ export default function GamePage({ params }: GamePageProps) {
         }
       }, 1000);
     },
-    [gameId]
+    [gameId],
   );
 
   const stopClock = useCallback(() => {
@@ -470,13 +481,16 @@ export default function GamePage({ params }: GamePageProps) {
 
   // For board orientation: in pass-and-play, show white's perspective always;
   // otherwise orient by player color
-  const boardOrientation = isPassAndPlay ? "white" : playerColor === "black" ? "black" : "white";
+  const boardOrientation = isPassAndPlay
+    ? "white"
+    : playerColor === "black"
+      ? "black"
+      : "white";
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <main className="min-h-screen bg-[var(--surface-main)] text-[var(--foreground)]">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3">
-
         {/* Top Bar */}
         <div className="flex items-center justify-between mb-4">
           <Link
@@ -488,10 +502,11 @@ export default function GamePage({ params }: GamePageProps) {
           </Link>
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${gameType === "rated"
-                ? "bg-[var(--game-blitz-bg)] text-[var(--game-blitz)] border border-[var(--game-blitz-border)]"
-                : "bg-[var(--surface-card)] text-gray-400 border border-[var(--surface-border)]"
-                }`}
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+                gameType === "rated"
+                  ? "bg-[var(--game-blitz-bg)] text-[var(--game-blitz)] border border-[var(--game-blitz-border)]"
+                  : "bg-[var(--surface-card)] text-gray-400 border border-[var(--surface-border)]"
+              }`}
             >
               {gameType}
             </span>
@@ -523,7 +538,11 @@ export default function GamePage({ params }: GamePageProps) {
                 onClick={handleCopyInvite}
                 className="p-2.5 rounded-xl bg-[var(--primary-muted)] border border-[var(--primary-border)] text-[var(--primary)] hover:bg-[var(--primary-border)] transition"
               >
-                {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copiedCode ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -545,10 +564,8 @@ export default function GamePage({ params }: GamePageProps) {
 
         {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 lg:gap-6 items-start">
-
           {/* ── Left: Board + Player strips ── */}
           <div className="flex flex-col gap-3">
-
             {/* Opponent (top of board) */}
             <PlayerStrip
               name={isPassAndPlay ? blackName : opponentName}
@@ -575,9 +592,24 @@ export default function GamePage({ params }: GamePageProps) {
 
             {/* My player strip (bottom of board) */}
             <PlayerStrip
-              name={isPassAndPlay ? whiteName : (playerColor === "white" ? whiteName : blackName)}
-              rating={isPassAndPlay ? whiteRating : (playerColor === "white" ? whiteRating : blackRating)}
-              isActive={turn === (isPassAndPlay ? "white" : playerColor) && gameStatus === "active"}
+              name={
+                isPassAndPlay
+                  ? whiteName
+                  : playerColor === "white"
+                    ? whiteName
+                    : blackName
+              }
+              rating={
+                isPassAndPlay
+                  ? whiteRating
+                  : playerColor === "white"
+                    ? whiteRating
+                    : blackRating
+              }
+              isActive={
+                turn === (isPassAndPlay ? "white" : playerColor) &&
+                gameStatus === "active"
+              }
               captured={whiteCaptured}
               materialAdv={diff > 0 ? diff : 0}
               time={whiteTime}
@@ -630,7 +662,6 @@ export default function GamePage({ params }: GamePageProps) {
 
           {/* ── Right Panel: Info + Move History ── */}
           <aside className="flex flex-col gap-4">
-
             {/* Players / Rating Card */}
             <div className="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl p-4 space-y-3">
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
@@ -644,7 +675,9 @@ export default function GamePage({ params }: GamePageProps) {
                       <p className="text-sm font-semibold text-white leading-none">
                         {whiteName}
                       </p>
-                      <p className="text-[11px] text-gray-500 mt-0.5">{whiteRating}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        {whiteRating}
+                      </p>
                     </div>
                   </div>
                   {turn === "white" && gameStatus === "active" && (
@@ -659,7 +692,9 @@ export default function GamePage({ params }: GamePageProps) {
                       <p className="text-sm font-semibold text-white leading-none">
                         {blackName}
                       </p>
-                      <p className="text-[11px] text-gray-500 mt-0.5">{blackRating}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        {blackRating}
+                      </p>
                     </div>
                   </div>
                   {turn === "black" && gameStatus === "active" && (
@@ -690,19 +725,21 @@ export default function GamePage({ params }: GamePageProps) {
                         {idx + 1}.
                       </span>
                       <span
-                        className={`px-2 py-0.5 rounded font-mono ${sanMoves.length - 1 === idx * 2
-                          ? "bg-[var(--primary-muted)] text-[var(--primary)] font-semibold"
-                          : "text-gray-300"
-                          }`}
+                        className={`px-2 py-0.5 rounded font-mono ${
+                          sanMoves.length - 1 === idx * 2
+                            ? "bg-[var(--primary-muted)] text-[var(--primary)] font-semibold"
+                            : "text-gray-300"
+                        }`}
                       >
                         {white}
                       </span>
                       {black && (
                         <span
-                          className={`px-2 py-0.5 rounded font-mono ${sanMoves.length - 1 === idx * 2 + 1
-                            ? "bg-[var(--primary-muted)] text-[var(--primary)] font-semibold"
-                            : "text-gray-300"
-                            }`}
+                          className={`px-2 py-0.5 rounded font-mono ${
+                            sanMoves.length - 1 === idx * 2 + 1
+                              ? "bg-[var(--primary-muted)] text-[var(--primary)] font-semibold"
+                              : "text-gray-300"
+                          }`}
                         >
                           {black}
                         </span>
@@ -731,10 +768,11 @@ export default function GamePage({ params }: GamePageProps) {
             {/* Turn Indicator (online) */}
             {!isPassAndPlay && gameStatus === "active" && (
               <div
-                className={`rounded-2xl p-3 text-center text-sm font-bold border transition-all ${isMyTurn
-                  ? "bg-[var(--success)]/10 border-[var(--success)]/30 text-[var(--success)]"
-                  : "bg-[var(--surface-card)] border-[var(--surface-border)] text-gray-500"
-                  }`}
+                className={`rounded-2xl p-3 text-center text-sm font-bold border transition-all ${
+                  isMyTurn
+                    ? "bg-[var(--success)]/10 border-[var(--success)]/30 text-[var(--success)]"
+                    : "bg-[var(--surface-card)] border-[var(--surface-border)] text-gray-500"
+                }`}
               >
                 {isMyTurn ? "● Your Turn" : "○ Opponent's Turn"}
               </div>
@@ -759,23 +797,30 @@ export default function GamePage({ params }: GamePageProps) {
                     ? "Time Out!"
                     : gameOver.reason === "resignation"
                       ? "Game Over"
-                      : gameOver.reason === "agreement"
-                        ? "Draw by Agreement"
-                        : gameOver.reason === "aborted"
-                          ? "Game Aborted"
-                          : "Game Over"}
+                      : gameOver.reason === "abandonment"
+                        ? "Opponent Left"
+                        : gameOver.reason === "agreement"
+                          ? "Draw by Agreement"
+                          : gameOver.reason === "aborted"
+                            ? "Game Aborted"
+                            : "Game Over"}
               </h2>
 
               {gameOver.result === "draw" ? (
                 <p className="text-gray-400 mt-2">The game ended in a draw.</p>
               ) : gameOver.result === "none" ? (
                 <p className="text-gray-400 mt-2">The game was aborted.</p>
+              ) : gameOver.reason === "abandonment" ? (
+                <p className="text-gray-400 mt-2">
+                  {gameOver.winner === playerColor
+                    ? "Your opponent left the game. You win!"
+                    : "You left the game."}
+                </p>
               ) : (
                 <p className="text-gray-400 mt-2">
                   {gameOver.reason === "resignation"
                     ? `${gameOver.result === playerColor ? "You resigned." : "Opponent resigned."}`
-                    : `${gameOver.winner === "white" ? whiteName : blackName
-                    } wins!`}
+                    : `${gameOver.winner === "white" ? whiteName : blackName} wins!`}
                 </p>
               )}
             </div>
@@ -838,8 +883,8 @@ export default function GamePage({ params }: GamePageProps) {
               <div>
                 <h3 className="font-bold text-white text-base">Draw Offered</h3>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  {drawOfferedBy === "white" ? whiteName : blackName} is offering a
-                  draw. Do you accept?
+                  {drawOfferedBy === "white" ? whiteName : blackName} is
+                  offering a draw. Do you accept?
                 </p>
               </div>
             </div>
@@ -889,18 +934,20 @@ function PlayerStrip({
 }: PlayerStripProps) {
   return (
     <div
-      className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${isActive
-        ? "bg-[var(--surface-card)] border-[var(--primary-border)] shadow-md"
-        : "bg-[var(--surface-main)]/50 border-[var(--surface-border)]"
-        }`}
+      className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${
+        isActive
+          ? "bg-[var(--surface-card)] border-[var(--primary-border)] shadow-md"
+          : "bg-[var(--surface-main)]/50 border-[var(--surface-border)]"
+      }`}
     >
       <div className="flex items-center gap-2.5 min-w-0">
         {/* Avatar */}
         <div
-          className={`w-8 h-8 rounded-full flex-shrink-0 border-2 flex items-center justify-center text-xs font-black ${side === "white"
-            ? "bg-white text-gray-800 border-gray-300"
-            : "bg-gray-800 text-white border-gray-600"
-            }`}
+          className={`w-8 h-8 rounded-full flex-shrink-0 border-2 flex items-center justify-center text-xs font-black ${
+            side === "white"
+              ? "bg-white text-gray-800 border-gray-300"
+              : "bg-gray-800 text-white border-gray-600"
+          }`}
         >
           {name[0]?.toUpperCase() ?? "?"}
         </div>
@@ -933,10 +980,11 @@ function PlayerStrip({
 
       {/* Clock */}
       <div
-        className={`px-3 py-1.5 rounded-lg font-mono text-base tabular-nums ${clockClass} ${isActive
-          ? "bg-[var(--primary-muted)] border border-[var(--primary-border)]"
-          : "bg-[var(--surface-main)]/60 border border-[var(--surface-border)]"
-          }`}
+        className={`px-3 py-1.5 rounded-lg font-mono text-base tabular-nums ${clockClass} ${
+          isActive
+            ? "bg-[var(--primary-muted)] border border-[var(--primary-border)]"
+            : "bg-[var(--surface-main)]/60 border border-[var(--surface-border)]"
+        }`}
       >
         {formatTime(time)}
       </div>
