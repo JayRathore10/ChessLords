@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
-// import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { socket } from "@/lib/socket";
 import { useAuth } from "@/lib/auth-context";
@@ -63,6 +63,7 @@ interface GameOverData {
   result: string;
   reason: string;
   winner?: string;
+  loser?: string;
 }
 
 interface GamePageProps {
@@ -135,7 +136,7 @@ const PIECE_SYMBOLS: Record<string, string> = {
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function GamePage({ params }: GamePageProps) {
   const { gameId } = React.use(params);
-  // const router = useRouter();
+  const router = useRouter();
   const { user } = useAuth();
 
   // Board & game state
@@ -173,7 +174,8 @@ export default function GamePage({ params }: GamePageProps) {
   // Game over overlay
   const [gameOver, setGameOver] = useState<GameOverData | null>(null);
 
-  // Resign / draw confirmation modals
+  // Leave / Resign / draw confirmation modals
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showResignModal, setShowResignModal] = useState(false);
   const [showDrawModal, setShowDrawModal] = useState(false);
   const [drawOfferedBy, setDrawOfferedBy] = useState<"white" | "black" | null>(
@@ -364,6 +366,30 @@ export default function GamePage({ params }: GamePageProps) {
       setGameOver(data);
     };
 
+    const handleGameLeft = (data: {
+      gameId: string;
+      result: string;
+      winner?: string;
+      loser?: string;
+      reason: string;
+      leavingColor?: string;
+    }) => {
+      stopClock();
+      setGameStatus("completed");
+      setGameOver({
+        result: data.result,
+        reason: data.reason || "player_left",
+        winner: data.winner,
+        loser: data.loser,
+      });
+
+      if (data.winner === playerColor) {
+        setMessage("Opponent left the game. You win!");
+      } else if (data.loser === playerColor) {
+        setMessage("You left the game.");
+      }
+    };
+
     const handleDrawOffered = (data: { byColor: "white" | "black" }) => {
       setDrawOfferedBy(data.byColor);
       setShowDrawModal(true);
@@ -381,6 +407,7 @@ export default function GamePage({ params }: GamePageProps) {
     socket.on("invalidMove", handleInvalidMove);
     socket.on("gameError", handleGameError);
     socket.on("gameOver", handleGameOver);
+    socket.on("gameLeft", handleGameLeft);
     socket.on("drawOffered", handleDrawOffered);
     socket.on("drawDeclined", handleDrawDeclined);
 
@@ -391,13 +418,14 @@ export default function GamePage({ params }: GamePageProps) {
       socket.off("invalidMove", handleInvalidMove);
       socket.off("gameError", handleGameError);
       socket.off("gameOver", handleGameOver);
+      socket.off("gameLeft", handleGameLeft);
       socket.off("drawOffered", handleDrawOffered);
       socket.off("drawDeclined", handleDrawDeclined);
       stopClock();
       socket.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameId]);
+  }, [gameId, playerColor]);
 
   // Scroll move list to bottom on new move
   useEffect(() => {
@@ -437,6 +465,23 @@ export default function GamePage({ params }: GamePageProps) {
 
   const handleAbort = () => {
     socket.emit("abortGame", { gameId });
+  };
+
+  const confirmLeaveGame = () => {
+    setShowLeaveModal(false);
+    socket.emit("leaveGame", { gameId });
+    router.push("/game");
+  };
+
+  const handleBackToLobby = () => {
+    if (gameStatus === "active" && !isPassAndPlay && !gameOver) {
+      setShowLeaveModal(true);
+    } else {
+      if (gameStatus === "waiting") {
+        socket.emit("leaveGame", { gameId });
+      }
+      router.push("/game");
+    }
   };
 
   const handleCopyInvite = () => {
@@ -493,13 +538,13 @@ export default function GamePage({ params }: GamePageProps) {
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3">
         {/* Top Bar */}
         <div className="flex items-center justify-between mb-4">
-          <Link
-            href="/game"
-            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition"
+          <button
+            onClick={handleBackToLobby}
+            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
             Back to Lobby
-          </Link>
+          </button>
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <span
               className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
@@ -797,8 +842,10 @@ export default function GamePage({ params }: GamePageProps) {
                     ? "Time Out!"
                     : gameOver.reason === "resignation"
                       ? "Game Over"
-                      : gameOver.reason === "abandonment"
-                        ? "Opponent Left"
+                      : gameOver.reason === "abandonment" || gameOver.reason === "player_left"
+                        ? gameOver.winner === playerColor
+                          ? "Opponent Left"
+                          : "Game Forfeited"
                         : gameOver.reason === "agreement"
                           ? "Draw by Agreement"
                           : gameOver.reason === "aborted"
@@ -810,10 +857,10 @@ export default function GamePage({ params }: GamePageProps) {
                 <p className="text-gray-400 mt-2">The game ended in a draw.</p>
               ) : gameOver.result === "none" ? (
                 <p className="text-gray-400 mt-2">The game was aborted.</p>
-              ) : gameOver.reason === "abandonment" ? (
+              ) : gameOver.reason === "abandonment" || gameOver.reason === "player_left" ? (
                 <p className="text-gray-400 mt-2">
                   {gameOver.winner === playerColor
-                    ? "Your opponent left the game. You win!"
+                    ? "Opponent left the game. You win!"
                     : "You left the game."}
                 </p>
               ) : (
@@ -828,16 +875,47 @@ export default function GamePage({ params }: GamePageProps) {
             <div className="flex flex-col gap-3 pt-2">
               <Link
                 href="/game"
-                className="w-full py-3 rounded-xl font-bold text-sm bg-primary-gradient text-[var(--surface-main)] hover:opacity-95 transition shadow-lg"
+                className="w-full py-3 rounded-xl font-bold text-sm bg-primary-gradient text-[var(--surface-main)] hover:opacity-95 transition shadow-lg text-center"
               >
                 Play Again
               </Link>
               <Link
                 href="/"
-                className="w-full py-3 rounded-xl font-bold text-sm bg-white/5 border border-[var(--surface-border)] text-gray-300 hover:bg-white/10 transition"
+                className="w-full py-3 rounded-xl font-bold text-sm bg-white/5 border border-[var(--surface-border)] text-gray-300 hover:bg-white/10 transition text-center"
               >
                 Back to Home
               </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Leave Game Confirmation Modal ─────────────────────────────────── */}
+      {showLeaveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl p-6 space-y-5 shadow-2xl">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-6 h-6 text-amber-400 flex-shrink-0" />
+              <div>
+                <h3 className="font-bold text-white text-base">Leave Game?</h3>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Leaving an ongoing game will count as a forfeit and you will lose the match.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLeaveModal(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-300 bg-white/5 border border-[var(--surface-border)] hover:bg-white/10 transition cursor-pointer"
+              >
+                Stay & Play
+              </button>
+              <button
+                onClick={confirmLeaveGame}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500/80 hover:bg-red-500 transition cursor-pointer"
+              >
+                Leave Game
+              </button>
             </div>
           </div>
         </div>
