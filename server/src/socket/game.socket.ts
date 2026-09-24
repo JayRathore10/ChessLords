@@ -1,15 +1,17 @@
-import { Server } from "socket.io"
-import { Socket } from "socket.io"
-import { getChessGame } from "../services/chess.service";
-import { gameModel } from "../models/game.model";
-import { createChessGame } from "../services/chess.service";
-import mongoose from "mongoose";
-import { makeChessMove } from "../services/chess.service";
+import { Server } from 'socket.io';
+import { Socket } from 'socket.io';
+import { getChessGame } from '../services/chess.service';
+import { gameModel } from '../models/game.model';
+import { createChessGame } from '../services/chess.service';
+import mongoose from 'mongoose';
+import { makeChessMove } from '../services/chess.service';
+
+const playerGames = new Map<string, string>();
 
 export const setupGameSocket = (io: Server, socket: Socket) => {
   // Socket for JoinGame
   socket.on(
-    "joinGame",
+    'joinGame',
     async (data: {
       gameId: string;
       userId?: string;
@@ -19,16 +21,15 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
       try {
         const {
           gameId,
-          userId = "guest",
-          username = "Guest",
+          userId = 'guest',
+          username = 'Guest',
           rating = 1200,
         } = data;
 
         const game = await gameModel.findById(gameId);
-
         if (!game) {
-          socket.emit("gameError", {
-            message: "Game not found",
+          socket.emit('gameError', {
+            message: 'Game not found',
           });
           return;
         }
@@ -38,21 +39,23 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
           socket.join(`game:${gameId}`);
           socket.data.userId = userId;
           socket.data.gameId = gameId;
-          socket.data.color = "white"; // default view
+          socket.data.color = 'white'; // default view
+
+          playerGames.set(socket.id, gameId);
 
           const existingGame = getChessGame(gameId);
           if (!existingGame) {
             createChessGame(gameId, game.currentPosition);
           }
 
-          socket.emit("gameState", {
+          socket.emit('gameState', {
             gameId: game._id.toString(),
-            color: "white",
+            color: 'white',
             isPassAndPlay: true,
-            whitePlayer: game.whitePlayer?.toString() || "player1",
-            blackPlayer: game.blackPlayer?.toString() || "player2",
-            whitePlayerName: game.whitePlayerName || "Player 1 (White)",
-            blackPlayerName: game.blackPlayerName || "Player 2 (Black)",
+            whitePlayer: game.whitePlayer?.toString() || 'player1',
+            blackPlayer: game.blackPlayer?.toString() || 'player2',
+            whitePlayerName: game.whitePlayerName || 'Player 1 (White)',
+            blackPlayerName: game.blackPlayerName || 'Player 2 (Black)',
             whitePlayerRating: game.whitePlayerRating || 1200,
             blackPlayerRating: game.blackPlayerRating || 1200,
             gameType: game.gameType,
@@ -82,34 +85,39 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
           (validUserId && game.blackPlayer?.toString() === userId) ||
           (game.blackPlayerName && game.blackPlayerName === username);
 
-        let playerColor: "white" | "black" = "white";
+        let playerColor: 'white' | 'black' = 'white';
 
         if (isWhite) {
-          playerColor = "white";
+          playerColor = 'white';
         } else if (isBlack) {
-          playerColor = "black";
-        } else if (game.status === "waiting") {
+          playerColor = 'black';
+        } else if (game.status === 'waiting') {
           // Second player joining waiting room!
-          if (!game.whitePlayer && (!game.whitePlayerName || game.whitePlayerName === "White")) {
+          if (
+            !game.whitePlayer &&
+            (!game.whitePlayerName || game.whitePlayerName === 'White')
+          ) {
             game.whitePlayer = validUserId;
             game.whitePlayerName = username;
             game.whitePlayerRating = rating;
-            playerColor = "white";
+            playerColor = 'white';
           } else {
             game.blackPlayer = validUserId;
             game.blackPlayerName = username;
             game.blackPlayerRating = rating;
-            playerColor = "black";
+            playerColor = 'black';
           }
 
-          game.status = "active";
+          game.status = 'active';
           game.startedAt = new Date();
           await game.save();
 
-          console.log(`[Room] ${username} joined waiting game ${gameId} as ${playerColor}`);
+          console.log(
+            `[Room] ${username} joined waiting game ${gameId} as ${playerColor}`
+          );
         } else {
           // Spectator or read-only view
-          playerColor = "white";
+          playerColor = 'white';
         }
 
         socket.join(`game:${gameId}`);
@@ -126,10 +134,10 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
           gameId: game._id.toString(),
           color: playerColor,
           isPassAndPlay: game.isPassAndPlay || false,
-          whitePlayer: game.whitePlayer?.toString() || "",
-          blackPlayer: game.blackPlayer?.toString() || "",
-          whitePlayerName: game.whitePlayerName || "White",
-          blackPlayerName: game.blackPlayerName || "Black",
+          whitePlayer: game.whitePlayer?.toString() || '',
+          blackPlayer: game.blackPlayer?.toString() || '',
+          whitePlayerName: game.whitePlayerName || 'White',
+          blackPlayerName: game.blackPlayerName || 'Black',
           whitePlayerRating: game.whitePlayerRating || 1200,
           blackPlayerRating: game.blackPlayerRating || 1200,
           gameType: game.gameType,
@@ -145,10 +153,10 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
         };
 
         // Notify this player
-        socket.emit("gameState", gameStatePayload);
+        socket.emit('gameState', gameStatePayload);
 
         // Notify other players in room about updated state / player joined
-        socket.to(`game:${gameId}`).emit("playerJoined", {
+        socket.to(`game:${gameId}`).emit('playerJoined', {
           gameId,
           joinedColor: playerColor,
           username,
@@ -156,11 +164,13 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
           status: game.status,
         });
 
-        console.log(`${username} (${userId}) joined game ${gameId} as ${playerColor}`);
+        console.log(
+          `${username} (${userId}) joined game ${gameId} as ${playerColor}`
+        );
       } catch (error) {
-        console.error("Join game error:", error);
-        socket.emit("gameError", {
-          message: "Failed to join game",
+        console.error('Join game error:', error);
+        socket.emit('gameError', {
+          message: 'Failed to join game',
         });
       }
     }
@@ -168,25 +178,20 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
 
   // Socket for MakeMove
   socket.on(
-    "makeMove",
+    'makeMove',
     async (data: {
       gameId: string;
       from: string;
       to: string;
-      promotion?: "q" | "r" | "b" | "n";
+      promotion?: 'q' | 'r' | 'b' | 'n';
     }) => {
       try {
-        const {
-          gameId,
-          from,
-          to,
-          promotion,
-        } = data;
+        const { gameId, from, to, promotion } = data;
 
         // Make sure socket belongs to this game
         if (socket.data.gameId !== gameId) {
-          socket.emit("invalidMove", {
-            message: "You are not in this game",
+          socket.emit('invalidMove', {
+            message: 'You are not in this game',
           });
           return;
         }
@@ -194,40 +199,32 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
         const game = await gameModel.findById(gameId);
 
         if (!game) {
-          socket.emit("invalidMove", {
-            message: "Game not found",
+          socket.emit('invalidMove', {
+            message: 'Game not found',
           });
           return;
         }
 
-        if (game.status !== "active") {
-          socket.emit("invalidMove", {
-            message: "Game is not active",
+        if (game.status !== 'active') {
+          socket.emit('invalidMove', {
+            message: 'Game is not active',
           });
           return;
         }
 
         // Check player's turn
-        if (
-          !game.isPassAndPlay &&
-          game.turn !== socket.data.color
-        ) {
-          socket.emit("invalidMove", {
-            message: "It is not your turn",
+        if (!game.isPassAndPlay && game.turn !== socket.data.color) {
+          socket.emit('invalidMove', {
+            message: 'It is not your turn',
           });
           return;
         }
 
         // Make chess move
-        const result = makeChessMove(
-          gameId,
-          from,
-          to,
-          promotion
-        );
+        const result = makeChessMove(gameId, from, to, promotion);
 
         if (!result.success) {
-          socket.emit("invalidMove", {
+          socket.emit('invalidMove', {
             message: result.message,
           });
           return;
@@ -242,140 +239,127 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
 
         // Check game over
         if (result.isGameOver) {
-          game.status = "completed";
+          game.status = 'completed';
           game.endedAt = new Date();
 
           if (result.isCheckmate) {
-            game.result =
-              result.turn === "white"
-                ? "black"
-                : "white";
+            game.result = result.turn === 'white' ? 'black' : 'white';
           } else {
-            game.result = "draw";
+            game.result = 'draw';
           }
         }
 
         await game.save();
 
         // Send updated game state to both players
-        io.to(`game:${gameId}`).emit(
-          "moveMade",
-          {
-            from,
-            to,
-            promotion,
+        io.to(`game:${gameId}`).emit('moveMade', {
+          from,
+          to,
+          promotion,
 
-            move: result.move,
+          move: result.move,
 
-            fen: result.fen,
+          fen: result.fen,
 
-            turn: result.turn,
+          turn: result.turn,
 
-            isCheck: result.isCheck,
+          isCheck: result.isCheck,
 
-            isCheckmate:
-              result.isCheckmate,
+          isCheckmate: result.isCheckmate,
 
-            isDraw:
-              result.isDraw,
+          isDraw: result.isDraw,
 
-            isGameOver:
-              result.isGameOver,
+          isGameOver: result.isGameOver,
 
-            status:
-              game.status,
+          status: game.status,
 
-            result:
-              game.result,
-          }
-        );
-
+          result: game.result,
+        });
       } catch (error) {
-        console.error(
-          "Move error:",
-          error
-        );
+        console.error('Move error:', error);
 
-        socket.emit("gameError", {
-          message:
-            "Failed to make move",
+        socket.emit('gameError', {
+          message: 'Failed to make move',
         });
       }
     }
   );
- 
+
   // --- RESIGN HANDLER ---
-  socket.on("resign", async (data: { gameId: string }) => {
+  socket.on('resign', async (data: { gameId: string }) => {
     try {
       const { gameId } = data;
       if (socket.data.gameId !== gameId) return;
 
       const game = await gameModel.findById(gameId);
-      if (!game || game.status !== "active") return;
+      if (!game || game.status !== 'active') return;
 
-      const resigningColor = socket.data.color as "white" | "black";
-      const winner = resigningColor === "white" ? "black" : "white";
+      const resigningColor = socket.data.color as 'white' | 'black';
+      const winner = resigningColor === 'white' ? 'black' : 'white';
 
-      game.status = "completed";
+      game.status = 'completed';
       game.result = winner;
       game.endedAt = new Date();
       await game.save();
 
-      io.to(`game:${gameId}`).emit("gameOver", {
+      io.to(`game:${gameId}`).emit('gameOver', {
         result: winner,
-        reason: "resignation",
+        reason: 'resignation',
         winner,
       });
 
       console.log(`[Game] ${resigningColor} resigned in game ${gameId}`);
     } catch (err) {
-      console.error("Resign error:", err);
+      console.error('Resign error:', err);
     }
   });
 
   // --- OFFER DRAW HANDLER ---
-  socket.on("offerDraw", (data: { gameId: string }) => {
+  socket.on('offerDraw', (data: { gameId: string }) => {
     const { gameId } = data;
     if (socket.data.gameId !== gameId) return;
 
     // Broadcast draw offer to the opponent
-    socket.to(`game:${gameId}`).emit("drawOffered", {
+    socket.to(`game:${gameId}`).emit('drawOffered', {
       byColor: socket.data.color,
     });
     console.log(`[Game] ${socket.data.color} offered draw in game ${gameId}`);
   });
 
   // --- RESPOND TO DRAW HANDLER ---
-  socket.on("respondDraw", async (data: { gameId: string; accept: boolean }) => {
-    try {
-      const { gameId, accept } = data;
-      if (socket.data.gameId !== gameId) return;
+  socket.on(
+    'respondDraw',
+    async (data: { gameId: string; accept: boolean }) => {
+      try {
+        const { gameId, accept } = data;
+        if (socket.data.gameId !== gameId) return;
 
-      if (accept) {
-        const game = await gameModel.findById(gameId);
-        if (!game || game.status !== "active") return;
+        if (accept) {
+          const game = await gameModel.findById(gameId);
+          if (!game || game.status !== 'active') return;
 
-        game.status = "completed";
-        game.result = "draw";
-        game.endedAt = new Date();
-        await game.save();
+          game.status = 'completed';
+          game.result = 'draw';
+          game.endedAt = new Date();
+          await game.save();
 
-        io.to(`game:${gameId}`).emit("gameOver", {
-          result: "draw",
-          reason: "agreement",
-        });
-        console.log(`[Game] Draw agreed in game ${gameId}`);
-      } else {
-        // Notify the offering player that draw was declined
-        socket.to(`game:${gameId}`).emit("drawDeclined");
+          io.to(`game:${gameId}`).emit('gameOver', {
+            result: 'draw',
+            reason: 'agreement',
+          });
+          console.log(`[Game] Draw agreed in game ${gameId}`);
+        } else {
+          // Notify the offering player that draw was declined
+          socket.to(`game:${gameId}`).emit('drawDeclined');
+        }
+      } catch (err) {
+        console.error('Respond draw error:', err);
       }
-    } catch (err) {
-      console.error("Respond draw error:", err);
     }
-  });
+  );
 
   // --- ABORT GAME HANDLER ---
-  socket.on("abortGame", async (data: { gameId: string }) => {
+  socket.on('abortGame', async (data: { gameId: string }) => {
     try {
       const { gameId } = data;
       if (socket.data.gameId !== gameId) return;
@@ -385,31 +369,33 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
 
       // Can only abort if no moves have been made
       if (game.moves.length > 0) {
-        socket.emit("gameError", { message: "Cannot abort a game that has already started" });
+        socket.emit('gameError', {
+          message: 'Cannot abort a game that has already started',
+        });
         return;
       }
 
-      game.status = "aborted";
+      game.status = 'aborted';
       game.endedAt = new Date();
       await game.save();
 
-      io.to(`game:${gameId}`).emit("gameOver", {
-        result: "none",
-        reason: "aborted",
+      io.to(`game:${gameId}`).emit('gameOver', {
+        result: 'none',
+        reason: 'aborted',
       });
       console.log(`[Game] Game ${gameId} aborted by ${socket.data.color}`);
     } catch (err) {
-      console.error("Abort game error:", err);
+      console.error('Abort game error:', err);
     }
   });
 
   // ─── TIMEOUT HANDLER ───────────────────────────────────────────────────────
   socket.on(
-    "gameTimeout",
+    'gameTimeout',
     async (data: {
       gameId: string;
-      winner: "white" | "black";
-      loser: "white" | "black";
+      winner: 'white' | 'black';
+      loser: 'white' | 'black';
     }) => {
       try {
         const { gameId, winner, loser } = data;
@@ -421,7 +407,7 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
 
         const game = await gameModel.findById(gameId);
 
-        if (!game || game.status !== "active") {
+        if (!game || game.status !== 'active') {
           return;
         }
 
@@ -432,23 +418,23 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
         }
 
         // Set the expired player's clock to zero
-        if (loser === "white") {
+        if (loser === 'white') {
           game.whiteTime = 0;
         } else {
           game.blackTime = 0;
         }
 
         // End the game
-        game.status = "completed";
+        game.status = 'completed';
         game.result = winner;
         game.endedAt = new Date();
 
         await game.save();
 
         // Tell both players
-        io.to(`game:${gameId}`).emit("gameOver", {
+        io.to(`game:${gameId}`).emit('gameOver', {
           result: winner,
-          reason: "timeout",
+          reason: 'timeout',
           winner,
         });
 
@@ -456,9 +442,68 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
           `[Game] ${loser} ran out of time in game ${gameId}. ${winner} wins.`
         );
       } catch (err) {
-        console.error("Timeout error:", err);
+        console.error('Timeout error:', err);
       }
     }
   );
 
-}
+  socket.on('leaveGame', async () => {
+    const gameId = playerGames.get( socket.id);
+
+    console.log('[LeaveGame]', {
+      socketId: socket.id,
+      gameId,
+      color: socket.data.color,
+    });
+
+    if (!gameId) {
+      console.log('[LeaveGame] No game found for socket:', socket.id);
+      return;
+    }
+
+    playerGames.delete(socket.id);
+
+    try {
+      const game = await gameModel.findById(gameId);
+
+      if (!game) return;
+
+      // Pass & Play uses one socket for both players
+      if (game.isPassAndPlay) return;
+
+      // Already finished
+      if (game.status === 'completed' || game.status === 'aborted') {
+        return;
+      }
+
+      // Nobody joined yet
+      if (game.status === 'waiting') {
+        return;
+      }
+
+      const leavingColor = socket.data.color as 'white' | 'black';
+
+      if (leavingColor !== 'white' && leavingColor !== 'black') {
+        return;
+      }
+
+      const winner = leavingColor === 'white' ? 'black' : 'white';
+
+      game.status = 'completed';
+      game.result = winner;
+      game.endedAt = new Date();
+
+      await game.save();
+
+      io.to(`game:${gameId}`).emit('gameOver', {
+        result: winner,
+        reason: 'abandonment',
+        winner,
+      });
+
+      console.log(`[Game] ${leavingColor} left ${gameId}. ${winner} wins.`);
+    } catch (error) {
+      console.error('[Game] Disconnect error:', error);
+    }
+  });
+};
