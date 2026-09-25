@@ -124,6 +124,8 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
         socket.data.userId = userId;
         socket.data.gameId = gameId;
         socket.data.color = playerColor;
+        socket.data.username = username;
+        playerGames.set(socket.id, gameId);
 
         const existingGame = getChessGame(gameId);
         if (!existingGame) {
@@ -447,63 +449,154 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
     }
   );
 
-  socket.on('leaveGame', async () => {
-    const gameId = playerGames.get( socket.id);
-
-    console.log('[LeaveGame]', {
-      socketId: socket.id,
-      gameId,
-      color: socket.data.color,
-    });
-
-    if (!gameId) {
-      console.log('[LeaveGame] No game found for socket:', socket.id);
-      return;
-    }
-
-    playerGames.delete(socket.id);
-
+  // ─── LEAVE GAME HANDLER ──────────────────────────────────────────────────
+  socket.on('leaveGame', async (data?: { gameId?: string }) => {
     try {
+      const gameId = data?.gameId || socket.data.gameId || playerGames.get(socket.id);
+
+      console.log('[LeaveGame]', {
+        socketId: socket.id,
+        gameId,
+        color: socket.data.color,
+      });
+
+      if (!gameId) {
+        console.log('[LeaveGame] No game found for socket:', socket.id);
+        return;
+      }
+
+      playerGames.delete(socket.id);
+
       const game = await gameModel.findById(gameId);
+      if (!game) {
+        socket.leave(`game:${gameId}`);
+        socket.data.gameId = undefined;
+        return;
+      }
 
-      if (!game) return;
-
-      // Pass & Play uses one socket for both players
-      if (game.isPassAndPlay) return;
-
-      // Already finished
+      // If already completed or aborted, just leave room
       if (game.status === 'completed' || game.status === 'aborted') {
+        socket.leave(`game:${gameId}`);
+        socket.data.gameId = undefined;
         return;
       }
 
-      // Nobody joined yet
+      // If player leaves while the game is still waiting for an opponent
       if (game.status === 'waiting') {
+        await gameModel.findOneAndUpdate(
+          { _id: gameId, status: 'waiting' },
+          {
+            $set: {
+              status: 'aborted',
+              result: 'none',
+              endedAt: new Date(),
+            },
+          }
+        );
+
+        io.to(`game:${gameId}`).emit('gameLeft', {
+          gameId,
+          status: 'aborted',
+          result: 'none',
+          reason: 'player_left',
+          leavingColor: socket.data.color,
+          message: 'Player left the game.',
+        });
+
+        io.to(`game:${gameId}`).emit('gameOver', {
+          result: 'none',
+          reason: 'player_left',
+        });
+
+        socket.leave(`game:${gameId}`);
+        socket.data.gameId = undefined;
         return;
       }
 
-      const leavingColor = socket.data.color as 'white' | 'black';
+      // Pass & Play mode
+      if (game.isPassAndPlay) {
+        await gameModel.findOneAndUpdate(
+          { _id: gameId, status: 'active' },
+          {
+            $set: {
+              status: 'completed',
+              endedAt: new Date(),
+            },
+          }
+        );
+        socket.leave(`game:${gameId}`);
+        socket.data.gameId = undefined;
+        return;
+      }
+
+      // Identify leaving color
+      let leavingColor = socket.data.color as 'white' | 'black' | undefined;
+      if (!leavingColor) {
+        const userId = socket.data.userId;
+        if (userId && game.whitePlayer && game.whitePlayer.toString() === userId) {
+          leavingColor = 'white';
+        } else if (userId && game.blackPlayer && game.blackPlayer.toString() === userId) {
+          leavingColor = 'black';
+        } else if (socket.data.username && game.whitePlayerName === socket.data.username) {
+          leavingColor = 'white';
+        } else if (socket.data.username && game.blackPlayerName === socket.data.username) {
+          leavingColor = 'black';
+        }
+      }
 
       if (leavingColor !== 'white' && leavingColor !== 'black') {
+        // Spectator or unidentified player leaving
+        socket.leave(`game:${gameId}`);
+        socket.data.gameId = undefined;
         return;
       }
 
       const winner = leavingColor === 'white' ? 'black' : 'white';
+      const loser = leavingColor;
 
-      game.status = 'completed';
-      game.result = winner;
-      game.endedAt = new Date();
+      // Atomically update game in MongoDB to prevent race conditions
+      const updatedGame = await gameModel.findOneAndUpdate(
+        { _id: gameId, status: 'active' },
+        {
+          $set: {
+            status: 'completed',
+            result: winner,
+            endedAt: new Date(),
+          },
+        },
+        { new: true }
+      );
 
-      await game.save();
+      if (!updatedGame) {
+        // Already finished or modified concurrently
+        socket.leave(`game:${gameId}`);
+        socket.data.gameId = undefined;
+        return;
+      }
+
+      // Notify all players in the game room immediately
+      io.to(`game:${gameId}`).emit('gameLeft', {
+        gameId,
+        result: winner,
+        winner,
+        loser,
+        reason: 'player_left',
+        leavingColor,
+      });
 
       io.to(`game:${gameId}`).emit('gameOver', {
         result: winner,
-        reason: 'abandonment',
         winner,
+        loser,
+        reason: 'player_left',
       });
 
-      console.log(`[Game] ${leavingColor} left ${gameId}. ${winner} wins.`);
+      console.log(`[Game] ${leavingColor} left game ${gameId}. ${winner} declared winner.`);
+
+      socket.leave(`game:${gameId}`);
+      socket.data.gameId = undefined;
     } catch (error) {
-      console.error('[Game] Disconnect error:', error);
+      console.error('[Game] leaveGame error:', error);
     }
   });
 };
