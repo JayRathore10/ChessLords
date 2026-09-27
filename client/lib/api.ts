@@ -79,3 +79,25 @@ export async function apiFetch<T = any>(
     );
   }
 }
+
+export async function checkUsername(
+  username: string
+): Promise<{ available: boolean; message: string }> {
+  try {
+    const res = await apiFetch<{
+      success: boolean;
+      available: boolean;
+      message: string;
+    }>(`/auth/check-username/${encodeURIComponent(username)}`);
+
+    return {
+      available: !!res.available,
+      message: res.message || "",
+    };
+  } catch (error: any) {
+    return {
+      available: false,
+      message: error.message || "Failed to check username",
+    };
+  }
+}

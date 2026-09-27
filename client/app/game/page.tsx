@@ -11,7 +11,7 @@ import LobbyHeader from "@/components/lobby/LobbyHeader";
 import LobbyTabs from "@/components/lobby/LobbyTabs";
 import MatchmakingModal from "@/components/lobby/MatchmakingModal";
 import QuickMatch from "@/components/QuickMatch/QuickMatch";
-import FriendGame from "@/components/FriendGame/FriendGame";
+import FriendGame from "@/components/friendGame/FriendGame";
 import PassAndPlay from "@/components/PassAndPlay/PassAndPlay";
 
 import { TIME_CONTROLS } from "@/lib/timeControls";

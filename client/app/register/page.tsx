@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import {
   User as UserIcon,
   AtSign,
@@ -12,8 +12,12 @@ import {
   EyeOff,
   ArrowRight,
   AlertCircle,
+  CheckCircle2,
+  XCircle,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { checkUsername } from "@/lib/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -31,10 +35,124 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Username validation state
+  const [usernameStatus, setUsernameStatus] = useState<
+    "idle" | "checking" | "available" | "unavailable" | "invalid"
+  >("idle");
+  const [usernameMessage, setUsernameMessage] = useState<string | null>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const latestCheckRef = useRef<string>("");
+
   const [hoveredPiece, setHoveredPiece] = useState<"left" | "right" | null>(null);
 
   const leftPieceRef = useRef<HTMLDivElement>(null);
   const rightPieceRef = useRef<HTMLDivElement>(null);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Debounced asynchronous username uniqueness check
+  const checkAvailability = useCallback(async (uname: string) => {
+    const trimmed = uname.trim();
+    if (!trimmed) {
+      setUsernameStatus("idle");
+      setUsernameMessage(null);
+      return;
+    }
+
+    if (trimmed.length < 3) {
+      setUsernameStatus("invalid");
+      setUsernameMessage("Username must be at least 3 characters");
+      return;
+    }
+
+    if (trimmed.length > 20) {
+      setUsernameStatus("invalid");
+      setUsernameMessage("Username must not exceed 20 characters");
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) {
+      setUsernameStatus("invalid");
+      setUsernameMessage("Letters, numbers, and underscores only");
+      return;
+    }
+
+    setUsernameStatus("checking");
+    setUsernameMessage("Checking availability...");
+    latestCheckRef.current = trimmed;
+
+    try {
+      const res = await checkUsername(trimmed);
+      // Ensure the response matches the current input to avoid race conditions
+      if (latestCheckRef.current === trimmed) {
+        if (res.available) {
+          setUsernameStatus("available");
+          setUsernameMessage("Username is available");
+        } else {
+          setUsernameStatus("unavailable");
+          setUsernameMessage(res.message || "Username is already taken");
+        }
+      }
+    } catch {
+      if (latestCheckRef.current === trimmed) {
+        setUsernameStatus("idle");
+        setUsernameMessage(null);
+      }
+    }
+  }, []);
+
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newUsername = e.target.value;
+    setFormData((prev) => ({ ...prev, username: newUsername }));
+    setError(null);
+
+    const trimmed = newUsername.trim();
+    if (!trimmed) {
+      setUsernameStatus("idle");
+      setUsernameMessage(null);
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      return;
+    }
+
+    if (trimmed.length < 3) {
+      setUsernameStatus("invalid");
+      setUsernameMessage("Username must be at least 3 characters");
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      return;
+    }
+
+    if (trimmed.length > 20) {
+      setUsernameStatus("invalid");
+      setUsernameMessage("Username must not exceed 20 characters");
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) {
+      setUsernameStatus("invalid");
+      setUsernameMessage("Letters, numbers, and underscores only");
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      return;
+    }
+
+    setUsernameStatus("checking");
+    setUsernameMessage("Checking availability...");
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      checkAvailability(trimmed);
+    }, 400);
+  };
 
   useEffect(() => {
     const addParallax = (
