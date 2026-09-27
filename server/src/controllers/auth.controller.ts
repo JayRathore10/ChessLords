@@ -279,3 +279,54 @@ export const changePassword = async (
     next(err);
   }
 };
+
+export const checkUsernameAvailability = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { username } = req.params;
+
+    if (!username || typeof username !== "string") {
+      return res.status(400).json({
+        success: false,
+        available: false,
+        message: "Username parameter is required",
+      });
+    }
+
+    const trimmed = username.trim();
+
+    // Validate format against zod schema rule
+    const validation = userSchema.shape.username.safeParse(trimmed);
+    if (!validation.success) {
+      return res.status(200).json({
+        success: true,
+        available: false,
+        message: validation.error.issues[0]?.message || "Invalid username format",
+      });
+    }
+
+    // Case-insensitive check for existing username
+    const existing = await userModel.findOne({
+      username: { $regex: new RegExp(`^${trimmed}$`, "i") },
+    });
+
+    if (existing) {
+      return res.status(200).json({
+        success: true,
+        available: false,
+        message: "Username is already taken",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      available: true,
+      message: "Username is available",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
