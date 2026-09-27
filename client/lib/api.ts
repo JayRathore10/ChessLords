@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+const API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1`;
 
 interface FetchOptions extends RequestInit {
   data?: any;
