@@ -1,8 +1,43 @@
-# ♟ ChessLords
+# ChessLords
 
 A real-time multiplayer chess platform built with **Next.js, Express, Socket.IO, MongoDB, and chess.js**.
 
 ChessLords provides an online chess experience with real-time gameplay, matchmaking, private rooms, friend games, game timers, ratings, player profiles, and multiple time controls.
+
+---
+
+## Screenshots
+
+### Home Page
+![Home Page](./assets/screenshots/home-page.png)
+
+### Sign In
+![Sign In](./assets/screenshots/sign-in.png)
+
+### Sign Up
+![Sign Up](./assets/screenshots/sign-up.png)
+
+### Lobby
+![Lobby](./assets/screenshots/lobby.png)
+
+### Matchmaking
+![Matchmaking](./assets/screenshots/match-making.png)
+
+### Play with Friend
+![Play with Friend](./assets/screenshots/play-with-friend.png)
+
+### Pass and Play
+![Pass and Play](./assets/screenshots/pass-and-play.png)
+
+### Start of Game
+![Start of Game](./assets/screenshots/start-of-game.png)
+
+### Gameplay
+![Gameplay](./assets/screenshots/gameplay.png)
+
+### Profile Page
+![Profile Page](./assets/screenshots/profile-page.png)
+---
 
 ## Features
 
@@ -58,7 +93,7 @@ ChessLords provides an online chess experience with real-time gameplay, matchmak
                     │      Frontend       │
                     └──────────┬──────────┘
                                │
-                     HTTP / Socket.IO
+                      HTTP / Socket.IO
                                │
                                ▼
                     ┌─────────────────────┐
@@ -73,8 +108,7 @@ ChessLords provides an online chess experience with real-time gameplay, matchmak
         │ Socket.IO│     │ chess.js   │   │  MongoDB  │
         │ Real-time│     │ Game Logic │   │  Database │
         └──────────┘     └────────────┘   └───────────┘
-```
-
+        
 ## Game Modes
 
 ### Quick Match
