@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef , Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { socket } from "@/lib/socket";
 import { useAuth } from "@/lib/auth-context";
@@ -17,7 +17,7 @@ import PassAndPlay from "@/components/PassAndPlay/PassAndPlay";
 import { TIME_CONTROLS } from "@/lib/timeControls";
 import { TimeControlOption } from "@/lib/timeControls";
 
-export default function GameLobbyPage() {
+function GameLobbyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -415,5 +415,13 @@ export default function GameLobbyPage() {
         onCancel={handleCancelSearch}
       />
     </main>
+  );
+}
+
+export default function GameLobbyPageWrapper() {
+  return (
+    <Suspense fallback={<div>Loading lobby...</div>}>
+      <GameLobbyPage />
+    </Suspense>
   );
 }
