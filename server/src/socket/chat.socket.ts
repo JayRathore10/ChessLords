@@ -1,42 +1,104 @@
+
 import { Server, Socket } from 'socket.io';
 import mongoose from 'mongoose';
 import { gameModel } from '../models/game.model';
 import { chatMessageModel } from '../models/chatMessage.model';
 
+type ChatMessageType = 'quick' | 'emoji' | 'custom';
+type PlayerColor = 'white' | 'black';
+
+const MESSAGE_TYPES: ChatMessageType[] = ['quick', 'emoji', 'custom'];
+const MAX_MESSAGE_LENGTH = 500;
+const CHAT_COOLDOWN_MS = 700;
+
+// Track message cooldowns per socket.
+const lastMessageAt = new Map<string, number>();
+
+const isValidColor = (color: unknown): color is PlayerColor =>
+  color === 'white' || color === 'black';
+
+// Verify that the socket belongs to the player assigned to its color.
+const isGamePlayer = (
+  socket: Socket,
+  game: {
+    whitePlayer?: mongoose.Types.ObjectId;
+    blackPlayer?: mongoose.Types.ObjectId;
+    whitePlayerName?: string;
+    blackPlayerName?: string;
+  }
+): boolean => {
+  const color = socket.data.color;
+  const userId = String(socket.data.userId || '');
+  const username = String(socket.data.username || '');
+
+  if (!isValidColor(color)) return false;
+
+  const playerId =
+    color === 'white' ? game.whitePlayer : game.blackPlayer;
+
+  const playerName =
+    color === 'white' ? game.whitePlayerName : game.blackPlayerName;
+
+  const idMatches =
+    !!playerId &&
+    mongoose.Types.ObjectId.isValid(userId) &&
+    playerId.toString() === userId;
+
+  const nameMatches =
+    !!playerName &&
+    !!username &&
+    playerName === username;
+
+  return idMatches || nameMatches;
+};
+
 export const setupChatSocket = (io: Server, socket: Socket) => {
-  // ─────────────────────────────────────────────────────────────
   // SEND CHAT MESSAGE
-  // ─────────────────────────────────────────────────────────────
   socket.on(
     'sendMessage',
     async (data: {
       gameId: string;
       message: string;
+      messageType?: ChatMessageType;
     }) => {
       try {
-        const { gameId, message } = data;
+        const { gameId, message, messageType = 'custom' } = data || {};
 
-        // Basic validation
-        if (!gameId || !message) {
+        if (
+          typeof gameId !== 'string' ||
+          !mongoose.Types.ObjectId.isValid(gameId) ||
+          typeof message !== 'string'
+        ) {
+          socket.emit('chatError', {
+            message: 'Invalid chat message',
+          });
           return;
         }
 
         const text = message.trim();
 
-        // Don't allow empty messages
         if (!text) {
+          socket.emit('chatError', {
+            message: 'Message cannot be empty',
+          });
           return;
         }
 
-        // Maximum message length
-        if (text.length > 500) {
+        if (text.length > MAX_MESSAGE_LENGTH) {
           socket.emit('chatError', {
             message: 'Message cannot exceed 500 characters',
           });
           return;
         }
 
-        // Make sure this socket is actually inside this game
+        if (!MESSAGE_TYPES.includes(messageType)) {
+          socket.emit('chatError', {
+            message: 'Invalid message type',
+          });
+          return;
+        }
+
+        // The socket must already have joined this game.
         if (socket.data.gameId !== gameId) {
           socket.emit('chatError', {
             message: 'You are not in this game',
@@ -44,7 +106,6 @@ export const setupChatSocket = (io: Server, socket: Socket) => {
           return;
         }
 
-        // Get game
         const game = await gameModel.findById(gameId);
 
         if (!game) {
@@ -54,22 +115,15 @@ export const setupChatSocket = (io: Server, socket: Socket) => {
           return;
         }
 
-        // Don't allow chat in aborted games
-        if (game.status === 'aborted') {
+        // Chat is available only during an active online game.
+        if (game.status !== 'active') {
           socket.emit('chatError', {
-            message: 'This game has been aborted',
+            message: 'Chat is available only during an active game',
           });
           return;
         }
 
-        // Get player information from socket
-        const userId = socket.data.userId;
-        const username = socket.data.username || 'Guest';
-        const color = socket.data.color as 'white' | 'black';
-
-        // Pass & Play
-        // There are two players on the same device,
-        // so chat doesn't really make sense.
+        // Pass & Play is a single-device mode.
         if (game.isPassAndPlay) {
           socket.emit('chatError', {
             message: 'Chat is not available in Pass & Play games',
@@ -77,81 +131,62 @@ export const setupChatSocket = (io: Server, socket: Socket) => {
           return;
         }
 
-        // Make sure the player has a valid color
-        if (color !== 'white' && color !== 'black') {
+        const color = socket.data.color as PlayerColor;
+
+        if (!isValidColor(color) || !isGamePlayer(socket, game)) {
           socket.emit('chatError', {
             message: 'You are not a player in this game',
           });
           return;
         }
 
-        // Verify that this player actually belongs to the game
-        let isPlayer = false;
+        // Prevent rapid repeated messages from the same socket.
+        const now = Date.now();
+        const lastSentAt = lastMessageAt.get(socket.id) || 0;
 
-        if (
-          userId &&
-          mongoose.Types.ObjectId.isValid(userId)
-        ) {
-          if (
-            color === 'white' &&
-            game.whitePlayer?.toString() === userId
-          ) {
-            isPlayer = true;
-          }
-
-          if (
-            color === 'black' &&
-            game.blackPlayer?.toString() === userId
-          ) {
-            isPlayer = true;
-          }
-        }
-
-        // Also support your username-based player matching
-        if (color === 'white' && game.whitePlayerName === username) {
-          isPlayer = true;
-        }
-
-        if (color === 'black' && game.blackPlayerName === username) {
-          isPlayer = true;
-        }
-
-        if (!isPlayer) {
+        if (now - lastSentAt < CHAT_COOLDOWN_MS) {
           socket.emit('chatError', {
-            message: 'You are not a player in this game',
+            message: 'Please wait before sending another message',
           });
           return;
         }
 
-        // Save message to MongoDB
+        lastMessageAt.set(socket.id, now);
+
+        const senderId =
+          color === 'white' ? game.whitePlayer : game.blackPlayer;
+
+        const senderName =
+          color === 'white'
+            ? game.whitePlayerName || 'White'
+            : game.blackPlayerName || 'Black';
+
+        // Save the message to MongoDB.
         const chatMessage = await chatMessageModel.create({
           gameId: game._id,
-
-          senderId:
-            userId && mongoose.Types.ObjectId.isValid(userId)
-              ? new mongoose.Types.ObjectId(userId)
-              : undefined,
-
+          senderId,
           senderColor: color,
-
-          senderName: username,
-
+          senderName,
           message: text,
+          messageType,
         });
 
-        // Send the message to everyone in the game room
-        io.to(`game:${gameId}`).emit('newMessage', {
+        const messagePayload = {
           _id: chatMessage._id.toString(),
           gameId: game._id.toString(),
-          senderId: userId,
+          senderId: senderId?.toString(),
           senderColor: color,
-          senderName: username,
+          senderName,
           message: text,
+          messageType,
           createdAt: chatMessage.createdAt,
-        });
+        };
+
+        // Send to both players in the game room.
+        io.to(`game:${gameId}`).emit('newMessage', messagePayload);
 
         console.log(
-          `[Chat] ${username} (${color}) sent message in game ${gameId}`
+          `[Chat] ${senderName} (${color}) sent ${messageType} message in game ${gameId}`
         );
       } catch (error) {
         console.error('[Chat] Send message error:', error);
@@ -163,20 +198,23 @@ export const setupChatSocket = (io: Server, socket: Socket) => {
     }
   );
 
-  // ─────────────────────────────────────────────────────────────
   // GET CHAT HISTORY
-  // ─────────────────────────────────────────────────────────────
   socket.on(
     'getChatHistory',
     async (data: { gameId: string }) => {
       try {
-        const { gameId } = data;
+        const { gameId } = data || {};
 
-        if (!gameId) {
+        if (
+          typeof gameId !== 'string' ||
+          !mongoose.Types.ObjectId.isValid(gameId)
+        ) {
+          socket.emit('chatError', {
+            message: 'Invalid game ID',
+          });
           return;
         }
 
-        // Make sure socket belongs to this game
         if (socket.data.gameId !== gameId) {
           socket.emit('chatError', {
             message: 'You are not in this game',
@@ -193,14 +231,21 @@ export const setupChatSocket = (io: Server, socket: Socket) => {
           return;
         }
 
-        // Get last 100 messages
+        if (game.isPassAndPlay || !isGamePlayer(socket, game)) {
+          socket.emit('chatError', {
+            message: 'You are not allowed to view this chat',
+          });
+          return;
+        }
+
+        // Fetch the newest 100 messages, then return them oldest first.
         const messages = await chatMessageModel
           .find({ gameId: game._id })
-          .sort({ createdAt: 1 })
+          .sort({ createdAt: -1 })
           .limit(100)
           .lean();
 
-        socket.emit('chatHistory', messages);
+        socket.emit('chatHistory', messages.reverse());
       } catch (error) {
         console.error('[Chat] Get history error:', error);
 
@@ -210,4 +255,8 @@ export const setupChatSocket = (io: Server, socket: Socket) => {
       }
     }
   );
+
+  socket.on('disconnect', () => {
+    lastMessageAt.delete(socket.id);
+  });
 };
