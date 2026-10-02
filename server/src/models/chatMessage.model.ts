@@ -1,4 +1,7 @@
+
 import mongoose, { Document, Types } from 'mongoose';
+
+export type ChatMessageType = 'quick' | 'emoji' | 'custom';
 
 export interface ChatMessageInterface extends Document {
   _id: Types.ObjectId;
@@ -7,6 +10,7 @@ export interface ChatMessageInterface extends Document {
   senderColor: 'white' | 'black';
   senderName: string;
   message: string;
+  messageType: ChatMessageType;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,6 +47,13 @@ const chatMessageSchema = new mongoose.Schema<ChatMessageInterface>(
       required: true,
       trim: true,
       maxlength: 500,
+    },
+
+    messageType: {
+      type: String,
+      enum: ['quick', 'emoji', 'custom'],
+      default: 'custom',
+      required: true,
     },
   },
   {
