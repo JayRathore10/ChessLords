@@ -6,6 +6,7 @@ import Link from "next/link";
 import { socket } from "@/lib/socket";
 import { useAuth } from "@/lib/auth-context";
 import ChessBoard from "@/components/chess/ChessBoard";
+import GameChat from "@/components/chess/GameChat";
 import {
   Crown,
   Flag,
@@ -795,6 +796,16 @@ export default function GamePage({ params }: GamePageProps) {
               </div>
             </div>
 
+            {/* Game Chat */}
+            {!isPassAndPlay && playerColor !== null && (
+              <GameChat
+                gameId={gameId}
+                playerColor={playerColor}
+                enabled={gameStatus === "active" || gameStatus === "completed"}
+                canSend={gameStatus === "active" && !gameOver}
+              />
+            )}
+
             {/* Pass & Play turn indicator */}
             {isPassAndPlay && gameStatus === "active" && (
               <div className="bg-[var(--surface-card)] border border-[var(--primary-border)] rounded-2xl p-4 text-center">
@@ -842,7 +853,8 @@ export default function GamePage({ params }: GamePageProps) {
                     ? "Time Out!"
                     : gameOver.reason === "resignation"
                       ? "Game Over"
-                      : gameOver.reason === "abandonment" || gameOver.reason === "player_left"
+                      : gameOver.reason === "abandonment" ||
+                          gameOver.reason === "player_left"
                         ? gameOver.winner === playerColor
                           ? "Opponent Left"
                           : "Game Forfeited"
@@ -857,7 +869,8 @@ export default function GamePage({ params }: GamePageProps) {
                 <p className="text-gray-400 mt-2">The game ended in a draw.</p>
               ) : gameOver.result === "none" ? (
                 <p className="text-gray-400 mt-2">The game was aborted.</p>
-              ) : gameOver.reason === "abandonment" || gameOver.reason === "player_left" ? (
+              ) : gameOver.reason === "abandonment" ||
+                gameOver.reason === "player_left" ? (
                 <p className="text-gray-400 mt-2">
                   {gameOver.winner === playerColor
                     ? "Opponent left the game. You win!"
@@ -899,7 +912,8 @@ export default function GamePage({ params }: GamePageProps) {
               <div>
                 <h3 className="font-bold text-white text-base">Leave Game?</h3>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Leaving an ongoing game will count as a forfeit and you will lose the match.
+                  Leaving an ongoing game will count as a forfeit and you will
+                  lose the match.
                 </p>
               </div>
             </div>
