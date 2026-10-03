@@ -58,9 +58,6 @@ export default function HomePage() {
   );
 }
 
-// 3. have to add live chart to the user 
-// have to setup the model for it and also the UI
-// have to add some predifined message  , emoji and things 
 // 5. have to add designs to the frontpage
 // 7. Have to add loading screen 
 // 8. Have to module the server.ts
