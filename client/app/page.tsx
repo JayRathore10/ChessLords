@@ -59,6 +59,7 @@ export default function HomePage() {
 }
 
 // 5. have to add designs to the frontpage
+// and have to redesign timmer in player
 // 7. Have to add loading screen 
 // 8. Have to module the server.ts
 // 9. Have to remove the check notification and invalid move notification 
