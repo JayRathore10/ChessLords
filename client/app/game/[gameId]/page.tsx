@@ -520,11 +520,6 @@ export default function GamePage({ params }: GamePageProps) {
       ? "text-red-400 font-extrabold"
       : "text-white font-bold";
 
-  // Player labels
-  const myName = playerColor === "white" ? whiteName : blackName;
-  const opponentName = playerColor === "white" ? blackName : whiteName;
-  const opponentRating = playerColor === "white" ? blackRating : whiteRating;
-
   // For board orientation: in pass-and-play, show white's perspective always;
   // otherwise orient by player color
   const boardOrientation = isPassAndPlay
@@ -533,12 +528,54 @@ export default function GamePage({ params }: GamePageProps) {
       ? "black"
       : "white";
 
+  const topPlayerColor: "white" | "black" =
+    isPassAndPlay || playerColor !== "black" ? "black" : "white";
+  const bottomPlayerColor: "white" | "black" =
+    isPassAndPlay || playerColor !== "black" ? "white" : "black";
+
+  const topPlayerStrip = {
+    name: topPlayerColor === "white" ? whiteName : blackName,
+    rating: topPlayerColor === "white" ? whiteRating : blackRating,
+    isActive: turn === topPlayerColor && gameStatus === "active",
+    captured: topPlayerColor === "white" ? whiteCaptured : blackCaptured,
+    materialAdv:
+      topPlayerColor === "white"
+        ? diff > 0
+          ? diff
+          : 0
+        : diff < 0
+          ? -diff
+          : 0,
+    time: topPlayerColor === "white" ? whiteTime : blackTime,
+    clockClass: topPlayerColor === "white" ? whiteClockClass : blackClockClass,
+    side: topPlayerColor,
+  };
+
+  const bottomPlayerStrip = {
+    name: bottomPlayerColor === "white" ? whiteName : blackName,
+    rating: bottomPlayerColor === "white" ? whiteRating : blackRating,
+    isActive: turn === bottomPlayerColor && gameStatus === "active",
+    captured: bottomPlayerColor === "white" ? whiteCaptured : blackCaptured,
+    materialAdv:
+      bottomPlayerColor === "white"
+        ? diff > 0
+          ? diff
+          : 0
+        : diff < 0
+          ? -diff
+          : 0,
+    time: bottomPlayerColor === "white" ? whiteTime : blackTime,
+    clockClass:
+      bottomPlayerColor === "white" ? whiteClockClass : blackClockClass,
+    side: bottomPlayerColor,
+  };
+
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <main className="min-h-screen bg-[var(--surface-main)] text-[var(--foreground)]">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3">
+    <main className="min-h-screen bg-[var(--surface-main)] text-[var(--foreground)] lg:h-screen lg:overflow-hidden">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3 lg:h-full lg:flex lg:flex-col">
         {/* Top Bar */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex shrink-0 items-center justify-between mb-3">
           <button
             onClick={handleBackToLobby}
             className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition cursor-pointer"
@@ -567,7 +604,7 @@ export default function GamePage({ params }: GamePageProps) {
 
         {/* Waiting for Opponent Banner */}
         {gameStatus === "waiting" && inviteCode && (
-          <div className="mb-4 p-4 bg-surface-card border border-[var(--primary-border)] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="mb-3 shrink-0 p-4 bg-surface-card border border-[var(--primary-border)] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-[var(--primary)]">
                 Waiting for your opponent to join…
@@ -595,7 +632,7 @@ export default function GamePage({ params }: GamePageProps) {
         )}
 
         {gameStatus === "waiting" && !inviteCode && (
-          <div className="mb-4 p-4 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl flex items-center gap-3 text-gray-400 text-sm">
+          <div className="mb-3 shrink-0 p-4 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl flex items-center gap-3 text-gray-400 text-sm">
             <span className="w-2 h-2 rounded-full bg-[var(--game-blitz)] animate-pulse" />
             Waiting for opponent to join…
           </div>
@@ -603,29 +640,30 @@ export default function GamePage({ params }: GamePageProps) {
 
         {/* Message Banner */}
         {message && (
-          <div className="mb-4 p-3 bg-[var(--primary-muted)] border border-[var(--primary-border)] rounded-xl text-center text-sm font-semibold text-white animate-in fade-in duration-150">
+          <div className="mb-3 shrink-0 p-3 bg-[var(--primary-muted)] border border-[var(--primary-border)] rounded-xl text-center text-sm font-semibold text-white animate-in fade-in duration-150">
             {message}
           </div>
         )}
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 lg:gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4 lg:gap-6 items-start lg:min-h-0 lg:flex-1">
           {/* ── Left: Board + Player strips ── */}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col items-center gap-2 lg:h-full lg:min-h-0">
             {/* Opponent (top of board) */}
             <PlayerStrip
-              name={isPassAndPlay ? blackName : opponentName}
-              rating={isPassAndPlay ? blackRating : opponentRating}
-              isActive={turn === "black" && gameStatus === "active"}
-              captured={blackCaptured}
-              materialAdv={diff < 0 ? -diff : 0}
-              time={blackTime}
-              clockClass={blackClockClass}
-              side="black"
+              name={topPlayerStrip.name}
+              rating={topPlayerStrip.rating}
+              isActive={topPlayerStrip.isActive}
+              captured={topPlayerStrip.captured}
+              materialAdv={topPlayerStrip.materialAdv}
+              time={topPlayerStrip.time}
+              clockClass={topPlayerStrip.clockClass}
+              side={topPlayerStrip.side}
+              className="w-full max-w-[min(92vw,38rem)] lg:w-[min(100%,calc(100vh-15rem),38rem)] lg:max-w-[min(100%,calc(100vh-15rem),38rem)]"
             />
 
             {/* Board */}
-            <div className="w-full">
+            <div className="w-full min-h-0 flex justify-center">
               <ChessBoard
                 fen={fen}
                 orientation={boardOrientation}
@@ -633,34 +671,21 @@ export default function GamePage({ params }: GamePageProps) {
                 isPassAndPlay={isPassAndPlay}
                 onMove={handleMakeMove}
                 lastMove={lastMove}
+                className="max-w-[min(92vw,38rem)] lg:w-[min(100%,calc(100vh-15rem),38rem)] lg:max-w-[min(100%,calc(100vh-15rem),38rem)]"
               />
             </div>
 
             {/* My player strip (bottom of board) */}
             <PlayerStrip
-              name={
-                isPassAndPlay
-                  ? whiteName
-                  : playerColor === "white"
-                    ? whiteName
-                    : blackName
-              }
-              rating={
-                isPassAndPlay
-                  ? whiteRating
-                  : playerColor === "white"
-                    ? whiteRating
-                    : blackRating
-              }
-              isActive={
-                turn === (isPassAndPlay ? "white" : playerColor) &&
-                gameStatus === "active"
-              }
-              captured={whiteCaptured}
-              materialAdv={diff > 0 ? diff : 0}
-              time={whiteTime}
-              clockClass={whiteClockClass}
-              side="white"
+              name={bottomPlayerStrip.name}
+              rating={bottomPlayerStrip.rating}
+              isActive={bottomPlayerStrip.isActive}
+              captured={bottomPlayerStrip.captured}
+              materialAdv={bottomPlayerStrip.materialAdv}
+              time={bottomPlayerStrip.time}
+              clockClass={bottomPlayerStrip.clockClass}
+              side={bottomPlayerStrip.side}
+              className="w-full max-w-[min(92vw,38rem)] lg:w-[min(100%,calc(100vh-15rem),38rem)] lg:max-w-[min(100%,calc(100vh-15rem),38rem)]"
             />
 
             {/* Game Action Buttons */}
@@ -707,7 +732,7 @@ export default function GamePage({ params }: GamePageProps) {
           </div>
 
           {/* ── Right Panel: Info + Move History ── */}
-          <aside className="flex flex-col gap-4">
+          <aside className="flex flex-col gap-4 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             {/* Players / Rating Card */}
             <div className="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl p-4 space-y-3">
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
@@ -1012,6 +1037,7 @@ interface PlayerStripProps {
   time: number;
   clockClass: string;
   side: "white" | "black";
+  className?: string;
 }
 
 function PlayerStrip({
@@ -1023,10 +1049,11 @@ function PlayerStrip({
   time,
   clockClass,
   side,
+  className = "",
 }: PlayerStripProps) {
   return (
     <div
-      className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${
+      className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${className} ${
         isActive
           ? "bg-[var(--surface-card)] border-[var(--primary-border)] shadow-md"
           : "bg-[var(--surface-main)]/50 border-[var(--surface-border)]"
