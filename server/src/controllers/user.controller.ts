@@ -375,3 +375,13 @@ export const updateMyProfile = async (
     });
   }
 };
+
+export const getLeaderboard = async(
+  req: authRequest, 
+  res : Response
+) => {
+  const users = await userModel.find();
+  return res.status(200).json({
+    users : users 
+  })
+}
