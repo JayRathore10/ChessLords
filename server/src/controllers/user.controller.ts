@@ -376,12 +376,36 @@ export const updateMyProfile = async (
   }
 };
 
-export const getLeaderboard = async(
-  req: authRequest, 
-  res : Response
+export const getLeaderboard = async (
+  req: authRequest,
+  res: Response
 ) => {
-  const users = await userModel.find();
-  return res.status(200).json({
-    users : users 
-  })
-}
+  try {
+    const users = await userModel
+      .find()
+      .select(
+        "username name profilePic rating gamesPlayed gamesWon gamesLost gamesDrawn"
+      )
+      .sort({ rating: -1, gamesWon: -1, _id: 1 })
+      .limit(100)
+      .lean();
+
+    const leaderboard = users.map((user, index) => ({
+      rank: index + 1,
+      ...user,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      count: leaderboard.length,
+      users: leaderboard,
+    });
+  } catch (error) {
+    console.error("Get leaderboard error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch leaderboard",
+    });
+  }
+};
