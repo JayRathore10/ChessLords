@@ -11,6 +11,7 @@ import { gameModel } from "./models/game.model";
 import gameRoutes from "./routes/game.routes";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
+import leaderboardRouter from "./routes/leaderboard.routes";
 import { connectDB } from "./configs/db.config";
 import { setupSocket } from "./socket/socket";
 
@@ -39,6 +40,7 @@ app.use(cookieParser());
 app.use("/api/v1/games", gameRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/leaderboard", leaderboardRouter);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hi, Jexts here!")
