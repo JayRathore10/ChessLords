@@ -246,7 +246,22 @@ export default function RegisterPage() {
       return;
     }
 
-    setIsLoading(true)
+    if (usernameStatus === "unavailable" || usernameStatus === "invalid") {
+      setError(usernameMessage || "Please choose a valid available username.");
+      return;
+    }
+
+    if (usernameStatus === "checking") {
+      setError("Please wait while we check username availability.");
+      return;
+    }
+
+    if (usernameStatus !== "available") {
+      setError("Please wait for username availability to be confirmed.");
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       await register(
@@ -368,14 +383,45 @@ export default function RegisterPage() {
                     id="username"
                     type="text"
                     value={formData.username}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, username: e.target.value }))
-                    }
+                    onChange={handleUsernameChange}
                     required
+                    autoComplete="username"
                     placeholder="grandmaster99"
-                    className="w-full pl-10 pr-3 py-2.5 bg-[#0f1115] border border-[#232732] rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-[#babcbd] focus:ring-1 focus:ring-[#babcbd] transition text-sm"
+                    aria-describedby={usernameMessage ? "username-status" : undefined}
+                    className={`w-full pl-10 pr-10 py-2.5 bg-[#0f1115] border rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-1 transition text-sm ${
+                      usernameStatus === "available"
+                        ? "border-emerald-500/60 focus:border-emerald-400 focus:ring-emerald-400"
+                        : usernameStatus === "unavailable" || usernameStatus === "invalid"
+                          ? "border-red-500/60 focus:border-red-400 focus:ring-red-400"
+                          : "border-[#232732] focus:border-[#babcbd] focus:ring-[#babcbd]"
+                    }`}
                   />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    {usernameStatus === "checking" && (
+                      <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                    )}
+                    {usernameStatus === "available" && (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    )}
+                    {(usernameStatus === "unavailable" || usernameStatus === "invalid") && (
+                      <XCircle className="w-4 h-4 text-red-400" />
+                    )}
+                  </div>
                 </div>
+                {usernameMessage && (
+                  <p
+                    id="username-status"
+                    className={`mt-1.5 text-xs ${
+                      usernameStatus === "available"
+                        ? "text-emerald-400"
+                        : usernameStatus === "checking"
+                          ? "text-gray-400"
+                          : "text-red-400"
+                    }`}
+                  >
+                    {usernameMessage}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -501,7 +547,13 @@ export default function RegisterPage() {
             <div className="pt-2">
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={
+                  isLoading ||
+                  usernameStatus === "checking" ||
+                  usernameStatus === "unavailable" ||
+                  usernameStatus === "invalid" ||
+                  (formData.username.trim().length > 0 && usernameStatus !== "available")
+                }
                 className="w-full py-3.5 px-4 bg-linear-to-r from-[#babcbd] to-[#cfd1d2] hover:from-[#cfd1d2] hover:to-[#e4e5e6] text-[#0f1115] font-bold rounded-xl shadow-lg shadow-black/40 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-sm"
               >
                 {isLoading ? (

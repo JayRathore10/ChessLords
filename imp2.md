@@ -124,53 +124,54 @@
 
 ## Authentication
 
-* [ ] Form Validation
+* [x] Form Validation
 
   * Email/password validation is implemented.
   * Username uniqueness is checked on submission.
-  * **Missing:** Real-time/asynchronous username uniqueness check while typing.
+  * Real-time/asynchronous username uniqueness check while typing (debounced API + status UI).
 
 ## Profile
 
-* [ ] Avatar Upload & Profile Updates
+* [x] Avatar Upload & Profile Updates
 
   * Avatar/profile picture update exists.
   * Display name update exists.
-  * **Missing:** Bio field.
-  * **Missing:** Username update support.
+  * Bio field (model, API, edit form, profile header).
+  * Username update support with uniqueness check.
 
 ## Game Clocks
 
-* [ ] Automatic Timeout Handling
+* [x] Automatic Timeout Handling
 
-  * Client detects `0:00` and emits `gameTimeout`.
-  * **Missing:** Authoritative server-side clock.
-  * A frozen/tampered client could prevent correct timeout handling.
+  * Client detects `0:00` and emits `gameTimeout` (hint only).
+  * Authoritative server-side clock (`lastMoveAt`, elapsed deduction on moves, scheduled timeout timers).
+  * Server re-validates timeouts; clients sync via `moveMade` / `clockUpdate`.
 
 ## Socket User Association
 
-* [ ] Verified Socket User Identity
+* [x] Verified Socket User Identity
 
-  * `socket.data.userId` currently depends on client-provided information.
-  * **Missing:** Cryptographic JWT verification.
+  * Socket.IO `io.use` middleware verifies JWT (auth.token / cookie / Bearer).
+  * Authenticated `socket.data.userId` / username / rating come from the verified user record.
+  * Client-provided identity is ignored when authenticated.
 
 ## Reconnection
 
-* [ ] Reconnection Handling
+* [x] Reconnection Handling
 
   * Game state can be restored through `joinGame`.
-  * **Missing:** 60-second disconnect grace period.
-  * **Missing:** Opponent disconnect notification/banner.
-  * **Missing:** Dedicated reconnection handshake/state flow.
+  * 60-second disconnect grace period (forfeit on timeout).
+  * Opponent disconnect notification/banner with countdown.
+  * Dedicated reconnection handshake (`reconnected` / `opponentReconnected`).
 
 ## Spectators
 
-* [ ] Spectator Mode
+* [x] Spectator Mode
 
-  * Non-player sockets can potentially join the game room.
-  * **Missing:** Dedicated spectator UI.
-  * **Missing:** Read-only spectator indicator.
-  * **Missing:** Spectator count tracking/broadcasting.
+  * Non-player sockets join as spectators (`isSpectator`).
+  * Dedicated spectator UI (badge + read-only note; no resign/draw/move).
+  * Read-only spectator indicator.
+  * Spectator count tracking/broadcasting (`spectatorUpdate`).
 
 ## Leaderboard
 
@@ -222,11 +223,11 @@
 
 ## Gameplay
 
-* [ ] Authoritative Server Clocks
+* [x] Authoritative Server Clocks
 
-  * Track timestamps on the server.
-  * Calculate elapsed time server-side.
-  * Prevent client-side clock manipulation/desync.
+  * Track timestamps on the server (`lastMoveAt`).
+  * Calculate elapsed time server-side on moves and reconnects.
+  * Prevent client-side clock manipulation/desync (server timers + validation).
 
 * [ ] Interactive Move History
 
@@ -258,12 +259,12 @@
 
 ## Socket Infrastructure
 
-* [ ] Socket.IO JWT Authentication
+* [x] Socket.IO JWT Authentication
 
   * Validate JWT during Socket.IO handshake.
   * Bind verified `userId` to `socket.data`.
 
-* [ ] Disconnect Grace Period
+* [x] Disconnect Grace Period
 
   * Detect unexpected disconnect.
   * Start 60-second timer.

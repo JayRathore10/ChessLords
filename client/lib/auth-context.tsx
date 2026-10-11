@@ -8,6 +8,7 @@ import React, {
   useCallback,
 } from "react";
 import axios from "axios";
+import { socket, syncSocketAuth } from "@/lib/socket";
 
 export interface User {
   _id: string;
@@ -15,6 +16,7 @@ export interface User {
   email: string;
   name: string;
   role: "user" | "admin";
+  bio?: string;
   rating?: number;
   profilePic?: string;
   gamesPlayed?: number;
@@ -42,6 +44,8 @@ interface AuthContextType {
 
   updateProfile: (data: {
     name?: string;
+    username?: string;
+    bio?: string;
     profilePic?: File;
   }) => Promise<void>;
 
@@ -166,6 +170,12 @@ export function AuthProvider({
           "userId",
           res.data.user._id
         );
+
+        // Rebind Socket.IO with the new JWT
+        if (socket.connected) {
+          socket.disconnect();
+        }
+        syncSocketAuth();
       }
 
     } catch (error: unknown) {
@@ -224,6 +234,11 @@ export function AuthProvider({
           "userId",
           res.data.user._id
         );
+
+        if (socket.connected) {
+          socket.disconnect();
+        }
+        syncSocketAuth();
       }
 
     } catch (error: unknown) {
@@ -259,12 +274,19 @@ export function AuthProvider({
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       localStorage.removeItem("userId");
+
+      if (socket.connected) {
+        socket.disconnect();
+      }
+      syncSocketAuth();
     }
   };
 
   // UPDATE PROFILE
   const updateProfile = async (data: {
     name?: string;
+    username?: string;
+    bio?: string;
     profilePic?: File;
   }) => {
     const formData = new FormData();
@@ -273,32 +295,46 @@ export function AuthProvider({
       formData.append("name", data.name);
     }
 
+    if (data.username !== undefined) {
+      formData.append("username", data.username);
+    }
+
+    if (data.bio !== undefined) {
+      formData.append("bio", data.bio);
+    }
+
     if (data.profilePic) {
       formData.append("profilePic", data.profilePic);
     }
 
-    const res = await axios.patch(
-      `${backendURL}/api/v1/users/me`,
-      formData,
-      {
-        withCredentials: true,
-        headers: {
-          ...(token
-            ? {
-              Authorization: `Bearer ${token}`,
-            }
-            : {}),
-        },
-      }
-    );
-
-    if (res.data.success && res.data.user) {
-      setUser(res.data.user);
-
-      localStorage.setItem(
-        "user",
-        JSON.stringify(res.data.user)
+    try {
+      const res = await axios.patch(
+        `${backendURL}/api/v1/users/me`,
+        formData,
+        {
+          withCredentials: true,
+          headers: {
+            ...(token
+              ? {
+                  Authorization: `Bearer ${token}`,
+                }
+              : {}),
+          },
+        }
       );
+
+      if (res.data.success && res.data.user) {
+        setUser(res.data.user);
+
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+      }
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          error.response?.data?.message || "Failed to update profile"
+        );
+      }
+      throw error;
     }
   };
 

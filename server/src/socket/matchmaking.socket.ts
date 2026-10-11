@@ -46,13 +46,28 @@ export const setupMatchmakingSocket = (io: Server, socket: Socket) => {
       };
     }) => {
       try {
-        const {
-          userId = socket.id,
-          username = `Player_${socket.id.slice(0, 4)}`,
-          rating = 1200,
-          gameType = "casual",
-          timeControl,
-        } = data;
+        // Prefer cryptographically verified identity from JWT handshake
+        const userId =
+          (socket.data.authenticated && socket.data.userId) ||
+          (data.userId && !socket.data.authenticated ? data.userId : undefined) ||
+          socket.id;
+        const username =
+          (socket.data.authenticated && socket.data.username) ||
+          data.username ||
+          `Player_${socket.id.slice(0, 4)}`;
+        const rating =
+          (socket.data.authenticated && typeof socket.data.rating === "number"
+            ? socket.data.rating
+            : undefined) ??
+          data.rating ??
+          1200;
+        const gameType = data.gameType || "casual";
+        const { timeControl } = data;
+
+        if (!timeControl?.initialTime) {
+          socket.emit("queueError", { message: "Time control is required" });
+          return;
+        }
 
         // Clean up any existing queue entry for this socket
         removeFromQueue(socket.id);
@@ -136,20 +151,25 @@ export const setupMatchmakingSocket = (io: Server, socket: Socket) => {
             whiteTime: timeControl.initialTime,
             blackTime: timeControl.initialTime,
             startedAt: new Date(),
+            lastMoveAt: new Date(),
           });
 
           const gameId = newGame._id.toString();
           createChessGame(gameId, newGame.currentPosition);
 
-          // Join sockets to game room
+          // Join sockets to game room (preserve verified userId from auth middleware)
           socket.join(`game:${gameId}`);
-          socket.data.userId = userId;
+          if (!socket.data.authenticated) {
+            socket.data.userId = userId;
+          }
           socket.data.gameId = gameId;
           socket.data.color = isCurrentWhite ? "white" : "black";
 
           if (opponentSocket) {
             opponentSocket.join(`game:${gameId}`);
-            opponentSocket.data.userId = opponent.userId;
+            if (!opponentSocket.data.authenticated) {
+              opponentSocket.data.userId = opponent.userId;
+            }
             opponentSocket.data.gameId = gameId;
             opponentSocket.data.color = isCurrentWhite ? "black" : "white";
           }

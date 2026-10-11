@@ -270,15 +270,64 @@ export const updateMyProfile = async (
       });
     }
 
-    const { name } = req.body;
+    const { name, username, bio } = req.body;
 
     const updateData: {
       name?: string;
+      username?: string;
+      bio?: string;
       profilePic?: string;
     } = {};
 
     if (name !== undefined) {
-      updateData.name = name;
+      const trimmedName = String(name).trim();
+      if (trimmedName.length < 2 || trimmedName.length > 30) {
+        return res.status(400).json({
+          success: false,
+          message: "Display name must be between 2 and 30 characters",
+        });
+      }
+      updateData.name = trimmedName;
+    }
+
+    if (username !== undefined) {
+      const trimmedUsername = String(username).trim();
+      if (
+        trimmedUsername.length < 3 ||
+        trimmedUsername.length > 20 ||
+        !/^[a-zA-Z0-9_]+$/.test(trimmedUsername)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Username must be 3–20 characters and contain only letters, numbers, and underscores",
+        });
+      }
+
+      const existing = await userModel.findOne({
+        username: { $regex: new RegExp(`^${trimmedUsername}$`, "i") },
+        _id: { $ne: req.user._id },
+      });
+
+      if (existing) {
+        return res.status(409).json({
+          success: false,
+          message: "Username is already taken",
+        });
+      }
+
+      updateData.username = trimmedUsername;
+    }
+
+    if (bio !== undefined) {
+      const trimmedBio = String(bio).trim();
+      if (trimmedBio.length > 160) {
+        return res.status(400).json({
+          success: false,
+          message: "Bio must not exceed 160 characters",
+        });
+      }
+      updateData.bio = trimmedBio;
     }
 
     // Multer has successfully uploaded the image
@@ -286,17 +335,11 @@ export const updateMyProfile = async (
       updateData.profilePic = `/images/${req.file.filename}`;
     }
 
-    console.log("UPDATE DATA:", updateData);
-
     const user = await userModel
-      .findByIdAndUpdate(
-        req.user._id,
-        updateData,
-        {
-          new: true,
-          runValidators: true,
-        }
-      )
+      .findByIdAndUpdate(req.user._id, updateData, {
+        new: true,
+        runValidators: true,
+      })
       .select("-password");
 
     if (!user) {
@@ -311,8 +354,20 @@ export const updateMyProfile = async (
       message: "Profile updated successfully",
       user,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Update profile error:", error);
+
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      (error as { code?: number }).code === 11000
+    ) {
+      return res.status(409).json({
+        success: false,
+        message: "Username is already taken",
+      });
+    }
 
     return res.status(500).json({
       success: false,

@@ -175,6 +175,7 @@ export const createGame = async (req: Request, res: Response) => {
       whiteTime: initialTime,
       blackTime: initialTime,
       startedAt: new Date(),
+      lastMoveAt: new Date(),
     });
 
     createChessGame(game._id.toString(), chess.fen());

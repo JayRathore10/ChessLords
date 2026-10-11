@@ -21,12 +21,13 @@ const router = Router();
 // Public
 router.get("/", getAllUsers);
 router.get("/username/:username", getUserByUsername);
+
+// Logged-in user (before /:id so "me" is not treated as an ObjectId)
+router.get("/me", isUserLoggedIn, getMyProfile);
+router.patch("/me", isUserLoggedIn, upload.single("profilePic"), updateMyProfile);
+
 router.get("/:id", getUserById);
 router.get("/:id/stats", getUserStats);
-
-// Logged-in user
-router.get("/me", isUserLoggedIn, getMyProfile);
-router.patch("/me", isUserLoggedIn, upload.single("profilePic") , updateMyProfile);
 
 // Admin
 router.delete("/:id", isAdminLoggedIn, deleteUser);

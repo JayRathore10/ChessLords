@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useRef , Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { socket } from "@/lib/socket";
+import { connectSocket, socket } from "@/lib/socket";
 import { useAuth } from "@/lib/auth-context";
 import { apiFetch } from "@/lib/api"; 
 
@@ -116,7 +116,7 @@ function GameLobbyPage() {
 
   // Socket setup for matchmaking & room events
   useEffect(() => {
-    socket.connect();
+    connectSocket();
 
     const handleMatchFound = (data: {
       gameId: string;

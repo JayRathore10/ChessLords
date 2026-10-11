@@ -1,12 +1,118 @@
 import { Server } from 'socket.io';
 import { Socket } from 'socket.io';
 import { getChessGame } from '../services/chess.service';
-import { gameModel } from '../models/game.model';
+import { gameModel, GameInterface } from '../models/game.model';
 import { createChessGame } from '../services/chess.service';
 import mongoose from 'mongoose';
 import { makeChessMove } from '../services/chess.service';
+import {
+  applyElapsedTime,
+  applyIncrement,
+  clearGameTimeout,
+  clockPayload,
+  handleAuthoritativeTimeout,
+  isTimedOut,
+  scheduleGameTimeout,
+} from '../services/clock.service';
+import {
+  clearAllPendingForGame,
+  clearPendingDisconnect,
+  handlePlayerReconnected,
+  startDisconnectGrace,
+} from '../services/reconnect.service';
 
 const playerGames = new Map<string, string>();
+
+/** gameId -> set of spectator socket ids */
+const gameSpectators = new Map<string, Set<string>>();
+
+function getSpectatorCount(gameId: string): number {
+  return gameSpectators.get(gameId)?.size ?? 0;
+}
+
+function addSpectator(io: Server, gameId: string, socketId: string) {
+  let set = gameSpectators.get(gameId);
+  if (!set) {
+    set = new Set();
+    gameSpectators.set(gameId, set);
+  }
+  set.add(socketId);
+  io.to(`game:${gameId}`).emit('spectatorUpdate', {
+    gameId,
+    spectatorCount: set.size,
+  });
+}
+
+function removeSpectator(io: Server, gameId: string, socketId: string) {
+  const set = gameSpectators.get(gameId);
+  if (!set || !set.has(socketId)) return;
+  set.delete(socketId);
+  if (set.size === 0) {
+    gameSpectators.delete(gameId);
+  }
+  io.to(`game:${gameId}`).emit('spectatorUpdate', {
+    gameId,
+    spectatorCount: set.size,
+  });
+}
+
+function armClock(io: Server, game: GameInterface) {
+  scheduleGameTimeout(game, (gameId, loser, winner) => {
+    void handleAuthoritativeTimeout(io, gameId, loser, winner);
+  });
+}
+
+function resolveSeatedColor(
+  socket: Socket,
+  game: GameInterface
+): 'white' | 'black' | null {
+  let color = socket.data.color as 'white' | 'black' | undefined;
+  if (color === 'white' || color === 'black') return color;
+
+  const userId = socket.data.userId;
+  if (userId && game.whitePlayer?.toString() === userId) return 'white';
+  if (userId && game.blackPlayer?.toString() === userId) return 'black';
+
+  const username = socket.data.username;
+  if (username && game.whitePlayerName === username) return 'white';
+  if (username && game.blackPlayerName === username) return 'black';
+
+  return null;
+}
+
+/**
+ * Unexpected disconnect handler — starts 60s grace period for active online games.
+ */
+export async function handleGameDisconnect(io: Server, socket: Socket) {
+  try {
+    if (socket.data.intentionalLeave) return;
+
+    const gameId = socket.data.gameId || playerGames.get(socket.id);
+    if (!gameId) return;
+
+    playerGames.delete(socket.id);
+
+    if (socket.data.isSpectator) {
+      removeSpectator(io, gameId, socket.id);
+      return;
+    }
+
+    const game = await gameModel.findById(gameId);
+    if (!game || game.status !== 'active' || game.isPassAndPlay) {
+      return;
+    }
+
+    const color = resolveSeatedColor(socket, game);
+    if (!color) return;
+
+    startDisconnectGrace(io, gameId, color, {
+      userId: socket.data.userId,
+      username: socket.data.username,
+    });
+  } catch (error) {
+    console.error('[Game] disconnect handler error:', error);
+  }
+}
 
 export const setupGameSocket = (io: Server, socket: Socket) => {
   // Socket for JoinGame
@@ -19,12 +125,23 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
       rating?: number;
     }) => {
       try {
-        const {
-          gameId,
-          userId = 'guest',
-          username = 'Guest',
-          rating = 1200,
-        } = data;
+        const { gameId } = data;
+
+        // Prefer verified JWT identity; fall back to payload only for guests
+        const userId =
+          (socket.data.authenticated && socket.data.userId) ||
+          data.userId ||
+          'guest';
+        const username =
+          (socket.data.authenticated && socket.data.username) ||
+          data.username ||
+          'Guest';
+        const rating =
+          (socket.data.authenticated && typeof socket.data.rating === 'number'
+            ? socket.data.rating
+            : undefined) ??
+          data.rating ??
+          1200;
 
         const game = await gameModel.findById(gameId);
         if (!game) {
@@ -37,7 +154,9 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
         // Check if Pass and Play local game
         if (game.isPassAndPlay) {
           socket.join(`game:${gameId}`);
-          socket.data.userId = userId;
+          if (!socket.data.authenticated) {
+            socket.data.userId = userId;
+          }
           socket.data.gameId = gameId;
           socket.data.color = 'white'; // default view
 
@@ -87,6 +206,8 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
 
         let playerColor: 'white' | 'black' = 'white';
 
+        let isSpectator = false;
+
         if (isWhite) {
           playerColor = 'white';
         } else if (isBlack) {
@@ -110,27 +231,57 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
 
           game.status = 'active';
           game.startedAt = new Date();
+          game.lastMoveAt = new Date();
           await game.save();
+          armClock(io, game);
 
           console.log(
             `[Room] ${username} joined waiting game ${gameId} as ${playerColor}`
           );
         } else {
           // Spectator or read-only view
+          isSpectator = true;
           playerColor = 'white';
         }
 
+        // Sync remaining time for reconnecting players on an active game
+        if (game.status === 'active' && game.lastMoveAt) {
+          applyElapsedTime(game);
+          await game.save();
+          armClock(io, game);
+        } else if (game.status === 'active' && !game.lastMoveAt) {
+          game.lastMoveAt = new Date();
+          await game.save();
+          armClock(io, game);
+        }
+
         socket.join(`game:${gameId}`);
-        socket.data.userId = userId;
+        if (!socket.data.authenticated) {
+          socket.data.userId = userId;
+          socket.data.username = username;
+        }
         socket.data.gameId = gameId;
         socket.data.color = playerColor;
-        socket.data.username = username;
+        socket.data.isSpectator = isSpectator;
+        socket.data.intentionalLeave = false;
         playerGames.set(socket.id, gameId);
+
+        // Clear disconnect grace if this seated player is reconnecting
+        if (!isSpectator && (playerColor === 'white' || playerColor === 'black')) {
+          handlePlayerReconnected(io, gameId, playerColor, username);
+        }
+
+        if (isSpectator) {
+          addSpectator(io, gameId, socket.id);
+        }
 
         const existingGame = getChessGame(gameId);
         if (!existingGame) {
           createChessGame(gameId, game.currentPosition);
         }
+
+        const clock = clockPayload(game);
+        const spectatorCount = getSpectatorCount(gameId);
 
         const gameStatePayload = {
           gameId: game._id.toString(),
@@ -149,13 +300,26 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
           currentPosition: game.currentPosition,
           turn: game.turn,
           timeControl: game.timeControl,
-          whiteTime: game.whiteTime,
-          blackTime: game.blackTime,
+          whiteTime: clock.whiteTime,
+          blackTime: clock.blackTime,
+          lastMoveAt: clock.lastMoveAt,
+          serverTime: clock.serverTime,
           inviteCode: game.inviteCode,
+          isSpectator,
+          spectatorCount,
+          reconnect: !isSpectator && game.status === 'active',
         };
 
         // Notify this player
         socket.emit('gameState', gameStatePayload);
+        socket.emit('reconnected', {
+          gameId,
+          color: playerColor,
+          isSpectator,
+          spectatorCount,
+          status: game.status,
+          ...clock,
+        });
 
         // Notify other players in room about updated state / player joined
         socket.to(`game:${gameId}`).emit('playerJoined', {
@@ -164,6 +328,10 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
           username,
           rating,
           status: game.status,
+          whiteTime: clock.whiteTime,
+          blackTime: clock.blackTime,
+          turn: game.turn,
+          serverTime: clock.serverTime,
         });
 
         console.log(
@@ -198,6 +366,13 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
           return;
         }
 
+        if (socket.data.isSpectator) {
+          socket.emit('invalidMove', {
+            message: 'Spectators cannot make moves',
+          });
+          return;
+        }
+
         const game = await gameModel.findById(gameId);
 
         if (!game) {
@@ -222,27 +397,57 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
           return;
         }
 
+        // Deduct elapsed time from the player about to move (authoritative)
+        applyElapsedTime(game);
+
+        if (isTimedOut(game)) {
+          const loser = game.turn;
+          const winner = loser === 'white' ? 'black' : 'white';
+          if (loser === 'white') game.whiteTime = 0;
+          else game.blackTime = 0;
+          game.status = 'completed';
+          game.result = winner;
+          game.endedAt = new Date();
+          await game.save();
+          clearGameTimeout(gameId);
+
+          io.to(`game:${gameId}`).emit('gameOver', {
+            result: winner,
+            reason: 'timeout',
+            winner,
+            loser,
+            whiteTime: game.whiteTime,
+            blackTime: game.blackTime,
+          });
+          return;
+        }
+
         // Make chess move
         const result = makeChessMove(gameId, from, to, promotion);
 
         if (!result.success) {
+          // Persist clock deduction even on illegal move attempt
+          await game.save();
           socket.emit('invalidMove', {
             message: result.message,
           });
           return;
         }
 
+        const movedColor = game.turn;
+        applyIncrement(game, movedColor);
+
         // Save move
         game.moves.push(result.move.san);
-
         game.currentPosition = result.fen;
-
         game.turn = result.turn;
+        game.lastMoveAt = new Date();
 
         // Check game over
         if (result.isGameOver) {
           game.status = 'completed';
           game.endedAt = new Date();
+          clearGameTimeout(gameId);
 
           if (result.isCheckmate) {
             game.result = result.turn === 'white' ? 'black' : 'white';
@@ -253,29 +458,30 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
 
         await game.save();
 
+        if (game.status === 'active') {
+          armClock(io, game);
+        }
+
+        const clock = clockPayload(game);
+
         // Send updated game state to both players
         io.to(`game:${gameId}`).emit('moveMade', {
           from,
           to,
           promotion,
-
           move: result.move,
-
           fen: result.fen,
-
           turn: result.turn,
-
           isCheck: result.isCheck,
-
           isCheckmate: result.isCheckmate,
-
           isDraw: result.isDraw,
-
           isGameOver: result.isGameOver,
-
           status: game.status,
-
           result: game.result,
+          whiteTime: clock.whiteTime,
+          blackTime: clock.blackTime,
+          serverTime: clock.serverTime,
+          lastMoveAt: clock.lastMoveAt,
         });
       } catch (error) {
         console.error('Move error:', error);
@@ -292,6 +498,7 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
     try {
       const { gameId } = data;
       if (socket.data.gameId !== gameId) return;
+      if (socket.data.isSpectator) return;
 
       const game = await gameModel.findById(gameId);
       if (!game || game.status !== 'active') return;
@@ -299,15 +506,20 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
       const resigningColor = socket.data.color as 'white' | 'black';
       const winner = resigningColor === 'white' ? 'black' : 'white';
 
+      applyElapsedTime(game);
       game.status = 'completed';
       game.result = winner;
       game.endedAt = new Date();
       await game.save();
+      clearGameTimeout(gameId);
+      clearAllPendingForGame(gameId);
 
       io.to(`game:${gameId}`).emit('gameOver', {
         result: winner,
         reason: 'resignation',
         winner,
+        whiteTime: game.whiteTime,
+        blackTime: game.blackTime,
       });
 
       console.log(`[Game] ${resigningColor} resigned in game ${gameId}`);
@@ -320,6 +532,7 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
   socket.on('offerDraw', (data: { gameId: string }) => {
     const { gameId } = data;
     if (socket.data.gameId !== gameId) return;
+    if (socket.data.isSpectator) return;
 
     // Broadcast draw offer to the opponent
     socket.to(`game:${gameId}`).emit('drawOffered', {
@@ -335,19 +548,25 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
       try {
         const { gameId, accept } = data;
         if (socket.data.gameId !== gameId) return;
+        if (socket.data.isSpectator) return;
 
         if (accept) {
           const game = await gameModel.findById(gameId);
           if (!game || game.status !== 'active') return;
 
+          applyElapsedTime(game);
           game.status = 'completed';
           game.result = 'draw';
           game.endedAt = new Date();
           await game.save();
+          clearGameTimeout(gameId);
+          clearAllPendingForGame(gameId);
 
           io.to(`game:${gameId}`).emit('gameOver', {
             result: 'draw',
             reason: 'agreement',
+            whiteTime: game.whiteTime,
+            blackTime: game.blackTime,
           });
           console.log(`[Game] Draw agreed in game ${gameId}`);
         } else {
@@ -365,6 +584,7 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
     try {
       const { gameId } = data;
       if (socket.data.gameId !== gameId) return;
+      if (socket.data.isSpectator) return;
 
       const game = await gameModel.findById(gameId);
       if (!game) return;
@@ -380,6 +600,8 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
       game.status = 'aborted';
       game.endedAt = new Date();
       await game.save();
+      clearGameTimeout(gameId);
+      clearAllPendingForGame(gameId);
 
       io.to(`game:${gameId}`).emit('gameOver', {
         result: 'none',
@@ -391,7 +613,7 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
     }
   });
 
-  // ─── TIMEOUT HANDLER ───────────────────────────────────────────────────────
+  // ─── TIMEOUT HANDLER (client hint — server re-validates authoritatively) ───
   socket.on(
     'gameTimeout',
     async (data: {
@@ -402,47 +624,11 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
       try {
         const { gameId, winner, loser } = data;
 
-        // Make sure this socket belongs to this game
         if (socket.data.gameId !== gameId) {
           return;
         }
 
-        const game = await gameModel.findById(gameId);
-
-        if (!game || game.status !== 'active') {
-          return;
-        }
-
-        // Make sure the reported loser is actually the player
-        // whose turn it currently is.
-        if (game.turn !== loser) {
-          return;
-        }
-
-        // Set the expired player's clock to zero
-        if (loser === 'white') {
-          game.whiteTime = 0;
-        } else {
-          game.blackTime = 0;
-        }
-
-        // End the game
-        game.status = 'completed';
-        game.result = winner;
-        game.endedAt = new Date();
-
-        await game.save();
-
-        // Tell both players
-        io.to(`game:${gameId}`).emit('gameOver', {
-          result: winner,
-          reason: 'timeout',
-          winner,
-        });
-
-        console.log(
-          `[Game] ${loser} ran out of time in game ${gameId}. ${winner} wins.`
-        );
+        await handleAuthoritativeTimeout(io, gameId, loser, winner);
       } catch (err) {
         console.error('Timeout error:', err);
       }
@@ -465,6 +651,8 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
         return;
       }
 
+      // Mark intentional so disconnect handler does not start a grace period
+      socket.data.intentionalLeave = true;
       playerGames.delete(socket.id);
 
       const game = await gameModel.findById(gameId);
@@ -546,13 +734,20 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
 
       if (leavingColor !== 'white' && leavingColor !== 'black') {
         // Spectator or unidentified player leaving
+        if (socket.data.isSpectator) {
+          removeSpectator(io, gameId, socket.id);
+        }
         socket.leave(`game:${gameId}`);
         socket.data.gameId = undefined;
+        socket.data.isSpectator = false;
         return;
       }
 
       const winner = leavingColor === 'white' ? 'black' : 'white';
       const loser = leavingColor;
+
+      clearGameTimeout(gameId);
+      clearPendingDisconnect(gameId, leavingColor);
 
       // Atomically update game in MongoDB to prevent race conditions
       const updatedGame = await gameModel.findOneAndUpdate(

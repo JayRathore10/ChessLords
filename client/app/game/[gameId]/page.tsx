@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { socket } from "@/lib/socket";
+import { connectSocket, socket } from "@/lib/socket";
 import { useAuth } from "@/lib/auth-context";
 import ChessBoard from "@/components/chess/ChessBoard";
 import GameChat from "@/components/chess/GameChat";
@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   Copy,
   Check,
+  Eye,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -26,6 +27,8 @@ interface GameState {
   gameId: string;
   color: "white" | "black";
   isPassAndPlay?: boolean;
+  isSpectator?: boolean;
+  spectatorCount?: number;
   whitePlayerName?: string;
   blackPlayerName?: string;
   whitePlayerRating?: number;
@@ -58,6 +61,18 @@ interface MoveData {
   isGameOver: boolean;
   status?: string;
   result?: string;
+  whiteTime?: number;
+  blackTime?: number;
+  serverTime?: number;
+  lastMoveAt?: string | null;
+}
+
+interface ClockUpdateData {
+  whiteTime: number;
+  blackTime: number;
+  turn: "white" | "black";
+  serverTime?: number;
+  lastMoveAt?: string | null;
 }
 
 interface GameOverData {
@@ -154,6 +169,8 @@ export default function GamePage({ params }: GamePageProps) {
   );
   const [sanMoves, setSanMoves] = useState<string[]>([]);
   const [isPassAndPlay, setIsPassAndPlay] = useState(false);
+  const [isSpectator, setIsSpectator] = useState(false);
+  const [spectatorCount, setSpectatorCount] = useState(0);
   const [message, setMessage] = useState("");
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
@@ -184,6 +201,14 @@ export default function GamePage({ params }: GamePageProps) {
   );
   const [drawPending, setDrawPending] = useState(false); // waiting for opponent
 
+  // Opponent disconnect grace banner
+  const [opponentDisconnect, setOpponentDisconnect] = useState<{
+    color: "white" | "black";
+    username?: string;
+    expiresAt: number;
+  } | null>(null);
+  const [disconnectSecondsLeft, setDisconnectSecondsLeft] = useState(0);
+
   // Move history scroll
   const moveListRef = useRef<HTMLDivElement>(null);
 
@@ -202,6 +227,7 @@ export default function GamePage({ params }: GamePageProps) {
   //   []
   // );
 
+  // Local display tick — timeout is confirmed by the server (authoritative)
   const startClock = useCallback(
     (currentTurn: "white" | "black") => {
       if (clockRef.current) {
@@ -212,43 +238,55 @@ export default function GamePage({ params }: GamePageProps) {
         if (currentTurn === "white") {
           setWhiteTime((t) => {
             if (t <= 1) {
-              // White's time is over → Black wins
               clearInterval(clockRef.current!);
               clockRef.current = null;
-
+              // Hint only — server re-validates with wall-clock timestamps
               socket.emit("gameTimeout", {
                 gameId,
                 winner: "black",
                 loser: "white",
               });
-
               return 0;
             }
-
             return t - 1;
           });
         } else {
           setBlackTime((t) => {
             if (t <= 1) {
-              // Black's time is over → White wins
               clearInterval(clockRef.current!);
               clockRef.current = null;
-
               socket.emit("gameTimeout", {
                 gameId,
                 winner: "white",
                 loser: "black",
               });
-
               return 0;
             }
-
             return t - 1;
           });
         }
       }, 1000);
     },
     [gameId],
+  );
+
+  const syncClocksFromServer = useCallback(
+    (data: {
+      whiteTime?: number;
+      blackTime?: number;
+      turn?: "white" | "black";
+    }) => {
+      if (typeof data.whiteTime === "number") {
+        setWhiteTime(Math.max(0, data.whiteTime));
+      }
+      if (typeof data.blackTime === "number") {
+        setBlackTime(Math.max(0, data.blackTime));
+      }
+      if (data.turn) {
+        startClock(data.turn);
+      }
+    },
+    [startClock],
   );
 
   const stopClock = useCallback(() => {
@@ -260,7 +298,7 @@ export default function GamePage({ params }: GamePageProps) {
 
   // ─── Socket wiring ───────────────────────────────────────────────────────
   useEffect(() => {
-    socket.connect();
+    connectSocket();
 
     const storedUserId =
       typeof window !== "undefined"
@@ -268,6 +306,7 @@ export default function GamePage({ params }: GamePageProps) {
         : "guest";
     const storedUsername = user?.username || "Player";
 
+    // userId/username still sent for guests; authenticated sockets ignore spoofed ids
     socket.emit("joinGame", {
       gameId,
       userId: storedUserId,
@@ -282,6 +321,8 @@ export default function GamePage({ params }: GamePageProps) {
       setSanMoves(game.moves || []);
       setGameStatus(game.status);
       setIsPassAndPlay(game.isPassAndPlay || false);
+      setIsSpectator(!!game.isSpectator);
+      setSpectatorCount(game.spectatorCount ?? 0);
       setWhiteName(game.whitePlayerName || "White");
       setBlackName(game.blackPlayerName || "Black");
       setWhiteRating(game.whitePlayerRating || 1200);
@@ -299,17 +340,33 @@ export default function GamePage({ params }: GamePageProps) {
       }
     };
 
+    const handleSpectatorUpdate = (data: {
+      gameId: string;
+      spectatorCount: number;
+    }) => {
+      if (data.gameId !== gameId) return;
+      setSpectatorCount(data.spectatorCount);
+    };
+
     const handlePlayerJoined = (data: {
       joinedColor: string;
       username: string;
       status: string;
+      whiteTime?: number;
+      blackTime?: number;
+      turn?: "white" | "black";
     }) => {
       if (data.status === "active") {
         setGameStatus("active");
         setMessage("");
-        // Start clock for white's first turn
-        startClock("white");
+        if (typeof data.whiteTime === "number") setWhiteTime(data.whiteTime);
+        if (typeof data.blackTime === "number") setBlackTime(data.blackTime);
+        startClock(data.turn || "white");
       }
+    };
+
+    const handleClockUpdate = (data: ClockUpdateData) => {
+      syncClocksFromServer(data);
     };
 
     const handleMove = (move: MoveData) => {
@@ -321,9 +378,16 @@ export default function GamePage({ params }: GamePageProps) {
       }
       if (move.status) setGameStatus(move.status);
 
-      // Increment the previous player's time
-      const prevTurn = move.turn === "white" ? "black" : "white";
-      if (increment > 0) {
+      // Prefer authoritative server times (includes increment + elapsed deduction)
+      if (
+        typeof move.whiteTime === "number" &&
+        typeof move.blackTime === "number"
+      ) {
+        setWhiteTime(Math.max(0, move.whiteTime));
+        setBlackTime(Math.max(0, move.blackTime));
+      } else if (increment > 0) {
+        // Fallback for older payloads
+        const prevTurn = move.turn === "white" ? "black" : "white";
         if (prevTurn === "white") {
           setWhiteTime((t) => t + increment);
         } else {
@@ -363,6 +427,7 @@ export default function GamePage({ params }: GamePageProps) {
 
     const handleGameOver = (data: GameOverData) => {
       stopClock();
+      setOpponentDisconnect(null);
       setGameStatus("completed");
       setGameOver(data);
     };
@@ -402,8 +467,40 @@ export default function GamePage({ params }: GamePageProps) {
       setTimeout(() => setMessage(""), 3000);
     };
 
+    const handleOpponentDisconnected = (data: {
+      gameId: string;
+      color: "white" | "black";
+      username?: string;
+      expiresAt: number;
+      graceMs?: number;
+    }) => {
+      if (data.gameId !== gameId) return;
+      // Don't show banner to the disconnected player themselves
+      if (playerColor && data.color === playerColor) return;
+      setOpponentDisconnect({
+        color: data.color,
+        username: data.username,
+        expiresAt: data.expiresAt,
+      });
+    };
+
+    const handleOpponentReconnected = (data: {
+      gameId: string;
+      color: "white" | "black";
+    }) => {
+      if (data.gameId !== gameId) return;
+      setOpponentDisconnect(null);
+      setMessage("Opponent reconnected.");
+      setTimeout(() => setMessage(""), 2500);
+    };
+
+    const handleReconnected = () => {
+      setOpponentDisconnect(null);
+    };
+
     socket.on("gameState", handleGameState);
     socket.on("playerJoined", handlePlayerJoined);
+    socket.on("clockUpdate", handleClockUpdate);
     socket.on("moveMade", handleMove);
     socket.on("invalidMove", handleInvalidMove);
     socket.on("gameError", handleGameError);
@@ -411,10 +508,15 @@ export default function GamePage({ params }: GamePageProps) {
     socket.on("gameLeft", handleGameLeft);
     socket.on("drawOffered", handleDrawOffered);
     socket.on("drawDeclined", handleDrawDeclined);
+    socket.on("opponentDisconnected", handleOpponentDisconnected);
+    socket.on("opponentReconnected", handleOpponentReconnected);
+    socket.on("reconnected", handleReconnected);
+    socket.on("spectatorUpdate", handleSpectatorUpdate);
 
     return () => {
       socket.off("gameState", handleGameState);
       socket.off("playerJoined", handlePlayerJoined);
+      socket.off("clockUpdate", handleClockUpdate);
       socket.off("moveMade", handleMove);
       socket.off("invalidMove", handleInvalidMove);
       socket.off("gameError", handleGameError);
@@ -422,11 +524,36 @@ export default function GamePage({ params }: GamePageProps) {
       socket.off("gameLeft", handleGameLeft);
       socket.off("drawOffered", handleDrawOffered);
       socket.off("drawDeclined", handleDrawDeclined);
+      socket.off("opponentDisconnected", handleOpponentDisconnected);
+      socket.off("opponentReconnected", handleOpponentReconnected);
+      socket.off("reconnected", handleReconnected);
+      socket.off("spectatorUpdate", handleSpectatorUpdate);
       stopClock();
       socket.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId, playerColor]);
+
+  // Countdown for opponent disconnect grace banner
+  useEffect(() => {
+    if (!opponentDisconnect) {
+      setDisconnectSecondsLeft(0);
+      return;
+    }
+
+    const tick = () => {
+      const left = Math.max(
+        0,
+        Math.ceil((opponentDisconnect.expiresAt - Date.now()) / 1000),
+      );
+      setDisconnectSecondsLeft(left);
+      if (left <= 0) setOpponentDisconnect(null);
+    };
+
+    tick();
+    const id = setInterval(tick, 250);
+    return () => clearInterval(id);
+  }, [opponentDisconnect]);
 
   // Scroll move list to bottom on new move
   useEffect(() => {
@@ -495,11 +622,15 @@ export default function GamePage({ params }: GamePageProps) {
 
   // ─── Computed ─────────────────────────────────────────────────────────────
   const isMyTurn =
+    !isSpectator &&
     gameStatus === "active" &&
     (isPassAndPlay || (playerColor !== null && turn === playerColor));
 
   const boardDisabled =
-    !isMyTurn || gameStatus !== "active" || gameOver !== null;
+    isSpectator ||
+    !isMyTurn ||
+    gameStatus !== "active" ||
+    gameOver !== null;
 
   const { whiteCaptured, blackCaptured } = parseCaptured(sanMoves);
   const diff = materialDiff(whiteCaptured, blackCaptured);
@@ -584,6 +715,18 @@ export default function GamePage({ params }: GamePageProps) {
             Back to Lobby
           </button>
           <div className="flex items-center gap-2 text-xs text-gray-500">
+            {isSpectator && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-sky-500/15 text-sky-300 border border-sky-500/30 flex items-center gap-1">
+                <Eye className="w-3 h-3" />
+                Spectating
+              </span>
+            )}
+            {spectatorCount > 0 && (
+              <span className="text-gray-400 flex items-center gap-1">
+                <Eye className="w-3 h-3" />
+                {spectatorCount}
+              </span>
+            )}
             <span
               className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
                 gameType === "rated"
@@ -638,6 +781,29 @@ export default function GamePage({ params }: GamePageProps) {
           </div>
         )}
 
+        {/* Opponent disconnect grace banner */}
+        {opponentDisconnect && gameStatus === "active" && (
+          <div className="mb-3 shrink-0 p-3 sm:p-4 bg-amber-500/10 border border-amber-500/35 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-bold text-amber-300">
+                  Opponent disconnected
+                </p>
+                <p className="text-xs text-amber-200/80 mt-0.5">
+                  {opponentDisconnect.username
+                    ? `${opponentDisconnect.username} lost connection.`
+                    : "Your opponent lost connection."}{" "}
+                  Waiting for them to reconnect…
+                </p>
+              </div>
+            </div>
+            <div className="font-mono text-lg font-black text-amber-300 tabular-nums sm:min-w-[3.5rem] text-right">
+              {disconnectSecondsLeft}s
+            </div>
+          </div>
+        )}
+
         {/* Message Banner */}
         {message && (
           <div className="mb-3 shrink-0 p-3 bg-[var(--primary-muted)] border border-[var(--primary-border)] rounded-xl text-center text-sm font-semibold text-white animate-in fade-in duration-150">
@@ -688,8 +854,8 @@ export default function GamePage({ params }: GamePageProps) {
               className="w-full max-w-[min(92vw,38rem)] lg:w-[min(100%,calc(100vh-15rem),38rem)] lg:max-w-[min(100%,calc(100vh-15rem),38rem)]"
             />
 
-            {/* Game Action Buttons */}
-            {gameStatus === "active" && !gameOver && (
+            {/* Game Action Buttons (players only) */}
+            {gameStatus === "active" && !gameOver && !isSpectator && (
               <div className="flex items-center gap-2 mt-1">
                 {sanMoves.length === 0 && (
                   <button
@@ -727,6 +893,13 @@ export default function GamePage({ params }: GamePageProps) {
                   <Flag className="w-3.5 h-3.5" />
                   Resign
                 </button>
+              </div>
+            )}
+
+            {isSpectator && gameStatus === "active" && !gameOver && (
+              <div className="mt-1 flex items-center gap-2 text-xs text-sky-300/90 px-1">
+                <Eye className="w-3.5 h-3.5" />
+                Read-only spectator view
               </div>
             )}
           </div>

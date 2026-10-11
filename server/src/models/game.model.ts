@@ -39,6 +39,9 @@ export interface GameInterface extends Document {
   whiteTime: number;
   blackTime: number;
 
+  /** Wall-clock timestamp when the current turn's clock started ticking */
+  lastMoveAt?: Date;
+
   startedAt?: Date;
   endedAt?: Date;
 
@@ -160,6 +163,10 @@ const gameSchema = new mongoose.Schema<GameInterface>(
       type: Number,
       required: true,
       min: 0,
+    },
+
+    lastMoveAt: {
+      type: Date,
     },
 
     startedAt: {

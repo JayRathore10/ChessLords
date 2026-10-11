@@ -29,9 +29,13 @@ export default function ProfilePage() {
   // Edit Profile Form State
   const [profileForm, setProfileForm] = useState<{
     name: string;
+    username: string;
+    bio: string;
     profilePic: File | null;
   }>({
     name: "",
+    username: "",
+    bio: "",
     profilePic: null,
   });
 
@@ -55,6 +59,8 @@ export default function ProfilePage() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setProfileForm({
         name: user.name || "",
+        username: user.username || "",
+        bio: user.bio || "",
         profilePic: null,
       });
     }
@@ -122,8 +128,33 @@ export default function ProfilePage() {
     setIsSubmitting(true);
 
     try {
+      const trimmedUsername = profileForm.username.trim();
+      if (
+        trimmedUsername.length < 3 ||
+        trimmedUsername.length > 20 ||
+        !/^[a-zA-Z0-9_]+$/.test(trimmedUsername)
+      ) {
+        setStatusMessage({
+          type: "error",
+          text: "Username must be 3–20 characters (letters, numbers, underscores).",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (profileForm.bio.length > 160) {
+        setStatusMessage({
+          type: "error",
+          text: "Bio must not exceed 160 characters.",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       await updateProfile({
         name: profileForm.name.trim(),
+        username: trimmedUsername,
+        bio: profileForm.bio.trim(),
         profilePic: profileForm.profilePic || undefined,
       });
 
@@ -251,11 +282,26 @@ export default function ProfilePage() {
         {activeTab === "edit" && (
           <EditProfileForm
             name={profileForm.name}
+            username={profileForm.username}
+            bio={profileForm.bio}
+            currentUsername={user.username}
             profilePic={user.profilePic}
             setName={(name) =>
               setProfileForm((prev) => ({
                 ...prev,
                 name,
+              }))
+            }
+            setUsername={(username) =>
+              setProfileForm((prev) => ({
+                ...prev,
+                username,
+              }))
+            }
+            setBio={(bio) =>
+              setProfileForm((prev) => ({
+                ...prev,
+                bio,
               }))
             }
             setProfilePic={(file) =>

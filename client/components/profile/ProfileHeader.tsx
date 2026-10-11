@@ -62,6 +62,12 @@ export default function ProfileHeader({
 
           <p className="text-gray-400 text-sm">{user.email}</p>
 
+          {user.bio ? (
+            <p className="text-gray-300 text-sm max-w-xl leading-relaxed">
+              {user.bio}
+            </p>
+          ) : null}
+
           {/* Badges / Rating quick stats */}
           <div className="pt-2 flex flex-wrap items-center justify-center sm:justify-start gap-4">
             <div className="flex items-center gap-1.5 text-[#babcbd] text-sm font-semibold">

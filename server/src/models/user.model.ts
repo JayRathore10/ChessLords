@@ -11,6 +11,7 @@ export interface UserInterface extends Document {
   role: "user" | "admin";
 
   profilePic: string;
+  bio: string;
 
   // Chess information
   rating: number;
@@ -73,6 +74,13 @@ const userSchema = new mongoose.Schema<UserInterface>(
     profilePic: {
       type: String,
       default: "default.jpg",
+    },
+
+    bio: {
+      type: String,
+      default: "",
+      maxlength: [160, "Bio must not exceed 160 characters"],
+      trim: true,
     },
 
     // Chess rating
