@@ -175,7 +175,7 @@
 
 ## Leaderboard
 
-* [ ] Leaderboard
+* [x] Leaderboard
 
   * `client/app/leaderboard/page.tsx` exists.
   * **Missing:** Live backend data.
