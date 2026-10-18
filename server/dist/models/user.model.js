@@ -46,6 +46,12 @@ const userSchema = new mongoose_1.default.Schema({
         type: String,
         default: "default.jpg",
     },
+    bio: {
+        type: String,
+        default: "",
+        maxlength: [160, "Bio must not exceed 160 characters"],
+        trim: true,
+    },
     // Chess rating
     rating: {
         type: Number,
@@ -72,6 +78,16 @@ const userSchema = new mongoose_1.default.Schema({
         default: 0,
         min: 0,
     },
+    ratingHistory: [
+        {
+            rating: { type: Number, required: true },
+            date: { type: Date, default: Date.now },
+            change: { type: Number, default: 0 },
+            gameId: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "Game" },
+            opponent: { type: String },
+            result: { type: String, enum: ["win", "loss", "draw"] },
+        },
+    ],
     isOnline: {
         type: Boolean,
         default: false,

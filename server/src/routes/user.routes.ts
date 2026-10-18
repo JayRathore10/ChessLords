@@ -26,6 +26,7 @@ router.get("/leaderboard", getLeaderboard);
 
 // Logged-in user (before /:id so "me" is not treated as an ObjectId)
 router.get("/me", isUserLoggedIn, getMyProfile);
+router.get("/me/stats", isUserLoggedIn, getUserStats);
 router.patch("/me", isUserLoggedIn, upload.single("profilePic"), updateMyProfile);
 
 router.get("/:id", getUserById);

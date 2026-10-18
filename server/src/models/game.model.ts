@@ -45,6 +45,8 @@ export interface GameInterface extends Document {
   startedAt?: Date;
   endedAt?: Date;
 
+  statsRecorded?: boolean;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -175,6 +177,11 @@ const gameSchema = new mongoose.Schema<GameInterface>(
 
     endedAt: {
       type: Date,
+    },
+
+    statsRecorded: {
+      type: Boolean,
+      default: false,
     },
   },
   {

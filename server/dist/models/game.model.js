@@ -99,11 +99,18 @@ const gameSchema = new mongoose_1.default.Schema({
         required: true,
         min: 0,
     },
+    lastMoveAt: {
+        type: Date,
+    },
     startedAt: {
         type: Date,
     },
     endedAt: {
         type: Date,
+    },
+    statsRecorded: {
+        type: Boolean,
+        default: false,
     },
 }, {
     timestamps: true,

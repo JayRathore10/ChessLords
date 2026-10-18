@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Types } from "mongoose";
 import { userModel } from "../models/user.model";
 import { authRequest } from "../types/authRequest.type";
+import { getUserStatistics } from "../services/stats.service";
 
 // GET /api/users
 export const getAllUsers = async (req: Request, res: Response) => {
@@ -189,23 +190,28 @@ export const deleteUser = async (req: Request, res: Response) => {
   }
 };
 
-// GET /api/users/:id/stats
+// GET /api/users/:id/stats or /api/users/me/stats
 export const getUserStats = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    let { id } = req.params;
 
-    if (!Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID",
-      });
+    if (id === "me") {
+      const authUser = (req as authRequest).user;
+      if (!authUser) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+      id = authUser._id.toString();
     }
 
-    const user = await userModel
-      .findById(id)
-      .select(
-        "username name profilePic rating gamesPlayed gamesWon gamesLost gamesDrawn"
-      );
+    let user;
+    if (Types.ObjectId.isValid(id)) {
+      user = await userModel.findById(id);
+    } else {
+      user = await userModel.findOne({ username: id });
+    }
 
     if (!user) {
       return res.status(404).json({
@@ -214,18 +220,11 @@ export const getUserStats = async (req: Request, res: Response) => {
       });
     }
 
+    const stats = await getUserStatistics(user);
+
     return res.status(200).json({
       success: true,
-      stats: {
-        username: user.username,
-        name: user.name,
-        profilePic: user.profilePic,
-        rating: user.rating,
-        gamesPlayed: user.gamesPlayed,
-        gamesWon: user.gamesWon,
-        gamesLost: user.gamesLost,
-        gamesDrawn: user.gamesDrawn,
-      },
+      stats,
     });
   } catch (error) {
     console.error("Get user stats error:", error);

@@ -152,6 +152,7 @@ const createGame = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             whiteTime: initialTime,
             blackTime: initialTime,
             startedAt: new Date(),
+            lastMoveAt: new Date(),
         });
         (0, chess_service_1.createChessGame)(game._id.toString(), chess.fen());
         return res.status(201).json({

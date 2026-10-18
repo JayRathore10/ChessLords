@@ -13,7 +13,10 @@ import ProfileTabs from "@/components/profile/ProfileTabs";
 import ProfileStatusMessage from "@/components/profile/ProfileStatusMessage";
 
 import StatsGrid from "@/components/profile/Overview/StatsGrid";
+import RatingProgressionChart from "@/components/profile/Overview/RatingProgressionChart";
 import PerformanceBreakdown from "@/components/profile/Overview/PerformanceBreakdown";
+import { apiFetch } from "@/lib/api";
+import type { UserFullStatistics } from "@/types/stats";
 
 import EditProfileForm from "@/components/profile/EditProfile/EditProfileForm";
 
@@ -52,6 +55,8 @@ export default function ProfilePage() {
   } | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userStats, setUserStats] = useState<UserFullStatistics | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
 
   // Load current user data into the edit form
   useEffect(() => {
@@ -64,6 +69,30 @@ export default function ProfilePage() {
         profilePic: null,
       });
     }
+  }, [user]);
+
+  // Fetch comprehensive player statistics
+  useEffect(() => {
+    if (!user) return;
+    let isMounted = true;
+    setIsLoadingStats(true);
+
+    apiFetch<{ success: boolean; stats: UserFullStatistics }>("/users/me/stats")
+      .then((res) => {
+        if (isMounted && res.success && res.stats) {
+          setUserStats(res.stats);
+        }
+      })
+      .catch((err) => {
+        console.warn("Failed to load user statistics:", err);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingStats(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [user]);
 
   // Loading state
@@ -111,14 +140,15 @@ export default function ProfilePage() {
     );
   }
 
-  // Game statistics
-  const gamesPlayed = user.gamesPlayed ?? 0;
-  const gamesWon = user.gamesWon ?? 0;
-  const gamesLost = user.gamesLost ?? 0;
-  const gamesDrawn = user.gamesDrawn ?? 0;
+  // Comprehensive game statistics
+  const gamesPlayed = userStats?.gamesPlayed ?? (user.gamesPlayed ?? 0);
+  const gamesWon = userStats?.gamesWon ?? (user.gamesWon ?? 0);
+  const gamesLost = userStats?.gamesLost ?? (user.gamesLost ?? 0);
+  const gamesDrawn = userStats?.gamesDrawn ?? (user.gamesDrawn ?? 0);
 
   const winRate =
-    gamesPlayed > 0 ? Math.round((gamesWon / gamesPlayed) * 100) : 0;
+    userStats?.winRate ??
+    (gamesPlayed > 0 ? Math.round((gamesWon / gamesPlayed) * 100) : 0);
 
   // Update profile
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -242,7 +272,10 @@ export default function ProfilePage() {
 
         {/* Profile Header */}
         <ProfileHeader
-          user={user}
+          user={{
+            ...user,
+            rating: userStats?.rating ?? user.rating,
+          }}
           gamesPlayed={gamesPlayed}
           winRate={winRate}
         />
@@ -260,7 +293,7 @@ export default function ProfilePage() {
 
         {/* Overview */}
         {activeTab === "overview" && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <StatsGrid
               gamesPlayed={gamesPlayed}
               gamesWon={gamesWon}
@@ -269,11 +302,19 @@ export default function ProfilePage() {
               winRate={winRate}
             />
 
+            <RatingProgressionChart
+              ratingHistory={userStats?.ratingHistory || []}
+              currentRating={userStats?.rating ?? user.rating ?? 1200}
+              peakRating={userStats?.peakRating ?? user.rating ?? 1200}
+              lowestRating={userStats?.lowestRating ?? user.rating ?? 1200}
+            />
+
             <PerformanceBreakdown
               gamesPlayed={gamesPlayed}
               gamesWon={gamesWon}
               gamesLost={gamesLost}
               gamesDrawn={gamesDrawn}
+              breakdown={userStats?.historicalBreakdown}
             />
           </div>
         )}

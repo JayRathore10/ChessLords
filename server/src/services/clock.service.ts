@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import { gameModel, GameInterface } from "../models/game.model";
+import { recordCompletedGameStats } from "./stats.service";
 
 type TimeoutCallback = (
   gameId: string,
@@ -145,6 +146,7 @@ export async function handleAuthoritativeTimeout(
   game.result = expectedWinner;
   game.endedAt = new Date();
   await game.save();
+  recordCompletedGameStats(game);
 
   io.to(`game:${gameId}`).emit("clockUpdate", {
     whiteTime: game.whiteTime,

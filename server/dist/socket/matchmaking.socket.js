@@ -29,8 +29,24 @@ const removeFromQueue = (socketId) => {
 };
 const setupMatchmakingSocket = (io, socket) => {
     socket.on("joinQueue", (data) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a, _b;
         try {
-            const { userId = socket.id, username = `Player_${socket.id.slice(0, 4)}`, rating = 1200, gameType = "casual", timeControl, } = data;
+            // Prefer cryptographically verified identity from JWT handshake
+            const userId = (socket.data.authenticated && socket.data.userId) ||
+                (data.userId && !socket.data.authenticated ? data.userId : undefined) ||
+                socket.id;
+            const username = (socket.data.authenticated && socket.data.username) ||
+                data.username ||
+                `Player_${socket.id.slice(0, 4)}`;
+            const rating = (_b = (_a = (socket.data.authenticated && typeof socket.data.rating === "number"
+                ? socket.data.rating
+                : undefined)) !== null && _a !== void 0 ? _a : data.rating) !== null && _b !== void 0 ? _b : 1200;
+            const gameType = data.gameType || "casual";
+            const { timeControl } = data;
+            if (!(timeControl === null || timeControl === void 0 ? void 0 : timeControl.initialTime)) {
+                socket.emit("queueError", { message: "Time control is required" });
+                return;
+            }
             // Clean up any existing queue entry for this socket
             removeFromQueue(socket.id);
             console.log(`[Queue] ${username} (${rating}) searching for ${timeControl.initialTime}+${timeControl.increment} (${gameType})`);
@@ -100,17 +116,22 @@ const setupMatchmakingSocket = (io, socket) => {
                     whiteTime: timeControl.initialTime,
                     blackTime: timeControl.initialTime,
                     startedAt: new Date(),
+                    lastMoveAt: new Date(),
                 });
                 const gameId = newGame._id.toString();
                 (0, chess_service_1.createChessGame)(gameId, newGame.currentPosition);
-                // Join sockets to game room
+                // Join sockets to game room (preserve verified userId from auth middleware)
                 socket.join(`game:${gameId}`);
-                socket.data.userId = userId;
+                if (!socket.data.authenticated) {
+                    socket.data.userId = userId;
+                }
                 socket.data.gameId = gameId;
                 socket.data.color = isCurrentWhite ? "white" : "black";
                 if (opponentSocket) {
                     opponentSocket.join(`game:${gameId}`);
-                    opponentSocket.data.userId = opponent.userId;
+                    if (!opponentSocket.data.authenticated) {
+                        opponentSocket.data.userId = opponent.userId;
+                    }
                     opponentSocket.data.gameId = gameId;
                     opponentSocket.data.color = isCurrentWhite ? "black" : "white";
                 }

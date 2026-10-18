@@ -20,6 +20,7 @@ import {
   handlePlayerReconnected,
   startDisconnectGrace,
 } from '../services/reconnect.service';
+import { recordCompletedGameStats } from '../services/stats.service';
 
 const playerGames = new Map<string, string>();
 
@@ -410,6 +411,7 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
           game.endedAt = new Date();
           await game.save();
           clearGameTimeout(gameId);
+          recordCompletedGameStats(game);
 
           io.to(`game:${gameId}`).emit('gameOver', {
             result: winner,
@@ -457,6 +459,10 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
         }
 
         await game.save();
+
+        if (game.status === 'completed') {
+          recordCompletedGameStats(game);
+        }
 
         if (game.status === 'active') {
           armClock(io, game);
@@ -513,6 +519,7 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
       await game.save();
       clearGameTimeout(gameId);
       clearAllPendingForGame(gameId);
+      recordCompletedGameStats(game);
 
       io.to(`game:${gameId}`).emit('gameOver', {
         result: winner,
@@ -561,6 +568,7 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
           await game.save();
           clearGameTimeout(gameId);
           clearAllPendingForGame(gameId);
+          recordCompletedGameStats(game);
 
           io.to(`game:${gameId}`).emit('gameOver', {
             result: 'draw',
@@ -768,6 +776,8 @@ export const setupGameSocket = (io: Server, socket: Socket) => {
         socket.data.gameId = undefined;
         return;
       }
+
+      recordCompletedGameStats(updatedGame);
 
       // Notify all players in the game room immediately
       io.to(`game:${gameId}`).emit('gameLeft', {

@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import { gameModel } from "../models/game.model";
 import { clearGameTimeout } from "./clock.service";
+import { recordCompletedGameStats } from "./stats.service";
 
 export const DISCONNECT_GRACE_MS = 60_000;
 
@@ -67,6 +68,8 @@ async function forfeitAfterGrace(
   );
 
   if (!updated) return;
+
+  recordCompletedGameStats(updated);
 
   io.to(`game:${gameId}`).emit("gameOver", {
     result: winner,

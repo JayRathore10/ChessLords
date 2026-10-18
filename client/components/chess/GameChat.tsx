@@ -110,7 +110,7 @@ export default function GameChat({
   const sendMessage = (text: string, messageType: MessageType) => {
     const trimmed = text.trim();
 
-    if (!trimmed || !canSend) return;
+    if (!trimmed || !canSend || !playerColor) return;
 
     const optimisticMessage: ChatMessage = {
       _id: `local-${optimisticIdRef.current++}`,

@@ -9,9 +9,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateMyProfile = exports.getMyProfile = exports.getUserStats = exports.deleteUser = exports.updateUser = exports.getUserByUsername = exports.getUserById = exports.getAllUsers = void 0;
+exports.getLeaderboard = exports.updateMyProfile = exports.getMyProfile = exports.getUserStats = exports.deleteUser = exports.updateUser = exports.getUserByUsername = exports.getUserById = exports.getAllUsers = void 0;
 const mongoose_1 = require("mongoose");
 const user_model_1 = require("../models/user.model");
+const stats_service_1 = require("../services/stats.service");
 // GET /api/users
 const getAllUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -173,37 +174,37 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.deleteUser = deleteUser;
-// GET /api/users/:id/stats
+// GET /api/users/:id/stats or /api/users/me/stats
 const getUserStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { id } = req.params;
-        if (!mongoose_1.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid user ID",
-            });
+        let { id } = req.params;
+        if (id === "me") {
+            const authUser = req.user;
+            if (!authUser) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Unauthorized",
+                });
+            }
+            id = authUser._id.toString();
         }
-        const user = yield user_model_1.userModel
-            .findById(id)
-            .select("username name profilePic rating gamesPlayed gamesWon gamesLost gamesDrawn");
+        let user;
+        if (mongoose_1.Types.ObjectId.isValid(id)) {
+            user = yield user_model_1.userModel.findById(id);
+        }
+        else {
+            user = yield user_model_1.userModel.findOne({ username: id });
+        }
         if (!user) {
             return res.status(404).json({
                 success: false,
                 message: "User not found",
             });
         }
+        const stats = yield (0, stats_service_1.getUserStatistics)(user);
         return res.status(200).json({
             success: true,
-            stats: {
-                username: user.username,
-                name: user.name,
-                profilePic: user.profilePic,
-                rating: user.rating,
-                gamesPlayed: user.gamesPlayed,
-                gamesWon: user.gamesWon,
-                gamesLost: user.gamesLost,
-                gamesDrawn: user.gamesDrawn,
-            },
+            stats,
         });
     }
     catch (error) {
@@ -240,16 +241,54 @@ const updateMyProfile = (req, res) => __awaiter(void 0, void 0, void 0, function
                 message: "Unauthorized",
             });
         }
-        const { name } = req.body;
+        const { name, username, bio } = req.body;
         const updateData = {};
         if (name !== undefined) {
-            updateData.name = name;
+            const trimmedName = String(name).trim();
+            if (trimmedName.length < 2 || trimmedName.length > 30) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Display name must be between 2 and 30 characters",
+                });
+            }
+            updateData.name = trimmedName;
+        }
+        if (username !== undefined) {
+            const trimmedUsername = String(username).trim();
+            if (trimmedUsername.length < 3 ||
+                trimmedUsername.length > 20 ||
+                !/^[a-zA-Z0-9_]+$/.test(trimmedUsername)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Username must be 3–20 characters and contain only letters, numbers, and underscores",
+                });
+            }
+            const existing = yield user_model_1.userModel.findOne({
+                username: { $regex: new RegExp(`^${trimmedUsername}$`, "i") },
+                _id: { $ne: req.user._id },
+            });
+            if (existing) {
+                return res.status(409).json({
+                    success: false,
+                    message: "Username is already taken",
+                });
+            }
+            updateData.username = trimmedUsername;
+        }
+        if (bio !== undefined) {
+            const trimmedBio = String(bio).trim();
+            if (trimmedBio.length > 160) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Bio must not exceed 160 characters",
+                });
+            }
+            updateData.bio = trimmedBio;
         }
         // Multer has successfully uploaded the image
         if (req.file) {
             updateData.profilePic = `/images/${req.file.filename}`;
         }
-        console.log("UPDATE DATA:", updateData);
         const user = yield user_model_1.userModel
             .findByIdAndUpdate(req.user._id, updateData, {
             new: true,
@@ -270,6 +309,15 @@ const updateMyProfile = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
     catch (error) {
         console.error("Update profile error:", error);
+        if (error &&
+            typeof error === "object" &&
+            "code" in error &&
+            error.code === 11000) {
+            return res.status(409).json({
+                success: false,
+                message: "Username is already taken",
+            });
+        }
         return res.status(500).json({
             success: false,
             message: "Failed to update profile",
@@ -277,3 +325,27 @@ const updateMyProfile = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.updateMyProfile = updateMyProfile;
+const getLeaderboard = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const users = yield user_model_1.userModel
+            .find()
+            .select("username name profilePic rating gamesPlayed gamesWon gamesLost gamesDrawn")
+            .sort({ rating: -1, gamesWon: -1, _id: 1 })
+            .limit(100)
+            .lean();
+        const leaderboard = users.map((user, index) => (Object.assign({ rank: index + 1 }, user)));
+        return res.status(200).json({
+            success: true,
+            count: leaderboard.length,
+            users: leaderboard,
+        });
+    }
+    catch (error) {
+        console.error("Get leaderboard error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch leaderboard",
+        });
+    }
+});
+exports.getLeaderboard = getLeaderboard;
