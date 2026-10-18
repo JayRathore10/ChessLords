@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { useEffect, useState } from "react";
 
 interface LeaderboardPlayer {
   _id: string;
@@ -27,12 +26,14 @@ export default function Leaderboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchLeaderboard = useCallback(async () => {
+  const fetchLeaderboard = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await apiFetch("/users/leaderboard");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/+$/, "")}/api/v1/users/leaderboard`,
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch leaderboard.");
@@ -49,32 +50,57 @@ export default function Leaderboard() {
       setError(
         err instanceof Error
           ? err.message
-          : "Something went wrong while loading the leaderboard."
+          : "Something went wrong while loading the leaderboard.",
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
-    void fetchLeaderboard();
-  }, [fetchLeaderboard]);
+    async function fetchLeaderboard() {
+      try {
+        setError("");
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/leaderboard`,
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch leaderboard.");
+        }
+
+        const data: LeaderboardResponse = await response.json();
+
+        if (!data.success || !Array.isArray(data.users)) {
+          throw new Error("Invalid leaderboard response.");
+        }
+
+        setPlayers(data.users);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Something went wrong while loading the leaderboard.",
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchLeaderboard();
+  }, []);
 
   return (
     <main className="min-h-screen bg-background px-6 py-10">
       <div className="mx-auto max-w-5xl">
-        {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-primary">
-            Leaderboard
-          </h1>
-
+          <h1 className="text-4xl font-bold text-primary">Leaderboard</h1>
           <p className="mt-2 text-foreground/60">
             Top players ranked by rating
           </p>
         </div>
 
-        {/* Leaderboard Card */}
         <div className="overflow-hidden rounded-2xl border border-surface-border bg-surface-card shadow-xl">
           {/* Table Header */}
           <div className="grid grid-cols-12 border-b border-surface-border px-6 py-4 text-sm font-medium text-foreground/50">
@@ -99,7 +125,7 @@ export default function Leaderboard() {
 
               <button
                 type="button"
-                onClick={() => void fetchLeaderboard()}
+                onClick={fetchLeaderboard}
                 className="mt-4 rounded-lg bg-primary px-4 py-2 text-white"
               >
                 Try Again
