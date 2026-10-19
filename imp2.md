@@ -9,114 +9,114 @@
 
 ### Authentication & User Management
 
-* [x] User Registration Page
+- [x] User Registration Page
 
-  * `client/app/register/page.tsx`
-  * Registration flow with display name, username, email, password, confirmation, and password strength meter.
+  - `client/app/register/page.tsx`
+  - Registration flow with display name, username, email, password, confirmation, and password strength meter.
 
-* [x] User Login Page
+- [x] User Login Page
 
-  * `client/app/login/page.tsx`
-  * Email/password validation, show/hide password, and error handling.
+  - `client/app/login/page.tsx`
+  - Email/password validation, show/hide password, and error handling.
 
-* [x] Global Auth Context & Session Management
+- [x] Global Auth Context & Session Management
 
-  * `client/lib/auth-context.tsx`
-  * Session state, JWT tokens, login, register, logout, refresh user, and profile updates.
+  - `client/lib/auth-context.tsx`
+  - Session state, JWT tokens, login, register, logout, refresh user, and profile updates.
 
-* [x] Dynamic Navbar
+- [x] Dynamic Navbar
 
-  * `client/components/NavBar.tsx`
-  * User avatar, rating, profile menu, logout, and login/register states.
+  - `client/components/NavBar.tsx`
+  - User avatar, rating, profile menu, logout, and login/register states.
 
-* [x] User Profile Page
+- [x] User Profile Page
 
-  * `client/app/profile/page.tsx`
-  * Stats, profile editing, and security sections.
+  - `client/app/profile/page.tsx`
+  - Stats, profile editing, and security sections.
 
-* [x] Change Password
+- [x] Change Password
 
-  * `POST /api/v1/auth/change-password`
-  * Password verification with bcrypt and database update.
+  - `POST /api/v1/auth/change-password`
+  - Password verification with bcrypt and database update.
 
 ### Game Creation & Lobby
 
-* [x] Landing Page & Play Hub
+- [x] Landing Page & Play Hub
 
-  * `client/app/page.tsx`
-  * Hero section, CTA, lobby stats, game modes, features, and footer.
+  - `client/app/page.tsx`
+  - Hero section, CTA, lobby stats, game modes, features, and footer.
 
-* [x] Game Lobby
+- [x] Game Lobby
 
-  * `client/app/game/page.tsx`
-  * Quick Match, Friend Game, Pass & Play, time controls, custom games, rated/casual.
+  - `client/app/game/page.tsx`
+  - Quick Match, Friend Game, Pass & Play, time controls, custom games, rated/casual.
 
-* [x] Server-Side Matchmaking
+- [x] Server-Side Matchmaking
 
-  * `server/src/socket/matchmaking.socket.ts`
-  * Rating-based matchmaking with time-control filtering and expanding rating tolerance.
+  - `server/src/socket/matchmaking.socket.ts`
+  - Rating-based matchmaking with time-control filtering and expanding rating tolerance.
 
-* [x] Matchmaking UI
+- [x] Matchmaking UI
 
-  * Searching modal, elapsed timer, and cancel queue functionality.
+  - Searching modal, elapsed timer, and cancel queue functionality.
 
-* [x] Match Routing
+- [x] Match Routing
 
-  * `matchFound` socket event redirects players to `/game/:gameId`.
+  - `matchFound` socket event redirects players to `/game/:gameId`.
 
-* [x] Play With Friend
+- [x] Play With Friend
 
-  * Custom time control.
-  * Color selection.
-  * Room code generation.
-  * Shareable game links.
+  - Custom time control.
+  - Color selection.
+  - Room code generation.
+  - Shareable game links.
 
-* [x] Pass & Play
+- [x] Pass & Play
 
-  * Local two-player hotseat mode.
+  - Local two-player hotseat mode.
 
 ### Gameplay
 
-* [x] Pawn Promotion Modal
+- [x] Pawn Promotion Modal
 
-  * `client/components/chess/ChessBoard.tsx`
-  * Queen, Rook, Bishop, Knight selection.
+  - `client/components/chess/ChessBoard.tsx`
+  - Queen, Rook, Bishop, Knight selection.
 
-* [x] Client Clocks & Increment
+- [x] Client Clocks & Increment
 
-  * `client/app/game/[gameId]/page.tsx`
-  * Countdown timers and increment support.
+  - `client/app/game/[gameId]/page.tsx`
+  - Countdown timers and increment support.
 
-* [x] Resign
+- [x] Resign
 
-  * Confirmation modal.
-  * Server updates game status.
-  * `gameOver` broadcast.
+  - Confirmation modal.
+  - Server updates game status.
+  - `gameOver` broadcast.
 
-* [x] Draw Offer
+- [x] Draw Offer
 
-  * Offer, accept, decline flow through Socket.IO.
+  - Offer, accept, decline flow through Socket.IO.
 
-* [x] Abort Game
+- [x] Abort Game
 
-  * Allowed when no moves have been played.
+  - Allowed when no moves have been played.
 
-* [x] Leave Game / Forfeit
+- [x] Leave Game / Forfeit
 
-  * Back-to-lobby confirmation.
-  * Active opponent wins immediately.
-  * Database update and `gameOver` notification.
+  - Back-to-lobby confirmation.
+  - Active opponent wins immediately.
+  - Database update and `gameOver` notification.
 
-* [x] Move History
+- [x] Move History
 
-  * SAN notation.
-  * Move numbering.
-  * Auto-scrolling.
+  - SAN notation.
+  - Move numbering.
+  - Auto-scrolling.
 
-* [x] Captured Pieces
+- [x] Captured Pieces
 
-  * Captured-piece display.
-  * Material advantage calculation.
+  - Captured-piece display.
+  - Material advantage calculation.
 
 ---
 
@@ -124,89 +124,89 @@
 
 ## Authentication
 
-* [x] Form Validation
+- [x] Form Validation
 
-  * Email/password validation is implemented.
-  * Username uniqueness is checked on submission.
-  * Real-time/asynchronous username uniqueness check while typing (debounced API + status UI).
+  - Email/password validation is implemented.
+  - Username uniqueness is checked on submission.
+  - Real-time/asynchronous username uniqueness check while typing (debounced API + status UI).
 
 ## Profile
 
-* [x] Avatar Upload & Profile Updates
+- [x] Avatar Upload & Profile Updates
 
-  * Avatar/profile picture update exists.
-  * Display name update exists.
-  * Bio field (model, API, edit form, profile header).
-  * Username update support with uniqueness check.
+  - Avatar/profile picture update exists.
+  - Display name update exists.
+  - Bio field (model, API, edit form, profile header).
+  - Username update support with uniqueness check.
 
 ## Game Clocks
 
-* [x] Automatic Timeout Handling
+- [x] Automatic Timeout Handling
 
-  * Client detects `0:00` and emits `gameTimeout` (hint only).
-  * Authoritative server-side clock (`lastMoveAt`, elapsed deduction on moves, scheduled timeout timers).
-  * Server re-validates timeouts; clients sync via `moveMade` / `clockUpdate`.
+  - Client detects `0:00` and emits `gameTimeout` (hint only).
+  - Authoritative server-side clock (`lastMoveAt`, elapsed deduction on moves, scheduled timeout timers).
+  - Server re-validates timeouts; clients sync via `moveMade` / `clockUpdate`.
 
 ## Socket User Association
 
-* [x] Verified Socket User Identity
+- [x] Verified Socket User Identity
 
-  * Socket.IO `io.use` middleware verifies JWT (auth.token / cookie / Bearer).
-  * Authenticated `socket.data.userId` / username / rating come from the verified user record.
-  * Client-provided identity is ignored when authenticated.
+  - Socket.IO `io.use` middleware verifies JWT (auth.token / cookie / Bearer).
+  - Authenticated `socket.data.userId` / username / rating come from the verified user record.
+  - Client-provided identity is ignored when authenticated.
 
 ## Reconnection
 
-* [x] Reconnection Handling
+- [x] Reconnection Handling
 
-  * Game state can be restored through `joinGame`.
-  * 60-second disconnect grace period (forfeit on timeout).
-  * Opponent disconnect notification/banner with countdown.
-  * Dedicated reconnection handshake (`reconnected` / `opponentReconnected`).
+  - Game state can be restored through `joinGame`.
+  - 60-second disconnect grace period (forfeit on timeout).
+  - Opponent disconnect notification/banner with countdown.
+  - Dedicated reconnection handshake (`reconnected` / `opponentReconnected`).
 
 ## Spectators
 
-* [x] Spectator Mode
+- [x] Spectator Mode
 
-  * Non-player sockets join as spectators (`isSpectator`).
-  * Dedicated spectator UI (badge + read-only note; no resign/draw/move).
-  * Read-only spectator indicator.
-  * Spectator count tracking/broadcasting (`spectatorUpdate`).
+  - Non-player sockets join as spectators (`isSpectator`).
+  - Dedicated spectator UI (badge + read-only note; no resign/draw/move).
+  - Read-only spectator indicator.
+  - Spectator count tracking/broadcasting (`spectatorUpdate`).
 
 ## Leaderboard
 
-* [x] Leaderboard
+- [x] Leaderboard
 
-  * `client/app/leaderboard/page.tsx` exists.
-  * **Missing:** Live backend data.
-  * Currently uses mock/hardcoded data.
+  - `client/app/leaderboard/page.tsx` exists.
+  - **Missing:** Live backend data.
+  - Currently uses mock/hardcoded data.
 
 ## Player Statistics
 
-* [x] Player Statistics
+- [x] Player Statistics
 
-  * Basic games/wins/losses/draws information exists.
-  * **Implemented:** Rating progression chart.
-  * **Implemented:** Historical performance breakdown.
-  * Updated UI on profile page with RatingProgressionChart and PerformanceBreakdown components.
-  * API endpoint `/api/v1/users/me/stats` provides full statistics including rating history and breakdown.
+  - Basic games/wins/losses/draws information exists.
+  - **Implemented:** Rating progression chart.
+  - **Implemented:** Historical performance breakdown.
+  - Updated UI on profile page with RatingProgressionChart and PerformanceBreakdown components.
+  - API endpoint `/api/v1/users/me/stats` provides full statistics including rating history and breakdown.
 
 ## Mobile
 
 - [x] Mobile Responsiveness
 
-  * Responsive layouts exist.
-  * Better portrait layout for small screens implemented using `dvh` units.
-  * Board and clocks are now fully visible without vertical scrolling.
+  - Responsive layouts exist.
+  - Better portrait layout for small screens implemented using `dvh` units.
+  - Board and clocks are now fully visible without vertical scrolling.
 
 ## Security Hardening
 
-* [ ] Production Security
+- [x] Production Security
 
-  * Zod validation and CORS configuration exist.
-  * **Missing:** `express-mongo-sanitize`.
-  * **Missing:** XSS protection.
-  * **Missing:** `helmet`.
+  - Zod validation and CORS configuration exist.
+  - Implemented `express-mongo-sanitize`.
+  - Implemented XSS protection using `xss-clean`.
+  - Implemented `helmet` for secure HTTP headers.
 
 ---
 
@@ -214,186 +214,186 @@
 
 ## Authentication
 
-* [ ] JWT Refresh Token Flow
+- [ ] JWT Refresh Token Flow
 
-  * Implement `/auth/refresh-token`.
-  * Add refresh-token controller.
-  * Add client-side 401 interceptor.
-  * Implement silent token renewal.
+  - Implement `/auth/refresh-token`.
+  - Add refresh-token controller.
+  - Add client-side 401 interceptor.
+  - Implement silent token renewal.
 
 ---
 
 ## Gameplay
 
-* [x] Authoritative Server Clocks
+- [x] Authoritative Server Clocks
 
-  * Track timestamps on the server (`lastMoveAt`).
-  * Calculate elapsed time server-side on moves and reconnects.
-  * Prevent client-side clock manipulation/desync (server timers + validation).
+  - Track timestamps on the server (`lastMoveAt`).
+  - Calculate elapsed time server-side on moves and reconnects.
+  - Prevent client-side clock manipulation/desync (server timers + validation).
 
-* [ ] Interactive Move History
+- [ ] Interactive Move History
 
-  * Click previous moves.
-  * Display the corresponding historical board position.
-  * Allow returning to the current position.
+  - Click previous moves.
+  - Display the corresponding historical board position.
+  - Allow returning to the current position.
 
-* [ ] PGN Export
+- [ ] PGN Export
 
-  * Generate PGN.
-  * Copy PGN.
-  * Download PGN.
+  - Generate PGN.
+  - Copy PGN.
+  - Download PGN.
 
-* [ ] FEN Export
+- [ ] FEN Export
 
-  * Copy current FEN position.
+  - Copy current FEN position.
 
-* [ ] Audio & Sound Effects
+- [ ] Audio & Sound Effects
 
-  * Move sound.
-  * Capture sound.
-  * Castle sound.
-  * Check sound.
-  * Checkmate sound.
-  * Low-time warning.
-  * Game-over sound.
+  - Move sound.
+  - Capture sound.
+  - Castle sound.
+  - Check sound.
+  - Checkmate sound.
+  - Low-time warning.
+  - Game-over sound.
 
 ---
 
 ## Socket Infrastructure
 
-* [x] Socket.IO JWT Authentication
+- [x] Socket.IO JWT Authentication
 
-  * Validate JWT during Socket.IO handshake.
-  * Bind verified `userId` to `socket.data`.
+  - Validate JWT during Socket.IO handshake.
+  - Bind verified `userId` to `socket.data`.
 
-* [x] Disconnect Grace Period
+- [x] Disconnect Grace Period
 
-  * Detect unexpected disconnect.
-  * Start 60-second timer.
-  * Notify opponent.
-  * Allow player to reconnect.
-  * Award victory after timeout if player does not return.
+  - Detect unexpected disconnect.
+  - Start 60-second timer.
+  - Notify opponent.
+  - Allow player to reconnect.
+  - Award victory after timeout if player does not return.
 
 ---
 
 ## Rating & Statistics
 
-* [ ] ELO / Rating Calculation
+- [ ] ELO / Rating Calculation
 
-  * Calculate rating changes after rated games.
-  * Update player ratings.
+  - Calculate rating changes after rated games.
+  - Update player ratings.
 
-* [ ] Post-Game Statistics Sync
+- [ ] Post-Game Statistics Sync
 
-  * Update:
+  - Update:
 
-    * Games played
-    * Wins
-    * Losses
-    * Draws
-    * Rating
-    * Rating history
+    - Games played
+    - Wins
+    - Losses
+    - Draws
+    - Rating
+    - Rating history
 
 ---
 
 ## Social Features
 
-* [ ] In-Game Chat
+- [ ] In-Game Chat
 
-  * Real-time player chat.
-  * Quick greetings/emotes.
-  * Profanity filtering.
-  * Mute controls.
+  - Real-time player chat.
+  - Quick greetings/emotes.
+  - Profanity filtering.
+  - Mute controls.
 
-* [ ] Friendship System
+- [ ] Friendship System
 
-  * Friend requests.
-  * Accept/reject requests.
-  * Friends list.
-  * Online status.
-  * Challenge friend.
+  - Friend requests.
+  - Accept/reject requests.
+  - Friends list.
+  - Online status.
+  - Challenge friend.
 
-* [ ] Leaderboard Backend Integration
+- [ ] Leaderboard Backend Integration
 
-  * Connect leaderboard UI to backend.
-  * Sort players by rating.
-  * Display live player statistics.
+  - Connect leaderboard UI to backend.
+  - Sort players by rating.
+  - Display live player statistics.
 
 ---
 
 ## UI / Customization
 
-* [ ] Board Themes
+- [ ] Board Themes
 
-  * Wood
-  * Glass
-  * Neo
-  * Classic Green
-  * Dark Slate
+  - Wood
+  - Glass
+  - Neo
+  - Classic Green
+  - Dark Slate
 
-* [ ] Piece Themes
+- [ ] Piece Themes
 
-  * Standard
-  * Neo
-  * Classic
-  * 3D
+  - Standard
+  - Neo
+  - Classic
+  - 3D
 
-* [ ] Toast Notifications
+- [ ] Toast Notifications
 
-  * Friend requests.
-  * Game challenges.
-  * Errors.
-  * System notifications.
-  * Game events.
+  - Friend requests.
+  - Game challenges.
+  - Errors.
+  - System notifications.
+  - Game events.
 
 ---
 
 ## Testing
 
-* [ ] Chess Service Unit Tests
+- [ ] Chess Service Unit Tests
 
-  * Move validation.
-  * Check.
-  * Checkmate.
-  * Draw conditions.
+  - Move validation.
+  - Check.
+  - Checkmate.
+  - Draw conditions.
 
-* [ ] API Integration Tests
+- [ ] API Integration Tests
 
-  * Authentication.
-  * Game routes.
-  * User routes.
+  - Authentication.
+  - Game routes.
+  - User routes.
 
-* [ ] Socket Tests
+- [ ] Socket Tests
 
-  * `joinGame`
-  * `makeMove`
-  * Draw offer.
-  * Resign.
-  * Timeout.
-  * Leave game.
-  * Reconnection.
+  - `joinGame`
+  - `makeMove`
+  - Draw offer.
+  - Resign.
+  - Timeout.
+  - Leave game.
+  - Reconnection.
 
 ---
 
 ## Production & Deployment
 
-* [ ] Rate Limiting
+- [ ] Rate Limiting
 
-  * Add `express-rate-limit`.
-  * Protect authentication endpoints.
-  * Protect game creation endpoints.
+  - Add `express-rate-limit`.
+  - Protect authentication endpoints.
+  - Protect game creation endpoints.
 
-* [ ] Production Security
+- [ ] Production Security
 
-  * Sanitize inputs.
-  * Configure production CORS.
-  * Add security headers.
+  - Sanitize inputs.
+  - Configure production CORS.
+  - Add security headers.
 
-* [ ] Docker
+- [ ] Docker
 
-  * `Dockerfile`
-  * `docker-compose.yml`
-  * Client + server + MongoDB deployment configuration.
+  - `Dockerfile`
+  - `docker-compose.yml`
+  - Client + server + MongoDB deployment configuration.
 
 ---
 
@@ -458,8 +458,8 @@ Based on dependencies and the current architecture:
 
 The major remaining work is now concentrated around:
 
-* **Competitive infrastructure:** ELO, statistics, authoritative clocks
-* **Socket reliability/security:** JWT authentication and reconnection
-* **Social features:** chat and friends
-* **Polish:** sounds, themes, notifications, mobile UX
-* **Production readiness:** testing, rate limiting, security, Docker
+- **Competitive infrastructure:** ELO, statistics, authoritative clocks
+- **Socket reliability/security:** JWT authentication and reconnection
+- **Social features:** chat and friends
+- **Polish:** sounds, themes, notifications, mobile UX
+- **Production readiness:** testing, rate limiting, security, Docker
