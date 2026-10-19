@@ -6,6 +6,7 @@ import {
   registerNewUser,
   changePassword,
   checkUsernameAvailability,
+  refreshTokenHandler,
 } from "../controllers/auth.controller";
 import { isUserLoggedIn } from "../middleware/auth.middleware";
 
@@ -13,6 +14,7 @@ const router = Router();
 
 router.post("/register", registerNewUser);
 router.post("/login", loginUser);
+router.post("/refresh-token", refreshTokenHandler);
 router.post("/logout", isUserLoggedIn, logoutUser);
 router.get("/me", isUserLoggedIn, me);
 router.post("/change-password", isUserLoggedIn, changePassword);
