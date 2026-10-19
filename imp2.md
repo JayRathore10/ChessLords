@@ -193,11 +193,11 @@
 
 ## Mobile
 
-* [ ] Mobile Responsiveness
+- [x] Mobile Responsiveness
 
   * Responsive layouts exist.
-  * **Missing:** Better portrait layout for small screens.
-  * Board and clocks may require scrolling on smaller devices.
+  * Better portrait layout for small screens implemented using `dvh` units.
+  * Board and clocks are now fully visible without vertical scrolling.
 
 ## Security Hardening
 

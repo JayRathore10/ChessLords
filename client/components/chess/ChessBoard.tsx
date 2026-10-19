@@ -67,11 +67,8 @@ export default function ChessBoard({
 
   const isPromotionMove = (from: string, to: string): boolean => {
     const piece = game.get(from as Square);
-
     if (!piece || piece.type !== "p") return false;
-
     const targetRank = to[1];
-
     return (
       (piece.color === "w" && targetRank === "8") ||
       (piece.color === "b" && targetRank === "1")
@@ -80,7 +77,6 @@ export default function ChessBoard({
 
   const handlePromotion = (promotion: "q" | "r" | "b" | "n") => {
     if (!promotionMove) return;
-
     const { from, to } = promotionMove;
 
     try {
@@ -92,7 +88,6 @@ export default function ChessBoard({
       });
 
       console.log("Promotion move:", move);
-
       if (!move) {
         console.log("Promotion move was illegal");
         return;
@@ -107,7 +102,6 @@ export default function ChessBoard({
       setPromotionMove(null);
       setSelectedSquare(null);
       setLegalMoveSquares([]);
-
     } catch (error) {
       console.error("Promotion error:", error);
     }
@@ -127,7 +121,6 @@ export default function ChessBoard({
           from: sourceSquare,
           to: targetSquare,
         });
-
         return false;
       }
 
@@ -142,16 +135,15 @@ export default function ChessBoard({
       if (onMove) {
         onMove(sourceSquare, targetSquare);
       }
-
       setSelectedSquare(null);
       setLegalMoveSquares([]);
-
       return true;
     } catch (error) {
       console.error("Move error:", error);
       return false;
     }
   };
+
   // Handle Square click (Tap to move)
   const handleSquareClick = ({ square }: SquareHandlerArgs) => {
     if (disabled) return;
@@ -166,7 +158,6 @@ export default function ChessBoard({
               from: selectedSquare,
               to: square,
             });
-
             return;
           }
 
@@ -180,10 +171,8 @@ export default function ChessBoard({
             if (onMove) {
               onMove(selectedSquare, square);
             }
-
             setSelectedSquare(null);
             setLegalMoveSquares([]);
-
             return;
           }
         } catch (error) {
@@ -197,6 +186,7 @@ export default function ChessBoard({
         return;
       }
     }
+
     // Check if clicked square has a piece belonging to active turn
     const pieceOnSquare = game.get(square as Square);
     const isPieceTurn = pieceOnSquare && pieceOnSquare.color === game.turn();
@@ -309,9 +299,8 @@ export default function ChessBoard({
 
   return (
     <div
-      className={`relative w-full max-w-121 aspect-square mx-auto shadow-2xl rounded-xl overflow-hidden bg-[#1f2228] p-2 border border-gray-800/80 ${className}`}
+      className={`relative w-full aspect-square mx-auto shadow-2xl rounded-xl overflow-hidden bg-[#1f2228] p-1.5 sm:p-2 border border-gray-800/80 flex-shrink-0 touch-none ${className}`}
     >
-
       {/* STEP 6: Promotion UI */}
       {promotionMove && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -319,7 +308,6 @@ export default function ChessBoard({
             <p className="text-white text-center mb-3 font-semibold">
               Promote pawn to
             </p>
-
             <div className="flex gap-3">
               <button
                 onClick={() => handlePromotion("q")}
@@ -330,7 +318,6 @@ export default function ChessBoard({
               >
                 {promotionColor === "w" ? "♕" : "♛"}
               </button>
-
               <button
                 onClick={() => handlePromotion("r")}
                 className={`w-16 h-16 text-5xl rounded-lg ${promotionColor === "w"
@@ -340,7 +327,6 @@ export default function ChessBoard({
               >
                 {promotionColor === "w" ? "♖" : "♜"}
               </button>
-
               <button
                 onClick={() => handlePromotion("b")}
                 className={`w-16 h-16 text-5xl rounded-lg ${promotionColor === "w"
@@ -350,7 +336,6 @@ export default function ChessBoard({
               >
                 {promotionColor === "w" ? "♗" : "♝"}
               </button>
-
               <button
                 onClick={() => handlePromotion("n")}
                 className={`w-16 h-16 text-5xl rounded-lg ${promotionColor === "w"
@@ -399,7 +384,6 @@ export default function ChessBoard({
           },
         }}
       />
-
     </div>
   );
 }

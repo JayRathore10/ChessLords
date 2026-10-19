@@ -21,8 +21,7 @@ import {
   Eye,
 } from "lucide-react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
+// Types
 interface GameState {
   gameId: string;
   color: "white" | "black";
@@ -86,7 +85,7 @@ interface GamePageProps {
   params: Promise<{ gameId: string }>;
 }
 
-// ─── Helper to format seconds into mm:ss ──────────────────────────────────────
+// Helper to format seconds into mm:ss
 function formatTime(seconds: number): string {
   const s = Math.max(0, Math.round(seconds));
   const m = Math.floor(s / 60);
@@ -94,7 +93,7 @@ function formatTime(seconds: number): string {
   return `${m}:${sec.toString().padStart(2, "0")}`;
 }
 
-// ─── Captured pieces helpers ──────────────────────────────────────────────────
+// Captured pieces helpers
 const PIECE_VALUES: Record<string, number> = {
   p: 1,
   n: 3,
@@ -109,6 +108,7 @@ function parseCaptured(moves: string[]): {
 } {
   const whiteCaptured: string[] = [];
   const blackCaptured: string[] = [];
+
   for (const san of moves) {
     if (san.includes("x")) {
       // Determine what was captured from SAN — basic heuristic
@@ -120,6 +120,7 @@ function parseCaptured(moves: string[]): {
       const isWhiteMove = san === san; // We count by index parity instead
       const idx = moves.indexOf(san);
       const isWhiteTurn = idx % 2 === 0;
+
       // The "captured" piece: we can't know exact type from SAN x alone, but
       // we mark a pawn by default for display; SAN doesn't always include it.
       if (isWhiteTurn) {
@@ -129,6 +130,7 @@ function parseCaptured(moves: string[]): {
       }
     }
   }
+
   return { whiteCaptured, blackCaptured };
 }
 
@@ -149,7 +151,7 @@ const PIECE_SYMBOLS: Record<string, string> = {
   q: "♛",
 };
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// Component
 export default function GamePage({ params }: GamePageProps) {
   const { gameId } = React.use(params);
   const router = useRouter();
@@ -171,6 +173,7 @@ export default function GamePage({ params }: GamePageProps) {
   const [isPassAndPlay, setIsPassAndPlay] = useState(false);
   const [isSpectator, setIsSpectator] = useState(false);
   const [spectatorCount, setSpectatorCount] = useState(0);
+
   const [message, setMessage] = useState("");
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
@@ -212,28 +215,12 @@ export default function GamePage({ params }: GamePageProps) {
   // Move history scroll
   const moveListRef = useRef<HTMLDivElement>(null);
 
-  // ─── Clock tick ──────────────────────────────────────────────────────────
-  // const startClock = useCallback(
-  //   (currentTurn: "white" | "black") => {
-  //     if (clockRef.current) clearInterval(clockRef.current);
-  //     clockRef.current = setInterval(() => {
-  //       if (currentTurn === "white") {
-  //         setWhiteTime((t) => Math.max(0, t - 1));
-  //       } else {
-  //         setBlackTime((t) => Math.max(0, t - 1));
-  //       }
-  //     }, 1000);
-  //   },
-  //   []
-  // );
-
   // Local display tick — timeout is confirmed by the server (authoritative)
   const startClock = useCallback(
     (currentTurn: "white" | "black") => {
       if (clockRef.current) {
         clearInterval(clockRef.current);
       }
-
       clockRef.current = setInterval(() => {
         if (currentTurn === "white") {
           setWhiteTime((t) => {
@@ -296,10 +283,9 @@ export default function GamePage({ params }: GamePageProps) {
     }
   }, []);
 
-  // ─── Socket wiring ───────────────────────────────────────────────────────
+  // Socket wiring
   useEffect(() => {
     connectSocket();
-
     const storedUserId =
       typeof window !== "undefined"
         ? localStorage.getItem("userId") || user?._id || "guest"
@@ -569,7 +555,7 @@ export default function GamePage({ params }: GamePageProps) {
     }
   }, [gameStatus, stopClock]);
 
-  // ─── Handlers ────────────────────────────────────────────────────────────
+  // Handlers
   const handleMakeMove = (from: string, to: string, promotion?: string) => {
     socket.emit("makeMove", { gameId, from, to, promotion: promotion || "q" });
   };
@@ -620,7 +606,7 @@ export default function GamePage({ params }: GamePageProps) {
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  // ─── Computed ─────────────────────────────────────────────────────────────
+  // Computed
   const isMyTurn =
     !isSpectator &&
     gameStatus === "active" &&
@@ -646,13 +632,13 @@ export default function GamePage({ params }: GamePageProps) {
     whiteTime < 30 && gameStatus === "active" && turn === "white"
       ? "text-red-400 font-extrabold"
       : "text-white font-bold";
+
   const blackClockClass =
     blackTime < 30 && gameStatus === "active" && turn === "black"
       ? "text-red-400 font-extrabold"
       : "text-white font-bold";
 
-  // For board orientation: in pass-and-play, show white's perspective always;
-  // otherwise orient by player color
+  // For board orientation
   const boardOrientation = isPassAndPlay
     ? "white"
     : playerColor === "black"
@@ -701,10 +687,14 @@ export default function GamePage({ params }: GamePageProps) {
     side: bottomPlayerColor,
   };
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  // Mobile-first sizing: prioritize keeping the board and clocks within the vertical viewport 
+  const boardWidthClass =
+    "w-full max-w-[min(96vw,55dvh)] sm:max-w-[min(90vw,65dvh)] lg:w-[min(100%,calc(100vh-15rem),38rem)] lg:max-w-[min(100%,calc(100vh-15rem),38rem)] mx-auto";
+
+  // Render
   return (
     <main className="min-h-screen bg-[var(--surface-main)] text-[var(--foreground)] lg:h-screen lg:overflow-hidden">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3 lg:h-full lg:flex lg:flex-col">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2 lg:h-full lg:flex lg:flex-col">
         {/* Top Bar */}
         <div className="flex shrink-0 items-center justify-between mb-3">
           <button
@@ -714,6 +704,7 @@ export default function GamePage({ params }: GamePageProps) {
             <ChevronLeft className="w-4 h-4" />
             Back to Lobby
           </button>
+
           <div className="flex items-center gap-2 text-xs text-gray-500">
             {isSpectator && (
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-sky-500/15 text-sky-300 border border-sky-500/30 flex items-center gap-1">
@@ -727,6 +718,7 @@ export default function GamePage({ params }: GamePageProps) {
                 {spectatorCount}
               </span>
             )}
+
             <span
               className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
                 gameType === "rated"
@@ -750,7 +742,7 @@ export default function GamePage({ params }: GamePageProps) {
           <div className="mb-3 shrink-0 p-4 bg-surface-card border border-[var(--primary-border)] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-[var(--primary)]">
-                Waiting for your opponent to join…
+                Waiting for your opponent to join
               </p>
               <p className="text-xs text-gray-400 mt-0.5">
                 Share this invite code or link with your friend
@@ -777,7 +769,7 @@ export default function GamePage({ params }: GamePageProps) {
         {gameStatus === "waiting" && !inviteCode && (
           <div className="mb-3 shrink-0 p-4 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl flex items-center gap-3 text-gray-400 text-sm">
             <span className="w-2 h-2 rounded-full bg-[var(--game-blitz)] animate-pulse" />
-            Waiting for opponent to join…
+            Waiting for opponent to join
           </div>
         )}
 
@@ -794,7 +786,7 @@ export default function GamePage({ params }: GamePageProps) {
                   {opponentDisconnect.username
                     ? `${opponentDisconnect.username} lost connection.`
                     : "Your opponent lost connection."}{" "}
-                  Waiting for them to reconnect…
+                  Waiting for them to reconnect
                 </p>
               </div>
             </div>
@@ -813,7 +805,7 @@ export default function GamePage({ params }: GamePageProps) {
 
         {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4 lg:gap-6 items-start lg:min-h-0 lg:flex-1">
-          {/* ── Left: Board + Player strips ── */}
+          {/* Left: Board + Player strips */}
           <div className="flex flex-col items-center gap-2 lg:h-full lg:min-h-0">
             {/* Opponent (top of board) */}
             <PlayerStrip
@@ -825,7 +817,7 @@ export default function GamePage({ params }: GamePageProps) {
               time={topPlayerStrip.time}
               clockClass={topPlayerStrip.clockClass}
               side={topPlayerStrip.side}
-              className="w-full max-w-[min(92vw,38rem)] lg:w-[min(100%,calc(100vh-15rem),38rem)] lg:max-w-[min(100%,calc(100vh-15rem),38rem)]"
+              className={boardWidthClass}
             />
 
             {/* Board */}
@@ -837,7 +829,7 @@ export default function GamePage({ params }: GamePageProps) {
                 isPassAndPlay={isPassAndPlay}
                 onMove={handleMakeMove}
                 lastMove={lastMove}
-                className="max-w-[min(92vw,38rem)] lg:w-[min(100%,calc(100vh-15rem),38rem)] lg:max-w-[min(100%,calc(100vh-15rem),38rem)]"
+                className={boardWidthClass}
               />
             </div>
 
@@ -851,12 +843,12 @@ export default function GamePage({ params }: GamePageProps) {
               time={bottomPlayerStrip.time}
               clockClass={bottomPlayerStrip.clockClass}
               side={bottomPlayerStrip.side}
-              className="w-full max-w-[min(92vw,38rem)] lg:w-[min(100%,calc(100vh-15rem),38rem)] lg:max-w-[min(100%,calc(100vh-15rem),38rem)]"
+              className={boardWidthClass}
             />
 
             {/* Game Action Buttons (players only) */}
             {gameStatus === "active" && !gameOver && !isSpectator && (
-              <div className="flex items-center gap-2 mt-1">
+              <div className={`flex items-center gap-2 mt-1 ${boardWidthClass}`}>
                 {sanMoves.length === 0 && (
                   <button
                     onClick={handleAbort}
@@ -867,7 +859,6 @@ export default function GamePage({ params }: GamePageProps) {
                     Abort
                   </button>
                 )}
-
                 {!drawPending && !isPassAndPlay && (
                   <button
                     onClick={handleOfferDraw}
@@ -878,13 +869,11 @@ export default function GamePage({ params }: GamePageProps) {
                     Offer Draw
                   </button>
                 )}
-
                 {drawPending && (
                   <span className="text-xs text-gray-500 px-2 italic">
-                    Draw offer pending…
+                    Draw offer pending
                   </span>
                 )}
-
                 <button
                   onClick={() => setShowResignModal(true)}
                   className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-red-800/50 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 transition ml-auto"
@@ -904,7 +893,7 @@ export default function GamePage({ params }: GamePageProps) {
             )}
           </div>
 
-          {/* ── Right Panel: Info + Move History ── */}
+          {/* Right Panel: Info + Move History */}
           <aside className="flex flex-col gap-4 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             {/* Players / Rating Card */}
             <div className="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl p-4 space-y-3">
@@ -1028,21 +1017,20 @@ export default function GamePage({ params }: GamePageProps) {
                     : "bg-[var(--surface-card)] border-[var(--surface-border)] text-gray-500"
                 }`}
               >
-                {isMyTurn ? "● Your Turn" : "○ Opponent's Turn"}
+                {isMyTurn ? "🎯 Your Turn" : "⏳ Opponent's Turn"}
               </div>
             )}
           </aside>
         </div>
       </div>
 
-      {/* ─── Game Over Overlay ─────────────────────────────────────────────── */}
+      {/* Game Over Overlay */}
       {gameOver && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-sm bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-3xl p-8 text-center space-y-5 shadow-2xl">
             <div className="w-16 h-16 mx-auto rounded-2xl bg-primary-gradient flex items-center justify-center shadow-lg">
               <Crown className="w-8 h-8 text-[var(--surface-main)]" />
             </div>
-
             <div>
               <h2 className="text-2xl font-extrabold text-white">
                 {gameOver.reason === "checkmate"
@@ -1062,7 +1050,6 @@ export default function GamePage({ params }: GamePageProps) {
                             ? "Game Aborted"
                             : "Game Over"}
               </h2>
-
               {gameOver.result === "draw" ? (
                 <p className="text-gray-400 mt-2">The game ended in a draw.</p>
               ) : gameOver.result === "none" ? (
@@ -1082,7 +1069,6 @@ export default function GamePage({ params }: GamePageProps) {
                 </p>
               )}
             </div>
-
             <div className="flex flex-col gap-3 pt-2">
               <Link
                 href="/game"
@@ -1101,7 +1087,7 @@ export default function GamePage({ params }: GamePageProps) {
         </div>
       )}
 
-      {/* ─── Leave Game Confirmation Modal ─────────────────────────────────── */}
+      {/* Leave Game Confirmation Modal */}
       {showLeaveModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="w-full max-w-sm bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl p-6 space-y-5 shadow-2xl">
@@ -1133,7 +1119,7 @@ export default function GamePage({ params }: GamePageProps) {
         </div>
       )}
 
-      {/* ─── Resign Confirmation Modal ─────────────────────────────────────── */}
+      {/* Resign Confirmation Modal */}
       {showResignModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="w-full max-w-sm bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl p-6 space-y-5 shadow-2xl">
@@ -1164,7 +1150,7 @@ export default function GamePage({ params }: GamePageProps) {
         </div>
       )}
 
-      {/* ─── Draw Offer Modal (incoming) ───────────────────────────────────── */}
+      {/* Draw Offer Modal (incoming) */}
       {showDrawModal && drawOfferedBy && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="w-full max-w-sm bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl p-6 space-y-5 shadow-2xl">
@@ -1199,8 +1185,7 @@ export default function GamePage({ params }: GamePageProps) {
   );
 }
 
-// ─── Player Strip Sub-component ───────────────────────────────────────────────
-
+// Player Strip Sub-component
 interface PlayerStripProps {
   name: string;
   rating: number;
@@ -1243,7 +1228,6 @@ function PlayerStrip({
         >
           {name[0]?.toUpperCase() ?? "?"}
         </div>
-
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-bold text-white truncate max-w-[120px]">
@@ -1251,7 +1235,6 @@ function PlayerStrip({
             </span>
             <span className="text-[11px] text-gray-500">{rating}</span>
           </div>
-
           {/* Captured pieces */}
           {captured.length > 0 && (
             <div className="flex items-center gap-px mt-0.5 flex-wrap">
@@ -1269,7 +1252,6 @@ function PlayerStrip({
           )}
         </div>
       </div>
-
       {/* Clock */}
       <div
         className={`px-3 py-1.5 rounded-lg font-mono text-base tabular-nums ${clockClass} ${
