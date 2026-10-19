@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import axios from "axios";
+import { api } from "@/lib/api"; // <-- Import the new interceptor
 import { socket, syncSocketAuth } from "@/lib/socket";
 
 export interface User {
@@ -30,58 +30,27 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-
   login: (email: string, password: string) => Promise<void>;
-
-  register: (
-    username: string,
-    name: string,
-    email: string,
-    password: string
-  ) => Promise<void>;
-
+  register: (username: string, name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-
-  updateProfile: (data: {
-    name?: string;
-    username?: string;
-    bio?: string;
-    profilePic?: File;
-  }) => Promise<void>;
-
-  changePassword: (
-    currentPassword: string,
-    newPassword: string
-  ) => Promise<void>;
-
+  updateProfile: (data: { name?: string; username?: string; bio?: string; profilePic?: File; }) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
-export function AuthProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Initialize auth state
   const refreshUser = useCallback(async () => {
     try {
       const storedToken = localStorage.getItem("token");
       const storedUser = localStorage.getItem("user");
 
-      // Restore token from localStorage
-      if (storedToken) {
-        setToken(storedToken);
-      }
-
-      // Restore user from localStorage
+      if (storedToken) setToken(storedToken);
       if (storedUser) {
         try {
           setUser(JSON.parse(storedUser));
@@ -90,34 +59,15 @@ export function AuthProvider({
         }
       }
 
-      // Fetch fresh user data from backend
-      const res = await axios.get(
-        `${backendURL}/api/v1/auth/me`,
-        {
-          withCredentials: true,
-          headers: storedToken
-            ? {
-              Authorization: `Bearer ${storedToken}`,
-            }
-            : undefined,
-        }
-      );
+      // Automatically uses the interceptor to refresh token if 401 occurs
+      const res = await api.get(`/api/v1/auth/me`);
 
       if (res.data.success && res.data.user) {
         setUser(res.data.user);
-
-        localStorage.setItem(
-          "user",
-          JSON.stringify(res.data.user)
-        );
-
-        localStorage.setItem(
-          "userId",
-          res.data.user._id
-        );
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        localStorage.setItem("userId", res.data.user._id);
       }
     } catch {
-      // If there is no valid token, clear auth state
       if (!localStorage.getItem("token")) {
         setUser(null);
         setToken(null);
@@ -132,232 +82,89 @@ export function AuthProvider({
     refreshUser();
   }, [refreshUser]);
 
-  // LOGIN
-  const login = async (
-    email: string,
-    password: string
-  ) => {
+  const login = async (email: string, password: string) => {
     try {
-      const res = await axios.post(
-        `${backendURL}/api/v1/auth/login`,
-        {
-          email,
-          password,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+      const res = await api.post(`/api/v1/auth/login`, { email, password });
 
       if (res.data.success && res.data.user) {
         setUser(res.data.user);
-
-        if (res.data.token) {
-          setToken(res.data.token);
-
-          localStorage.setItem(
-            "token",
-            res.data.token
-          );
+        if (res.data.accessToken) {
+          setToken(res.data.accessToken);
+          localStorage.setItem("token", res.data.accessToken);
         }
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        localStorage.setItem("userId", res.data.user._id);
 
-        localStorage.setItem(
-          "user",
-          JSON.stringify(res.data.user)
-        );
-
-        localStorage.setItem(
-          "userId",
-          res.data.user._id
-        );
-
-        // Rebind Socket.IO with the new JWT
-        if (socket.connected) {
-          socket.disconnect();
-        }
+        if (socket.connected) socket.disconnect();
         syncSocketAuth();
       }
-
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(
-          error.response?.data?.message ||
-          "Login failed. Please try again."
-        );
-      }
-
-      throw new Error(
-        "Something went wrong. Please try again."
-      );
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Login failed. Please try again.");
     }
   };
 
-  // REGISTER
-  const register = async (
-    username: string,
-    name: string,
-    email: string,
-    password: string
-  ) => {
+  const register = async (username: string, name: string, email: string, password: string) => {
     try {
-      const res = await axios.post(
-        `${backendURL}/api/v1/auth/register`,
-        {
-          username,
-          name,
-          email,
-          password,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+      const res = await api.post(`/api/v1/auth/register`, { username, name, email, password });
 
       if (res.data.success && res.data.user) {
         setUser(res.data.user);
-
-        if (res.data.token) {
-          setToken(res.data.token);
-
-          localStorage.setItem(
-            "token",
-            res.data.token
-          );
+        if (res.data.accessToken) {
+          setToken(res.data.accessToken);
+          localStorage.setItem("token", res.data.accessToken);
         }
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        localStorage.setItem("userId", res.data.user._id);
 
-        localStorage.setItem(
-          "user",
-          JSON.stringify(res.data.user)
-        );
-
-        localStorage.setItem(
-          "userId",
-          res.data.user._id
-        );
-
-        if (socket.connected) {
-          socket.disconnect();
-        }
+        if (socket.connected) socket.disconnect();
         syncSocketAuth();
       }
-
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(
-          error.response?.data?.message ||
-          "Registration failed. Please try again."
-        );
-      }
-
-      throw new Error(
-        "Something went wrong. Please try again."
-      );
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Registration failed. Please try again.");
     }
   };
 
-  // LOGOUT
   const logout = async () => {
     try {
-      await axios.post(
-        `${backendURL}/api/v1/auth/logout`,
-        {},
-        {
-          withCredentials: true,
-        }
-      );
+      await api.post(`/api/v1/auth/logout`, {});
     } catch {
-      // Ignore logout request errors
+      // Ignore errors on logout
     } finally {
       setUser(null);
       setToken(null);
-
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       localStorage.removeItem("userId");
 
-      if (socket.connected) {
-        socket.disconnect();
-      }
+      if (socket.connected) socket.disconnect();
       syncSocketAuth();
     }
   };
 
-  // UPDATE PROFILE
-  const updateProfile = async (data: {
-    name?: string;
-    username?: string;
-    bio?: string;
-    profilePic?: File;
-  }) => {
+  const updateProfile = async (data: { name?: string; username?: string; bio?: string; profilePic?: File; }) => {
     const formData = new FormData();
-
-    if (data.name !== undefined) {
-      formData.append("name", data.name);
-    }
-
-    if (data.username !== undefined) {
-      formData.append("username", data.username);
-    }
-
-    if (data.bio !== undefined) {
-      formData.append("bio", data.bio);
-    }
-
-    if (data.profilePic) {
-      formData.append("profilePic", data.profilePic);
-    }
+    if (data.name !== undefined) formData.append("name", data.name);
+    if (data.username !== undefined) formData.append("username", data.username);
+    if (data.bio !== undefined) formData.append("bio", data.bio);
+    if (data.profilePic) formData.append("profilePic", data.profilePic);
 
     try {
-      const res = await axios.patch(
-        `${backendURL}/api/v1/users/me`,
-        formData,
-        {
-          withCredentials: true,
-          headers: {
-            ...(token
-              ? {
-                  Authorization: `Bearer ${token}`,
-                }
-              : {}),
-          },
-        }
-      );
-
+      const res = await api.patch(`/api/v1/users/me`, formData);
       if (res.data.success && res.data.user) {
         setUser(res.data.user);
-
         localStorage.setItem("user", JSON.stringify(res.data.user));
       }
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(
-          error.response?.data?.message || "Failed to update profile"
-        );
-      }
-      throw error;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Failed to update profile");
     }
   };
 
-  // CHANGE PASSWORD
-  const changePassword = async (
-    currentPassword: string,
-    newPassword: string
-  ) => {
-    await axios.post(
-      `${backendURL}/api/v1/auth/change-password`,
-      {
-        currentPassword,
-        newPassword,
-      },
-      {
-        withCredentials: true,
-        headers: token
-          ? {
-            Authorization: `Bearer ${token}`,
-          }
-          : undefined,
-      }
-    );
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    try {
+      await api.post(`/api/v1/auth/change-password`, { currentPassword, newPassword });
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Failed to change password");
+    }
   };
 
   return (
@@ -381,12 +188,8 @@ export function AuthProvider({
 
 export function useAuth() {
   const context = useContext(AuthContext);
-
   if (context === undefined) {
-    throw new Error(
-      "useAuth must be used within an AuthProvider"
-    );
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-
   return context;
 }
