@@ -183,11 +183,13 @@
 
 ## Player Statistics
 
-* [ ] Player Statistics
+* [x] Player Statistics
 
   * Basic games/wins/losses/draws information exists.
-  * **Missing:** Rating progression chart.
-  * **Missing:** Historical performance breakdown.
+  * **Implemented:** Rating progression chart.
+  * **Implemented:** Historical performance breakdown.
+  * Updated UI on profile page with RatingProgressionChart and PerformanceBreakdown components.
+  * API endpoint `/api/v1/users/me/stats` provides full statistics including rating history and breakdown.
 
 ## Mobile
 
