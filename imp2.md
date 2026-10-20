@@ -214,7 +214,7 @@
 
 ## Authentication
 
-- [ ] JWT Refresh Token Flow
+- [x] JWT Refresh Token Flow
 
   - Implement `/auth/refresh-token`.
   - Add refresh-token controller.
