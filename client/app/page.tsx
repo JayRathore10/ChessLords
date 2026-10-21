@@ -58,7 +58,7 @@ export default function HomePage() {
   );
 }
 
-// arget : make leaderboard api call work if not implement it using basic fetch 
+// have to add move history 
 // 5. have to add designs to the frontpage
 // and have to redesign timmer in player
 // 7. Have to add loading screen 
