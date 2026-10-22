@@ -90,7 +90,16 @@ api.interceptors.response.use(
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         localStorage.removeItem("userId");
-        if (typeof window !== "undefined") window.location.href = "/login";
+        
+        // Prevent infinite reload loops on public routes
+        if (typeof window !== "undefined") {
+          const currentPath = window.location.pathname;
+          const publicPaths = ["/login", "/register", "/"];
+          if (!publicPaths.includes(currentPath)) {
+            window.location.href = "/login";
+          }
+        }
+        
         return Promise.reject(err);
       } finally {
         isRefreshing = false;
