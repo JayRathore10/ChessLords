@@ -23,6 +23,7 @@ import {
   Copy,
   Check,
   Eye,
+  Download,
 } from "lucide-react";
 
 // Types
@@ -174,6 +175,7 @@ export default function GamePage({ params }: GamePageProps) {
   const [message, setMessage] = useState("");
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedPGN, setCopiedPGN] = useState(false);
 
   // Player names / rating
   const [whiteName, setWhiteName] = useState("White");
@@ -346,7 +348,6 @@ export default function GamePage({ params }: GamePageProps) {
       if (move.move?.san) {
         setSanMoves((prev) => {
           const next = [...prev, move.move!.san!];
-          // Keep view on live if they were already on live, otherwise maintain index
           setViewingMoveIndex((current) => current === null || current === prev.length ? null : current);
           return next;
         });
@@ -543,10 +544,49 @@ export default function GamePage({ params }: GamePageProps) {
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
+  // PGN GENERATION
+  const generatePGN = useCallback(() => {
+    const c = new Chess();
+    c.header("Site", "ChessLords");
+    c.header("Date", new Date().toISOString().split("T")[0]);
+    c.header("White", whiteName);
+    c.header("Black", blackName);
+    
+    let result = "*";
+    if (gameOver) {
+      if (gameOver.result === "white") result = "1-0";
+      else if (gameOver.result === "black") result = "0-1";
+      else if (gameOver.result === "draw") result = "1/2-1/2";
+    }
+    c.header("Result", result);
+
+    for (const san of sanMoves) {
+      try { c.move(san); } catch (e) {}
+    }
+    return c.pgn();
+  }, [sanMoves, whiteName, blackName, gameOver]);
+
+  const handleCopyPGN = () => {
+    navigator.clipboard.writeText(generatePGN());
+    setCopiedPGN(true);
+    setTimeout(() => setCopiedPGN(false), 2000);
+  };
+
+  const handleDownloadPGN = () => {
+    const pgn = generatePGN();
+    const blob = new Blob([pgn], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ChessLords_${whiteName}_vs_${blackName}.pgn`.replace(/\s+/g, "_");
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   // Computed
   const isMyTurn = !isSpectator && gameStatus === "active" && (isPassAndPlay || (playerColor !== null && turn === playerColor));
-
-  // Disable board if spectating, not your turn, game over, OR actively viewing history
   const boardDisabled = isSpectator || !isMyTurn || gameStatus !== "active" || gameOver !== null || isViewingHistory;
 
   const { whiteCaptured, blackCaptured } = parseCaptured(sanMoves);
@@ -740,9 +780,21 @@ export default function GamePage({ params }: GamePageProps) {
                   Move History
                 </h3>
                 
-                {/* History Navigation Controls */}
+                {/* PGN Actions + History Controls */}
                 {sanMoves.length > 0 && (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
+                    {/* PGN Export Actions */}
+                    <div className="flex items-center gap-1 bg-[var(--surface-main)] rounded-lg border border-[var(--surface-border)]">
+                       <button onClick={handleCopyPGN} title="Copy PGN" className="p-1 text-gray-400 hover:text-white transition">
+                         {copiedPGN ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                       </button>
+                       <div className="w-px h-4 bg-[var(--surface-border)]" />
+                       <button onClick={handleDownloadPGN} title="Download PGN" className="p-1 text-gray-400 hover:text-white transition">
+                         <Download className="w-4 h-4" />
+                       </button>
+                    </div>
+                  
+                    {/* Move Nav Controls */}
                     <div className="flex items-center bg-[var(--surface-main)] rounded-lg border border-[var(--surface-border)]">
                       <button
                         onClick={() => setViewingMoveIndex(0)}
