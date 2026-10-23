@@ -176,6 +176,7 @@ export default function GamePage({ params }: GamePageProps) {
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedPGN, setCopiedPGN] = useState(false);
+  const [copiedFEN, setCopiedFEN] = useState(false);
 
   // Player names / rating
   const [whiteName, setWhiteName] = useState("White");
@@ -544,7 +545,7 @@ export default function GamePage({ params }: GamePageProps) {
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  // PGN GENERATION
+  // PGN GENERATION & DOWNLOAD
   const generatePGN = useCallback(() => {
     const c = new Chess();
     c.header("Site", "ChessLords");
@@ -579,6 +580,25 @@ export default function GamePage({ params }: GamePageProps) {
     const a = document.createElement("a");
     a.href = url;
     a.download = `ChessLords_${whiteName}_vs_${blackName}.pgn`.replace(/\s+/g, "_");
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // FEN EXPORT & DOWNLOAD
+  const handleCopyFEN = () => {
+    navigator.clipboard.writeText(displayedFen);
+    setCopiedFEN(true);
+    setTimeout(() => setCopiedFEN(false), 2000);
+  };
+
+  const handleDownloadFEN = () => {
+    const blob = new Blob([displayedFen], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ChessLords_${whiteName}_vs_${blackName}.fen`.replace(/\s+/g, "_");
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -780,18 +800,32 @@ export default function GamePage({ params }: GamePageProps) {
                   Move History
                 </h3>
                 
-                {/* PGN Actions + History Controls */}
+                {/* Export Actions + History Controls */}
                 {sanMoves.length > 0 && (
                   <div className="flex items-center gap-2">
-                    {/* PGN Export Actions */}
-                    <div className="flex items-center gap-1 bg-[var(--surface-main)] rounded-lg border border-[var(--surface-border)]">
-                       <button onClick={handleCopyPGN} title="Copy PGN" className="p-1 text-gray-400 hover:text-white transition">
-                         {copiedPGN ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                       </button>
+                    {/* FEN / PGN Export Actions */}
+                    <div className="flex items-center gap-1 bg-[var(--surface-main)] rounded-lg border border-[var(--surface-border)] px-1">
+                       {/* FEN Copy & Download */}
+                       <div className="flex items-center">
+                         <button onClick={handleCopyFEN} title="Copy FEN string" className="p-1 text-gray-400 hover:text-white transition text-[10px] font-bold">
+                           {copiedFEN ? <Check className="w-3.5 h-3.5 text-emerald-400 inline" /> : "FEN"}
+                         </button>
+                         <button onClick={handleDownloadFEN} title="Download .fen file" className="p-1 text-gray-400 hover:text-white transition">
+                           <Download className="w-3.5 h-3.5" />
+                         </button>
+                       </div>
+
                        <div className="w-px h-4 bg-[var(--surface-border)]" />
-                       <button onClick={handleDownloadPGN} title="Download PGN" className="p-1 text-gray-400 hover:text-white transition">
-                         <Download className="w-4 h-4" />
-                       </button>
+
+                       {/* PGN Copy & Download */}
+                       <div className="flex items-center">
+                         <button onClick={handleCopyPGN} title="Copy PGN string" className="p-1 text-gray-400 hover:text-white transition text-[10px] font-bold">
+                           {copiedPGN ? <Check className="w-3.5 h-3.5 text-emerald-400 inline" /> : "PGN"}
+                         </button>
+                         <button onClick={handleDownloadPGN} title="Download .pgn file" className="p-1 text-gray-400 hover:text-white transition">
+                           <Download className="w-3.5 h-3.5" />
+                         </button>
+                       </div>
                     </div>
                   
                     {/* Move Nav Controls */}
