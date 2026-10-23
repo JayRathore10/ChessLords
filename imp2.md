@@ -243,7 +243,7 @@
   - Copy PGN.
   - Download PGN.
 
-- [ ] FEN Export
+- [x] FEN Export
 
   - Copy current FEN position.
 
