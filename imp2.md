@@ -237,7 +237,7 @@
   - Display the corresponding historical board position.
   - Allow returning to the current position.
 
-- [ ] PGN Export
+- [x] PGN Export
 
   - Generate PGN.
   - Copy PGN.
