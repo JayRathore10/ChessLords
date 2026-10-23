@@ -231,7 +231,7 @@
   - Calculate elapsed time server-side on moves and reconnects.
   - Prevent client-side clock manipulation/desync (server timers + validation).
 
-- [ ] Interactive Move History
+- [x] Interactive Move History
 
   - Click previous moves.
   - Display the corresponding historical board position.
