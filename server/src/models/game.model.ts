@@ -11,6 +11,10 @@ export interface GameInterface extends Document {
   whitePlayerRating?: number;
   blackPlayerRating?: number;
 
+  // Rating changes after the game
+  whiteRatingChange: number;
+  blackRatingChange: number;
+
   inviteCode?: string;
   isPrivate?: boolean;
   isPassAndPlay?: boolean;
@@ -30,8 +34,8 @@ export interface GameInterface extends Document {
 
   // Example: 10+0, 10+5, 30+0
   timeControl: {
-    initialTime: number; // seconds
-    increment: number;   // seconds
+    initialTime: number;
+    increment: number;
     name?: string;
   };
 
@@ -83,6 +87,16 @@ const gameSchema = new mongoose.Schema<GameInterface>(
     blackPlayerRating: {
       type: Number,
       default: 1200,
+    },
+
+    whiteRatingChange: {
+      type: Number,
+      default: 0,
+    },
+
+    blackRatingChange: {
+      type: Number,
+      default: 0,
     },
 
     inviteCode: {

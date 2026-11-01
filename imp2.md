@@ -247,7 +247,7 @@
 
   - Copy current FEN position.
 
-- [ ] Audio & Sound Effects
+- [x] Audio & Sound Effects
 
   - Move sound.
   - Capture sound.
