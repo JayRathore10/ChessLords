@@ -1,5 +1,3 @@
-// server/src/services/elo.service.ts
-
 const K_FACTOR = 32;
 
 export function calculateElo(
