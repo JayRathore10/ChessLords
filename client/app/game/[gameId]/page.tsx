@@ -90,6 +90,16 @@ interface GamePageProps {
   params: Promise<{ gameId: string }>;
 }
 
+// Sound Utility
+const playSound = (type: "move" | "capture" | "castle" | "check" | "checkmate" | "lowTime" | "gameOver") => {
+  if (typeof window !== "undefined") {
+    const audio = new Audio(`/sounds/${type}.mp3`);
+    audio.play().catch(() => {
+      // Browsers may block autoplay if the user hasn't interacted with the page yet; ignore safely.
+    });
+  }
+};
+
 // Helper to format seconds into mm:ss
 function formatTime(seconds: number): string {
   const s = Math.max(0, Math.round(seconds));
@@ -99,58 +109,32 @@ function formatTime(seconds: number): string {
 }
 
 // Captured pieces helpers
-const PIECE_VALUES: Record<string, number> = {
-  p: 1,
-  n: 3,
-  b: 3,
-  r: 5,
-  q: 9,
-};
+const PIECE_VALUES: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9 };
 
-function parseCaptured(moves: string[]): {
-  whiteCaptured: string[];
-  blackCaptured: string[];
-} {
+function parseCaptured(moves: string[]): { whiteCaptured: string[]; blackCaptured: string[]; } {
   const whiteCaptured: string[] = [];
   const blackCaptured: string[] = [];
 
   for (const san of moves) {
     if (san.includes("x")) {
-      const capturePiece = san
-        .replace(/[+#!=?]/g, "")
-        .replace(/x.*/, "")
-        .slice(-1)
-        .toLowerCase();
+      const capturePiece = san.replace(/[+#!=?]/g, "").replace(/x.*/, "").slice(-1).toLowerCase();
       const idx = moves.indexOf(san);
       const isWhiteTurn = idx % 2 === 0;
 
-      if (isWhiteTurn) {
-        whiteCaptured.push(capturePiece || "p");
-      } else {
-        blackCaptured.push(capturePiece || "p");
-      }
+      if (isWhiteTurn) whiteCaptured.push(capturePiece || "p");
+      else blackCaptured.push(capturePiece || "p");
     }
   }
-
   return { whiteCaptured, blackCaptured };
 }
 
-function materialDiff(
-  whiteCaptured: string[],
-  blackCaptured: string[],
-): number {
+function materialDiff(whiteCaptured: string[], blackCaptured: string[]): number {
   const wVal = whiteCaptured.reduce((a, p) => a + (PIECE_VALUES[p] || 1), 0);
   const bVal = blackCaptured.reduce((a, p) => a + (PIECE_VALUES[p] || 1), 0);
   return wVal - bVal;
 }
 
-const PIECE_SYMBOLS: Record<string, string> = {
-  p: "♟",
-  n: "♞",
-  b: "♝",
-  r: "♜",
-  q: "♛",
-};
+const PIECE_SYMBOLS: Record<string, string> = { p: "♟", n: "♞", b: "♝", r: "♜", q: "♛" };
 
 // Component
 export default function GamePage({ params }: GamePageProps) {
@@ -210,22 +194,15 @@ export default function GamePage({ params }: GamePageProps) {
   } | null>(null);
   const [disconnectSecondsLeft, setDisconnectSecondsLeft] = useState(0);
 
-  // Move history scroll
   const moveListRef = useRef<HTMLDivElement>(null);
 
-  // Reconstruct board history using chess.js
   const boardHistory = useMemo(() => {
     const tempChess = new Chess();
-    const history = [
-      { fen: tempChess.fen(), lastMove: null as { from: string; to: string } | null }
-    ];
+    const history = [{ fen: tempChess.fen(), lastMove: null as { from: string; to: string } | null }];
     for (const san of sanMoves) {
       try {
         const move = tempChess.move(san);
-        history.push({
-          fen: tempChess.fen(),
-          lastMove: move ? { from: move.from, to: move.to } : null
-        });
+        history.push({ fen: tempChess.fen(), lastMove: move ? { from: move.from, to: move.to } : null });
       } catch (e) {
         history.push({ fen: tempChess.fen(), lastMove: null });
       }
@@ -233,7 +210,6 @@ export default function GamePage({ params }: GamePageProps) {
     return history;
   }, [sanMoves]);
 
-  // Determine active view variables
   const isViewingHistory = viewingMoveIndex !== null && viewingMoveIndex < sanMoves.length;
   const displayedFen = isViewingHistory ? boardHistory[viewingMoveIndex].fen : fen;
   const displayedLastMove = isViewingHistory ? boardHistory[viewingMoveIndex].lastMove : lastMove;
@@ -245,6 +221,7 @@ export default function GamePage({ params }: GamePageProps) {
       clockRef.current = setInterval(() => {
         if (currentTurn === "white") {
           setWhiteTime((t) => {
+            if (t === 31) playSound("lowTime"); // Play warning as it hits 30 seconds
             if (t <= 1) {
               clearInterval(clockRef.current!);
               clockRef.current = null;
@@ -255,6 +232,7 @@ export default function GamePage({ params }: GamePageProps) {
           });
         } else {
           setBlackTime((t) => {
+            if (t === 31) playSound("lowTime"); // Play warning as it hits 30 seconds
             if (t <= 1) {
               clearInterval(clockRef.current!);
               clockRef.current = null;
@@ -346,6 +324,19 @@ export default function GamePage({ params }: GamePageProps) {
       setTurn(move.turn);
       setLastMove({ from: move.from, to: move.to });
       
+      // Determine Audio Event
+      if (move.isCheckmate) {
+        playSound("checkmate");
+      } else if (move.isCheck) {
+        playSound("check");
+      } else if (move.move?.san?.includes("O-O")) {
+        playSound("castle");
+      } else if (move.move?.san?.includes("x")) {
+        playSound("capture");
+      } else {
+        playSound("move");
+      }
+      
       if (move.move?.san) {
         setSanMoves((prev) => {
           const next = [...prev, move.move!.san!];
@@ -374,6 +365,7 @@ export default function GamePage({ params }: GamePageProps) {
           setGameOver({ result: winner, reason: "checkmate", winner });
         } else if (move.isDraw) {
           setMessage("Draw!");
+          playSound("gameOver");
           setGameOver({ result: "draw", reason: "draw" });
         }
       } else {
@@ -395,11 +387,13 @@ export default function GamePage({ params }: GamePageProps) {
       setOpponentDisconnect(null);
       setGameStatus("completed");
       setGameOver(data);
+      if (data.reason !== "checkmate") playSound("gameOver");
     };
 
     const handleGameLeft = (data: { gameId: string; result: string; winner?: string; loser?: string; reason: string; leavingColor?: string }) => {
       stopClock();
       setGameStatus("completed");
+      playSound("gameOver");
       setGameOver({
         result: data.result,
         reason: data.reason || "player_left",
