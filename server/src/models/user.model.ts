@@ -1,8 +1,9 @@
+
 import mongoose, { Document, Types } from "mongoose";
 
 export interface RatingHistoryEntry {
-  rating: number;
   date: Date;
+  rating: number;
   change: number;
   gameId?: Types.ObjectId;
   opponent?: string;
@@ -29,7 +30,7 @@ export interface UserInterface extends Document {
   gamesLost: number;
   gamesDrawn: number;
 
-  ratingHistory?: RatingHistoryEntry[];
+  ratingHistory: RatingHistoryEntry[];
 
   // Account status
   isOnline: boolean;
@@ -125,17 +126,44 @@ const userSchema = new mongoose.Schema<UserInterface>(
       min: 0,
     },
 
-    ratingHistory: [
-      {
-        rating: { type: Number, required: true },
-        date: { type: Date, default: Date.now },
-        change: { type: Number, default: 0 },
-        gameId: { type: mongoose.Schema.Types.ObjectId, ref: "Game" },
-        opponent: { type: String },
-        result: { type: String, enum: ["win", "loss", "draw"] },
-      },
-    ],
+    // Rating history
+    ratingHistory: {
+      type: [
+        {
+          date: {
+            type: Date,
+            default: Date.now,
+          },
 
+          rating: {
+            type: Number,
+            required: true,
+          },
+
+          change: {
+            type: Number,
+            default: 0,
+          },
+
+          gameId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Game",
+          },
+
+          opponent: {
+            type: String,
+          },
+
+          result: {
+            type: String,
+            enum: ["win", "loss", "draw"],
+          },
+        },
+      ],
+      default: [],
+    },
+
+    // Account status
     isOnline: {
       type: Boolean,
       default: false,
