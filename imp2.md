@@ -278,7 +278,7 @@
 
 ## Rating & Statistics
 
-- [ ] ELO / Rating Calculation
+- [x] ELO / Rating Calculation
 
   - Calculate rating changes after rated games.
   - Update player ratings.
