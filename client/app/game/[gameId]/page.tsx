@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { connectSocket, socket } from "@/lib/socket";
@@ -97,16 +91,7 @@ interface GamePageProps {
 }
 
 // Sound Utility
-const playSound = (
-  type:
-    | "move"
-    | "capture"
-    | "castle"
-    | "check"
-    | "checkmate"
-    | "lowTime"
-    | "gameOver",
-) => {
+const playSound = (type: "move" | "capture" | "castle" | "check" | "checkmate" | "lowTime" | "gameOver") => {
   if (typeof window !== "undefined") {
     const audio = new Audio(`/sounds/${type}.mp3`);
     audio.play().catch(() => {
@@ -126,20 +111,13 @@ function formatTime(seconds: number): string {
 // Captured pieces helpers
 const PIECE_VALUES: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9 };
 
-function parseCaptured(moves: string[]): {
-  whiteCaptured: string[];
-  blackCaptured: string[];
-} {
+function parseCaptured(moves: string[]): { whiteCaptured: string[]; blackCaptured: string[]; } {
   const whiteCaptured: string[] = [];
   const blackCaptured: string[] = [];
 
   for (const san of moves) {
     if (san.includes("x")) {
-      const capturePiece = san
-        .replace(/[+#!=?]/g, "")
-        .replace(/x.*/, "")
-        .slice(-1)
-        .toLowerCase();
+      const capturePiece = san.replace(/[+#!=?]/g, "").replace(/x.*/, "").slice(-1).toLowerCase();
       const idx = moves.indexOf(san);
       const isWhiteTurn = idx % 2 === 0;
 
@@ -150,22 +128,13 @@ function parseCaptured(moves: string[]): {
   return { whiteCaptured, blackCaptured };
 }
 
-function materialDiff(
-  whiteCaptured: string[],
-  blackCaptured: string[],
-): number {
+function materialDiff(whiteCaptured: string[], blackCaptured: string[]): number {
   const wVal = whiteCaptured.reduce((a, p) => a + (PIECE_VALUES[p] || 1), 0);
   const bVal = blackCaptured.reduce((a, p) => a + (PIECE_VALUES[p] || 1), 0);
   return wVal - bVal;
 }
 
-const PIECE_SYMBOLS: Record<string, string> = {
-  p: "♟",
-  n: "♞",
-  b: "♝",
-  r: "♜",
-  q: "♛",
-};
+const PIECE_SYMBOLS: Record<string, string> = { p: "♟", n: "♞", b: "♝", r: "♜", q: "♛" };
 
 // Component
 export default function GamePage({ params }: GamePageProps) {
@@ -174,17 +143,11 @@ export default function GamePage({ params }: GamePageProps) {
   const { user, refreshUser } = useAuth();
 
   // Board & game state
-  const [playerColor, setPlayerColor] = useState<"white" | "black" | null>(
-    null,
-  );
+  const [playerColor, setPlayerColor] = useState<"white" | "black" | null>(null);
   const [turn, setTurn] = useState<"white" | "black" | null>(null);
   const [gameStatus, setGameStatus] = useState<string>("waiting");
-  const [fen, setFen] = useState(
-    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-  );
-  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(
-    null,
-  );
+  const [fen, setFen] = useState("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
   const [sanMoves, setSanMoves] = useState<string[]>([]);
   const [isPassAndPlay, setIsPassAndPlay] = useState(false);
   const [isSpectator, setIsSpectator] = useState(false);
@@ -220,9 +183,7 @@ export default function GamePage({ params }: GamePageProps) {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showResignModal, setShowResignModal] = useState(false);
   const [showDrawModal, setShowDrawModal] = useState(false);
-  const [drawOfferedBy, setDrawOfferedBy] = useState<"white" | "black" | null>(
-    null,
-  );
+  const [drawOfferedBy, setDrawOfferedBy] = useState<"white" | "black" | null>(null);
   const [drawPending, setDrawPending] = useState(false);
 
   // Opponent disconnect grace banner
@@ -237,19 +198,11 @@ export default function GamePage({ params }: GamePageProps) {
 
   const boardHistory = useMemo(() => {
     const tempChess = new Chess();
-    const history = [
-      {
-        fen: tempChess.fen(),
-        lastMove: null as { from: string; to: string } | null,
-      },
-    ];
+    const history = [{ fen: tempChess.fen(), lastMove: null as { from: string; to: string } | null }];
     for (const san of sanMoves) {
       try {
         const move = tempChess.move(san);
-        history.push({
-          fen: tempChess.fen(),
-          lastMove: move ? { from: move.from, to: move.to } : null,
-        });
+        history.push({ fen: tempChess.fen(), lastMove: move ? { from: move.from, to: move.to } : null });
       } catch (e) {
         history.push({ fen: tempChess.fen(), lastMove: null });
       }
@@ -257,14 +210,9 @@ export default function GamePage({ params }: GamePageProps) {
     return history;
   }, [sanMoves]);
 
-  const isViewingHistory =
-    viewingMoveIndex !== null && viewingMoveIndex < sanMoves.length;
-  const displayedFen = isViewingHistory
-    ? boardHistory[viewingMoveIndex].fen
-    : fen;
-  const displayedLastMove = isViewingHistory
-    ? boardHistory[viewingMoveIndex].lastMove
-    : lastMove;
+  const isViewingHistory = viewingMoveIndex !== null && viewingMoveIndex < sanMoves.length;
+  const displayedFen = isViewingHistory ? boardHistory[viewingMoveIndex].fen : fen;
+  const displayedLastMove = isViewingHistory ? boardHistory[viewingMoveIndex].lastMove : lastMove;
 
   // Local display tick
   const startClock = useCallback(
@@ -277,11 +225,7 @@ export default function GamePage({ params }: GamePageProps) {
             if (t <= 1) {
               clearInterval(clockRef.current!);
               clockRef.current = null;
-              socket.emit("gameTimeout", {
-                gameId,
-                winner: "black",
-                loser: "white",
-              });
+              socket.emit("gameTimeout", { gameId, winner: "black", loser: "white" });
               return 0;
             }
             return t - 1;
@@ -292,11 +236,7 @@ export default function GamePage({ params }: GamePageProps) {
             if (t <= 1) {
               clearInterval(clockRef.current!);
               clockRef.current = null;
-              socket.emit("gameTimeout", {
-                gameId,
-                winner: "white",
-                loser: "black",
-              });
+              socket.emit("gameTimeout", { gameId, winner: "white", loser: "black" });
               return 0;
             }
             return t - 1;
@@ -308,15 +248,9 @@ export default function GamePage({ params }: GamePageProps) {
   );
 
   const syncClocksFromServer = useCallback(
-    (data: {
-      whiteTime?: number;
-      blackTime?: number;
-      turn?: "white" | "black";
-    }) => {
-      if (typeof data.whiteTime === "number")
-        setWhiteTime(Math.max(0, data.whiteTime));
-      if (typeof data.blackTime === "number")
-        setBlackTime(Math.max(0, data.blackTime));
+    (data: { whiteTime?: number; blackTime?: number; turn?: "white" | "black" }) => {
+      if (typeof data.whiteTime === "number") setWhiteTime(Math.max(0, data.whiteTime));
+      if (typeof data.blackTime === "number") setBlackTime(Math.max(0, data.blackTime));
       if (data.turn) startClock(data.turn);
     },
     [startClock],
@@ -332,10 +266,7 @@ export default function GamePage({ params }: GamePageProps) {
   // Socket wiring
   useEffect(() => {
     connectSocket();
-    const storedUserId =
-      typeof window !== "undefined"
-        ? localStorage.getItem("userId") || user?._id || "guest"
-        : "guest";
+    const storedUserId = typeof window !== "undefined" ? localStorage.getItem("userId") || user?._id || "guest" : "guest";
     const storedUsername = user?.username || "Player";
 
     socket.emit("joinGame", {
@@ -369,22 +300,12 @@ export default function GamePage({ params }: GamePageProps) {
       if (game.status === "active") startClock(game.turn);
     };
 
-    const handleSpectatorUpdate = (data: {
-      gameId: string;
-      spectatorCount: number;
-    }) => {
+    const handleSpectatorUpdate = (data: { gameId: string; spectatorCount: number }) => {
       if (data.gameId !== gameId) return;
       setSpectatorCount(data.spectatorCount);
     };
 
-    const handlePlayerJoined = (data: {
-      joinedColor: string;
-      username: string;
-      status: string;
-      whiteTime?: number;
-      blackTime?: number;
-      turn?: "white" | "black";
-    }) => {
+    const handlePlayerJoined = (data: { joinedColor: string; username: string; status: string; whiteTime?: number; blackTime?: number; turn?: "white" | "black" }) => {
       if (data.status === "active") {
         setGameStatus("active");
         setMessage("");
@@ -402,7 +323,7 @@ export default function GamePage({ params }: GamePageProps) {
       setFen(move.fen);
       setTurn(move.turn);
       setLastMove({ from: move.from, to: move.to });
-
+      
       // Determine Audio Event
       if (move.isCheckmate) {
         playSound("checkmate");
@@ -415,23 +336,18 @@ export default function GamePage({ params }: GamePageProps) {
       } else {
         playSound("move");
       }
-
+      
       if (move.move?.san) {
         setSanMoves((prev) => {
           const next = [...prev, move.move!.san!];
-          setViewingMoveIndex((current) =>
-            current === null || current === prev.length ? null : current,
-          );
+          setViewingMoveIndex((current) => current === null || current === prev.length ? null : current);
           return next;
         });
       }
 
       if (move.status) setGameStatus(move.status);
 
-      if (
-        typeof move.whiteTime === "number" &&
-        typeof move.blackTime === "number"
-      ) {
+      if (typeof move.whiteTime === "number" && typeof move.blackTime === "number") {
         setWhiteTime(Math.max(0, move.whiteTime));
         setBlackTime(Math.max(0, move.blackTime));
       } else if (increment > 0) {
@@ -453,8 +369,8 @@ export default function GamePage({ params }: GamePageProps) {
           setGameOver({ result: "draw", reason: "draw" });
         }
       } else {
-        if (move.isCheck) setMessage("Check!");
-        else setMessage("");
+        // Clear message on a normal move (removed the "Check!" message block)
+        setMessage("");
         startClock(move.turn);
       }
     };
@@ -464,8 +380,7 @@ export default function GamePage({ params }: GamePageProps) {
       setTimeout(() => setMessage(""), 2500);
     };
 
-    const handleGameError = (data: { message: string }) =>
-      setMessage(data.message);
+    const handleGameError = (data: { message: string }) => setMessage(data.message);
 
     const handleGameOver = (data: GameOverData) => {
       stopClock();
@@ -473,21 +388,10 @@ export default function GamePage({ params }: GamePageProps) {
       setGameStatus("completed");
       setGameOver(data);
       if (data.reason !== "checkmate") playSound("gameOver");
-
-      // SYNC POST-GAME STATS
-      if (data.reason !== "aborted") {
-        refreshUser();
-      }
+      if (data.reason !== "aborted") refreshUser();
     };
 
-    const handleGameLeft = (data: {
-      gameId: string;
-      result: string;
-      winner?: string;
-      loser?: string;
-      reason: string;
-      leavingColor?: string;
-    }) => {
+    const handleGameLeft = (data: { gameId: string; result: string; winner?: string; loser?: string; reason: string; leavingColor?: string }) => {
       stopClock();
       setGameStatus("completed");
       playSound("gameOver");
@@ -498,16 +402,11 @@ export default function GamePage({ params }: GamePageProps) {
         loser: data.loser,
       });
 
-      if (data.winner === playerColor)
-        setMessage("Opponent left the game. You win!");
+      if (data.winner === playerColor) setMessage("Opponent left the game. You win!");
       else if (data.loser === playerColor) setMessage("You left the game.");
-
-      // SYNC POST-GAME STATS
-      if (data.reason !== "aborted") {
-        refreshUser();
-      }
+      if (data.reason !== "aborted") refreshUser();
     };
-    
+
     const handleDrawOffered = (data: { byColor: "white" | "black" }) => {
       setDrawOfferedBy(data.byColor);
       setShowDrawModal(true);
@@ -519,25 +418,13 @@ export default function GamePage({ params }: GamePageProps) {
       setTimeout(() => setMessage(""), 3000);
     };
 
-    const handleOpponentDisconnected = (data: {
-      gameId: string;
-      color: "white" | "black";
-      username?: string;
-      expiresAt: number;
-    }) => {
+    const handleOpponentDisconnected = (data: { gameId: string; color: "white" | "black"; username?: string; expiresAt: number }) => {
       if (data.gameId !== gameId) return;
       if (playerColor && data.color === playerColor) return;
-      setOpponentDisconnect({
-        color: data.color,
-        username: data.username,
-        expiresAt: data.expiresAt,
-      });
+      setOpponentDisconnect({ color: data.color, username: data.username, expiresAt: data.expiresAt });
     };
 
-    const handleOpponentReconnected = (data: {
-      gameId: string;
-      color: "white" | "black";
-    }) => {
+    const handleOpponentReconnected = (data: { gameId: string; color: "white" | "black" }) => {
       if (data.gameId !== gameId) return;
       setOpponentDisconnect(null);
       setMessage("Opponent reconnected.");
@@ -579,6 +466,7 @@ export default function GamePage({ params }: GamePageProps) {
       stopClock();
       socket.disconnect();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId, playerColor]);
 
   useEffect(() => {
@@ -587,10 +475,7 @@ export default function GamePage({ params }: GamePageProps) {
       return;
     }
     const tick = () => {
-      const left = Math.max(
-        0,
-        Math.ceil((opponentDisconnect.expiresAt - Date.now()) / 1000),
-      );
+      const left = Math.max(0, Math.ceil((opponentDisconnect.expiresAt - Date.now()) / 1000));
       setDisconnectSecondsLeft(left);
       if (left <= 0) setOpponentDisconnect(null);
     };
@@ -664,7 +549,7 @@ export default function GamePage({ params }: GamePageProps) {
     c.header("Date", new Date().toISOString().split("T")[0]);
     c.header("White", whiteName);
     c.header("Black", blackName);
-
+    
     let result = "*";
     if (gameOver) {
       if (gameOver.result === "white") result = "1-0";
@@ -674,9 +559,7 @@ export default function GamePage({ params }: GamePageProps) {
     c.header("Result", result);
 
     for (const san of sanMoves) {
-      try {
-        c.move(san);
-      } catch (e) {}
+      try { c.move(san); } catch (e) {}
     }
     return c.pgn();
   }, [sanMoves, whiteName, blackName, gameOver]);
@@ -693,10 +576,7 @@ export default function GamePage({ params }: GamePageProps) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `ChessLords_${whiteName}_vs_${blackName}.pgn`.replace(
-      /\s+/g,
-      "_",
-    );
+    a.download = `ChessLords_${whiteName}_vs_${blackName}.pgn`.replace(/\s+/g, "_");
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -715,10 +595,7 @@ export default function GamePage({ params }: GamePageProps) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `ChessLords_${whiteName}_vs_${blackName}.fen`.replace(
-      /\s+/g,
-      "_",
-    );
+    a.download = `ChessLords_${whiteName}_vs_${blackName}.fen`.replace(/\s+/g, "_");
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -726,16 +603,8 @@ export default function GamePage({ params }: GamePageProps) {
   };
 
   // Computed
-  const isMyTurn =
-    !isSpectator &&
-    gameStatus === "active" &&
-    (isPassAndPlay || (playerColor !== null && turn === playerColor));
-  const boardDisabled =
-    isSpectator ||
-    !isMyTurn ||
-    gameStatus !== "active" ||
-    gameOver !== null ||
-    isViewingHistory;
+  const isMyTurn = !isSpectator && gameStatus === "active" && (isPassAndPlay || (playerColor !== null && turn === playerColor));
+  const boardDisabled = isSpectator || !isMyTurn || gameStatus !== "active" || gameOver !== null || isViewingHistory;
 
   const { whiteCaptured, blackCaptured } = parseCaptured(sanMoves);
   const diff = materialDiff(whiteCaptured, blackCaptured);
@@ -745,32 +614,19 @@ export default function GamePage({ params }: GamePageProps) {
     movePairs.push([sanMoves[i], sanMoves[i + 1]]);
   }
 
-  const whiteClockClass =
-    whiteTime < 30 && gameStatus === "active" && turn === "white"
-      ? "text-red-400 font-extrabold"
-      : "text-white font-bold";
-  const blackClockClass =
-    blackTime < 30 && gameStatus === "active" && turn === "black"
-      ? "text-red-400 font-extrabold"
-      : "text-white font-bold";
-
-  const boardOrientation = isPassAndPlay
-    ? "white"
-    : playerColor === "black"
-      ? "black"
-      : "white";
-  const topPlayerColor: "white" | "black" =
-    isPassAndPlay || playerColor !== "black" ? "black" : "white";
-  const bottomPlayerColor: "white" | "black" =
-    isPassAndPlay || playerColor !== "black" ? "white" : "black";
+  const whiteClockClass = whiteTime < 30 && gameStatus === "active" && turn === "white" ? "text-red-400 font-extrabold" : "text-white font-bold";
+  const blackClockClass = blackTime < 30 && gameStatus === "active" && turn === "black" ? "text-red-400 font-extrabold" : "text-white font-bold";
+  
+  const boardOrientation = isPassAndPlay ? "white" : playerColor === "black" ? "black" : "white";
+  const topPlayerColor: "white" | "black" = isPassAndPlay || playerColor !== "black" ? "black" : "white";
+  const bottomPlayerColor: "white" | "black" = isPassAndPlay || playerColor !== "black" ? "white" : "black";
 
   const topPlayerStrip = {
     name: topPlayerColor === "white" ? whiteName : blackName,
     rating: topPlayerColor === "white" ? whiteRating : blackRating,
     isActive: turn === topPlayerColor && gameStatus === "active",
     captured: topPlayerColor === "white" ? whiteCaptured : blackCaptured,
-    materialAdv:
-      topPlayerColor === "white" ? (diff > 0 ? diff : 0) : diff < 0 ? -diff : 0,
+    materialAdv: topPlayerColor === "white" ? diff > 0 ? diff : 0 : diff < 0 ? -diff : 0,
     time: topPlayerColor === "white" ? whiteTime : blackTime,
     clockClass: topPlayerColor === "white" ? whiteClockClass : blackClockClass,
     side: topPlayerColor,
@@ -781,32 +637,20 @@ export default function GamePage({ params }: GamePageProps) {
     rating: bottomPlayerColor === "white" ? whiteRating : blackRating,
     isActive: turn === bottomPlayerColor && gameStatus === "active",
     captured: bottomPlayerColor === "white" ? whiteCaptured : blackCaptured,
-    materialAdv:
-      bottomPlayerColor === "white"
-        ? diff > 0
-          ? diff
-          : 0
-        : diff < 0
-          ? -diff
-          : 0,
+    materialAdv: bottomPlayerColor === "white" ? diff > 0 ? diff : 0 : diff < 0 ? -diff : 0,
     time: bottomPlayerColor === "white" ? whiteTime : blackTime,
-    clockClass:
-      bottomPlayerColor === "white" ? whiteClockClass : blackClockClass,
+    clockClass: bottomPlayerColor === "white" ? whiteClockClass : blackClockClass,
     side: bottomPlayerColor,
   };
 
-  const boardWidthClass =
-    "w-full max-w-[min(96vw,55dvh)] sm:max-w-[min(90vw,65dvh)] lg:w-[min(100%,calc(100vh-15rem),38rem)] lg:max-w-[min(100%,calc(100vh-15rem),38rem)] mx-auto";
+  const boardWidthClass = "w-full max-w-[min(96vw,55dvh)] sm:max-w-[min(90vw,65dvh)] lg:w-[min(100%,calc(100vh-15rem),38rem)] lg:max-w-[min(100%,calc(100vh-15rem),38rem)] mx-auto";
 
   return (
     <main className="min-h-screen bg-[var(--surface-main)] text-[var(--foreground)] lg:h-screen lg:overflow-hidden">
       <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2 lg:h-full lg:flex lg:flex-col">
         {/* Top Bar */}
         <div className="flex shrink-0 items-center justify-between mb-3">
-          <button
-            onClick={handleBackToLobby}
-            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition cursor-pointer"
-          >
+          <button onClick={handleBackToLobby} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition cursor-pointer">
             <ChevronLeft className="w-4 h-4" /> Back to Lobby
           </button>
 
@@ -821,9 +665,7 @@ export default function GamePage({ params }: GamePageProps) {
                 <Eye className="w-3 h-3" /> {spectatorCount}
               </span>
             )}
-            <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${gameType === "rated" ? "bg-[var(--game-blitz-bg)] text-[var(--game-blitz)] border border-[var(--game-blitz-border)]" : "bg-[var(--surface-card)] text-gray-400 border border-[var(--surface-border)]"}`}
-            >
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${gameType === "rated" ? "bg-[var(--game-blitz-bg)] text-[var(--game-blitz)] border border-[var(--game-blitz-border)]" : "bg-[var(--surface-card)] text-gray-400 border border-[var(--surface-border)]"}`}>
               {gameType}
             </span>
             {timeControlName && (
@@ -837,26 +679,13 @@ export default function GamePage({ params }: GamePageProps) {
         {gameStatus === "waiting" && inviteCode && (
           <div className="mb-3 shrink-0 p-4 bg-surface-card border border-[var(--primary-border)] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-bold text-[var(--primary)]">
-                Waiting for your opponent to join
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Share this invite code or link with your friend
-              </p>
+              <p className="text-sm font-bold text-[var(--primary)]">Waiting for your opponent to join</p>
+              <p className="text-xs text-gray-400 mt-0.5">Share this invite code or link with your friend</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-mono font-black text-xl tracking-widest text-white bg-[var(--surface-main)] px-4 py-2 rounded-xl border border-[var(--surface-border)]">
-                {inviteCode}
-              </span>
-              <button
-                onClick={handleCopyInvite}
-                className="p-2.5 rounded-xl bg-[var(--primary-muted)] border border-[var(--primary-border)] text-[var(--primary)] hover:bg-[var(--primary-border)] transition"
-              >
-                {copiedCode ? (
-                  <Check className="w-4 h-4" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
+              <span className="font-mono font-black text-xl tracking-widest text-white bg-[var(--surface-main)] px-4 py-2 rounded-xl border border-[var(--surface-border)]">{inviteCode}</span>
+              <button onClick={handleCopyInvite} className="p-2.5 rounded-xl bg-[var(--primary-muted)] border border-[var(--primary-border)] text-[var(--primary)] hover:bg-[var(--primary-border)] transition">
+                {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </button>
             </div>
           </div>
@@ -864,8 +693,7 @@ export default function GamePage({ params }: GamePageProps) {
 
         {gameStatus === "waiting" && !inviteCode && (
           <div className="mb-3 shrink-0 p-4 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl flex items-center gap-3 text-gray-400 text-sm">
-            <span className="w-2 h-2 rounded-full bg-[var(--game-blitz)] animate-pulse" />{" "}
-            Waiting for opponent to join
+            <span className="w-2 h-2 rounded-full bg-[var(--game-blitz)] animate-pulse" /> Waiting for opponent to join
           </div>
         )}
 
@@ -874,20 +702,11 @@ export default function GamePage({ params }: GamePageProps) {
             <div className="flex items-start gap-2.5">
               <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-bold text-amber-300">
-                  Opponent disconnected
-                </p>
-                <p className="text-xs text-amber-200/80 mt-0.5">
-                  {opponentDisconnect.username
-                    ? `${opponentDisconnect.username} lost connection.`
-                    : "Your opponent lost connection."}{" "}
-                  Waiting for them to reconnect
-                </p>
+                <p className="text-sm font-bold text-amber-300">Opponent disconnected</p>
+                <p className="text-xs text-amber-200/80 mt-0.5">{opponentDisconnect.username ? `${opponentDisconnect.username} lost connection.` : "Your opponent lost connection."} Waiting for them to reconnect</p>
               </div>
             </div>
-            <div className="font-mono text-lg font-black text-amber-300 tabular-nums sm:min-w-[3.5rem] text-right">
-              {disconnectSecondsLeft}s
-            </div>
+            <div className="font-mono text-lg font-black text-amber-300 tabular-nums sm:min-w-[3.5rem] text-right">{disconnectSecondsLeft}s</div>
           </div>
         )}
 
@@ -901,15 +720,9 @@ export default function GamePage({ params }: GamePageProps) {
           {/* Left: Board + Player strips */}
           <div className="flex flex-col items-center gap-2 lg:h-full lg:min-h-0">
             <PlayerStrip
-              name={topPlayerStrip.name}
-              rating={topPlayerStrip.rating}
-              isActive={topPlayerStrip.isActive}
-              captured={topPlayerStrip.captured}
-              materialAdv={topPlayerStrip.materialAdv}
-              time={topPlayerStrip.time}
-              clockClass={topPlayerStrip.clockClass}
-              side={topPlayerStrip.side}
-              className={boardWidthClass}
+              name={topPlayerStrip.name} rating={topPlayerStrip.rating} isActive={topPlayerStrip.isActive}
+              captured={topPlayerStrip.captured} materialAdv={topPlayerStrip.materialAdv} time={topPlayerStrip.time}
+              clockClass={topPlayerStrip.clockClass} side={topPlayerStrip.side} className={boardWidthClass}
             />
 
             <div className="w-full min-h-0 flex justify-center">
@@ -925,100 +738,54 @@ export default function GamePage({ params }: GamePageProps) {
             </div>
 
             <PlayerStrip
-              name={bottomPlayerStrip.name}
-              rating={bottomPlayerStrip.rating}
-              isActive={bottomPlayerStrip.isActive}
-              captured={bottomPlayerStrip.captured}
-              materialAdv={bottomPlayerStrip.materialAdv}
-              time={bottomPlayerStrip.time}
-              clockClass={bottomPlayerStrip.clockClass}
-              side={bottomPlayerStrip.side}
-              className={boardWidthClass}
+              name={bottomPlayerStrip.name} rating={bottomPlayerStrip.rating} isActive={bottomPlayerStrip.isActive}
+              captured={bottomPlayerStrip.captured} materialAdv={bottomPlayerStrip.materialAdv} time={bottomPlayerStrip.time}
+              clockClass={bottomPlayerStrip.clockClass} side={bottomPlayerStrip.side} className={boardWidthClass}
             />
 
             {gameStatus === "active" && !gameOver && !isSpectator && (
-              <div
-                className={`flex items-center gap-2 mt-1 ${boardWidthClass}`}
-              >
+              <div className={`flex items-center gap-2 mt-1 ${boardWidthClass}`}>
                 {sanMoves.length === 0 && (
-                  <button
-                    onClick={handleAbort}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-[var(--surface-border)] text-gray-400 hover:text-white hover:border-gray-600 transition"
-                    title="Abort Game (no moves made)"
-                  >
+                  <button onClick={handleAbort} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-[var(--surface-border)] text-gray-400 hover:text-white hover:border-gray-600 transition" title="Abort Game (no moves made)">
                     <RotateCcw className="w-3.5 h-3.5" /> Abort
                   </button>
                 )}
                 {!drawPending && !isPassAndPlay && (
-                  <button
-                    onClick={handleOfferDraw}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-[var(--surface-border)] text-gray-400 hover:text-white hover:border-gray-600 transition"
-                    title="Offer Draw"
-                  >
+                  <button onClick={handleOfferDraw} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-[var(--surface-border)] text-gray-400 hover:text-white hover:border-gray-600 transition" title="Offer Draw">
                     <Handshake className="w-3.5 h-3.5" /> Offer Draw
                   </button>
                 )}
-                {drawPending && (
-                  <span className="text-xs text-gray-500 px-2 italic">
-                    Draw offer pending
-                  </span>
-                )}
-                <button
-                  onClick={() => setShowResignModal(true)}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-red-800/50 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 transition ml-auto"
-                  title="Resign"
-                >
+                {drawPending && <span className="text-xs text-gray-500 px-2 italic">Draw offer pending</span>}
+                <button onClick={() => setShowResignModal(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-red-800/50 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 transition ml-auto" title="Resign">
                   <Flag className="w-3.5 h-3.5" /> Resign
                 </button>
               </div>
             )}
 
             {isSpectator && gameStatus === "active" && !gameOver && (
-              <div className="mt-1 flex items-center gap-2 text-xs text-sky-300/90 px-1">
-                <Eye className="w-3.5 h-3.5" /> Read-only spectator view
-              </div>
+              <div className="mt-1 flex items-center gap-2 text-xs text-sky-300/90 px-1"><Eye className="w-3.5 h-3.5" /> Read-only spectator view</div>
             )}
           </div>
 
           {/* Right Panel: Info + Move History */}
           <aside className="flex flex-col gap-4 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             <div className="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl p-4 space-y-3">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                Players
-              </h3>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Players</h3>
               <div className="space-y-2">
                 <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--surface-main)] border border-[var(--surface-border)]">
                   <div className="flex items-center gap-2.5">
                     <span className="w-5 h-5 rounded-full bg-white border-2 border-gray-300 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-semibold text-white leading-none">
-                        {whiteName}
-                      </p>
-                      <p className="text-[11px] text-gray-500 mt-0.5">
-                        {whiteRating}
-                      </p>
-                    </div>
+                    <div><p className="text-sm font-semibold text-white leading-none">{whiteName}</p><p className="text-[11px] text-gray-500 mt-0.5">{whiteRating}</p></div>
                   </div>
-                  {turn === "white" && gameStatus === "active" && (
-                    <span className="w-2 h-2 rounded-full bg-[var(--success)] animate-pulse" />
-                  )}
+                  {turn === "white" && gameStatus === "active" && <span className="w-2 h-2 rounded-full bg-[var(--success)] animate-pulse" />}
                 </div>
 
                 <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--surface-main)] border border-[var(--surface-border)]">
                   <div className="flex items-center gap-2.5">
                     <span className="w-5 h-5 rounded-full bg-gray-800 border-2 border-gray-600 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-semibold text-white leading-none">
-                        {blackName}
-                      </p>
-                      <p className="text-[11px] text-gray-500 mt-0.5">
-                        {blackRating}
-                      </p>
-                    </div>
+                    <div><p className="text-sm font-semibold text-white leading-none">{blackName}</p><p className="text-[11px] text-gray-500 mt-0.5">{blackRating}</p></div>
                   </div>
-                  {turn === "black" && gameStatus === "active" && (
-                    <span className="w-2 h-2 rounded-full bg-[var(--success)] animate-pulse" />
-                  )}
+                  {turn === "black" && gameStatus === "active" && <span className="w-2 h-2 rounded-full bg-[var(--success)] animate-pulse" />}
                 </div>
               </div>
             </div>
@@ -1029,59 +796,35 @@ export default function GamePage({ params }: GamePageProps) {
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                   Move History
                 </h3>
-
+                
                 {/* Export Actions + History Controls */}
                 {sanMoves.length > 0 && (
                   <div className="flex items-center gap-2">
                     {/* FEN / PGN Export Actions */}
                     <div className="flex items-center gap-1 bg-[var(--surface-main)] rounded-lg border border-[var(--surface-border)] px-1">
-                      {/* FEN Copy & Download */}
-                      <div className="flex items-center">
-                        <button
-                          onClick={handleCopyFEN}
-                          title="Copy FEN string"
-                          className="p-1 text-gray-400 hover:text-white transition text-[10px] font-bold"
-                        >
-                          {copiedFEN ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-400 inline" />
-                          ) : (
-                            "FEN"
-                          )}
-                        </button>
-                        <button
-                          onClick={handleDownloadFEN}
-                          title="Download .fen file"
-                          className="p-1 text-gray-400 hover:text-white transition"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                       {/* FEN Copy & Download */}
+                       <div className="flex items-center">
+                         <button onClick={handleCopyFEN} title="Copy FEN string" className="p-1 text-gray-400 hover:text-white transition text-[10px] font-bold">
+                           {copiedFEN ? <Check className="w-3.5 h-3.5 text-emerald-400 inline" /> : "FEN"}
+                         </button>
+                         <button onClick={handleDownloadFEN} title="Download .fen file" className="p-1 text-gray-400 hover:text-white transition">
+                           <Download className="w-3.5 h-3.5" />
+                         </button>
+                       </div>
 
-                      <div className="w-px h-4 bg-[var(--surface-border)]" />
+                       <div className="w-px h-4 bg-[var(--surface-border)]" />
 
-                      {/* PGN Copy & Download */}
-                      <div className="flex items-center">
-                        <button
-                          onClick={handleCopyPGN}
-                          title="Copy PGN string"
-                          className="p-1 text-gray-400 hover:text-white transition text-[10px] font-bold"
-                        >
-                          {copiedPGN ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-400 inline" />
-                          ) : (
-                            "PGN"
-                          )}
-                        </button>
-                        <button
-                          onClick={handleDownloadPGN}
-                          title="Download .pgn file"
-                          className="p-1 text-gray-400 hover:text-white transition"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                       {/* PGN Copy & Download */}
+                       <div className="flex items-center">
+                         <button onClick={handleCopyPGN} title="Copy PGN string" className="p-1 text-gray-400 hover:text-white transition text-[10px] font-bold">
+                           {copiedPGN ? <Check className="w-3.5 h-3.5 text-emerald-400 inline" /> : "PGN"}
+                         </button>
+                         <button onClick={handleDownloadPGN} title="Download .pgn file" className="p-1 text-gray-400 hover:text-white transition">
+                           <Download className="w-3.5 h-3.5" />
+                         </button>
+                       </div>
                     </div>
-
+                  
                     {/* Move Nav Controls */}
                     <div className="flex items-center bg-[var(--surface-main)] rounded-lg border border-[var(--surface-border)]">
                       <button
@@ -1092,38 +835,22 @@ export default function GamePage({ params }: GamePageProps) {
                         <ChevronsLeft className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() =>
-                          setViewingMoveIndex((prev) =>
-                            Math.max(0, (prev ?? sanMoves.length) - 1),
-                          )
-                        }
+                        onClick={() => setViewingMoveIndex(prev => Math.max(0, (prev ?? sanMoves.length) - 1))}
                         disabled={viewingMoveIndex === 0}
                         className="p-1 text-gray-400 hover:text-white disabled:opacity-30 transition border-l border-r border-[var(--surface-border)]"
                       >
                         <ChevronLeft className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() =>
-                          setViewingMoveIndex((prev) =>
-                            prev === null || prev >= sanMoves.length - 1
-                              ? null
-                              : prev + 1,
-                          )
-                        }
-                        disabled={
-                          viewingMoveIndex === null ||
-                          viewingMoveIndex === sanMoves.length
-                        }
+                        onClick={() => setViewingMoveIndex(prev => prev === null || prev >= sanMoves.length - 1 ? null : prev + 1)}
+                        disabled={viewingMoveIndex === null || viewingMoveIndex === sanMoves.length}
                         className="p-1 text-gray-400 hover:text-white disabled:opacity-30 transition border-r border-[var(--surface-border)]"
                       >
                         <ChevronRight className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => setViewingMoveIndex(null)}
-                        disabled={
-                          viewingMoveIndex === null ||
-                          viewingMoveIndex === sanMoves.length
-                        }
+                        disabled={viewingMoveIndex === null || viewingMoveIndex === sanMoves.length}
                         className="p-1 text-gray-400 hover:text-white disabled:opacity-30 transition"
                       >
                         <ChevronsRight className="w-4 h-4" />
@@ -1142,29 +869,18 @@ export default function GamePage({ params }: GamePageProps) {
                 )}
               </div>
 
-              <div
-                ref={moveListRef}
-                className="flex-1 overflow-y-auto space-y-1 max-h-72 pr-1"
-              >
+              <div ref={moveListRef} className="flex-1 overflow-y-auto space-y-1 max-h-72 pr-1">
                 {movePairs.length === 0 ? (
                   <p className="text-xs text-gray-600 italic">No moves yet</p>
                 ) : (
                   movePairs.map(([white, black], idx) => {
                     const whiteMoveIndex = idx * 2 + 1;
                     const blackMoveIndex = idx * 2 + 2;
-                    const currentIndex =
-                      viewingMoveIndex !== null
-                        ? viewingMoveIndex
-                        : sanMoves.length;
+                    const currentIndex = viewingMoveIndex !== null ? viewingMoveIndex : sanMoves.length;
 
                     return (
-                      <div
-                        key={idx}
-                        className="grid grid-cols-[28px_1fr_1fr] gap-1 items-center text-sm"
-                      >
-                        <span className="text-[11px] text-gray-600 text-right pr-1">
-                          {idx + 1}.
-                        </span>
+                      <div key={idx} className="grid grid-cols-[28px_1fr_1fr] gap-1 items-center text-sm">
+                        <span className="text-[11px] text-gray-600 text-right pr-1">{idx + 1}.</span>
                         <span
                           onClick={() => setViewingMoveIndex(whiteMoveIndex)}
                           className={`px-2 py-0.5 rounded font-mono cursor-pointer transition ${
@@ -1195,37 +911,20 @@ export default function GamePage({ params }: GamePageProps) {
             </div>
 
             {!isPassAndPlay && playerColor !== null && (
-              <GameChat
-                gameId={gameId}
-                playerColor={playerColor}
-                enabled={gameStatus === "active" || gameStatus === "completed"}
-                canSend={gameStatus === "active" && !gameOver}
-              />
+              <GameChat gameId={gameId} playerColor={playerColor} enabled={gameStatus === "active" || gameStatus === "completed"} canSend={gameStatus === "active" && !gameOver} />
             )}
 
             {isPassAndPlay && gameStatus === "active" && (
               <div className="bg-[var(--surface-card)] border border-[var(--primary-border)] rounded-2xl p-4 text-center">
-                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">
-                  Current Turn
-                </p>
-                <p className="text-base font-extrabold text-white">
-                  {turn === "white" ? whiteName : blackName}
-                </p>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Pass the device to the other player
-                </p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Current Turn</p>
+                <p className="text-base font-extrabold text-white">{turn === "white" ? whiteName : blackName}</p>
+                <p className="text-xs text-gray-500 mt-0.5">Pass the device to the other player</p>
               </div>
             )}
 
             {!isPassAndPlay && gameStatus === "active" && (
-              <div
-                className={`rounded-2xl p-3 text-center text-sm font-bold border transition-all ${isMyTurn && !isViewingHistory ? "bg-[var(--success)]/10 border-[var(--success)]/30 text-[var(--success)]" : "bg-[var(--surface-card)] border-[var(--surface-border)] text-gray-500"}`}
-              >
-                {isViewingHistory
-                  ? "🔍 Viewing History"
-                  : isMyTurn
-                    ? "🎯 Your Turn"
-                    : "⏳ Opponent's Turn"}
+              <div className={`rounded-2xl p-3 text-center text-sm font-bold border transition-all ${isMyTurn && !isViewingHistory ? "bg-[var(--success)]/10 border-[var(--success)]/30 text-[var(--success)]" : "bg-[var(--surface-card)] border-[var(--surface-border)] text-gray-500"}`}>
+                {isViewingHistory ? "🔍 Viewing History" : isMyTurn ? "🎯 Your Turn" : "⏳ Opponent's Turn"}
               </div>
             )}
           </aside>
@@ -1235,60 +934,14 @@ export default function GamePage({ params }: GamePageProps) {
       {gameOver && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-sm bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-3xl p-8 text-center space-y-5 shadow-2xl">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-primary-gradient flex items-center justify-center shadow-lg">
-              <Crown className="w-8 h-8 text-[var(--surface-main)]" />
-            </div>
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-primary-gradient flex items-center justify-center shadow-lg"><Crown className="w-8 h-8 text-[var(--surface-main)]" /></div>
             <div>
-              <h2 className="text-2xl font-extrabold text-white">
-                {gameOver.reason === "checkmate"
-                  ? "Checkmate!"
-                  : gameOver.reason === "timeout"
-                    ? "Time Out!"
-                    : gameOver.reason === "resignation"
-                      ? "Game Over"
-                      : gameOver.reason === "abandonment" ||
-                          gameOver.reason === "player_left"
-                        ? gameOver.winner === playerColor
-                          ? "Opponent Left"
-                          : "Game Forfeited"
-                        : gameOver.reason === "agreement"
-                          ? "Draw by Agreement"
-                          : gameOver.reason === "aborted"
-                            ? "Game Aborted"
-                            : "Game Over"}
-              </h2>
-              {gameOver.result === "draw" ? (
-                <p className="text-gray-400 mt-2">The game ended in a draw.</p>
-              ) : gameOver.result === "none" ? (
-                <p className="text-gray-400 mt-2">The game was aborted.</p>
-              ) : gameOver.reason === "abandonment" ||
-                gameOver.reason === "player_left" ? (
-                <p className="text-gray-400 mt-2">
-                  {gameOver.winner === playerColor
-                    ? "Opponent left the game. You win!"
-                    : "You left the game."}
-                </p>
-              ) : (
-                <p className="text-gray-400 mt-2">
-                  {gameOver.reason === "resignation"
-                    ? `${gameOver.result === playerColor ? "You resigned." : "Opponent resigned."}`
-                    : `${gameOver.winner === "white" ? whiteName : blackName} wins!`}
-                </p>
-              )}
+              <h2 className="text-2xl font-extrabold text-white">{gameOver.reason === "checkmate" ? "Checkmate!" : gameOver.reason === "timeout" ? "Time Out!" : gameOver.reason === "resignation" ? "Game Over" : gameOver.reason === "abandonment" || gameOver.reason === "player_left" ? gameOver.winner === playerColor ? "Opponent Left" : "Game Forfeited" : gameOver.reason === "agreement" ? "Draw by Agreement" : gameOver.reason === "aborted" ? "Game Aborted" : "Game Over"}</h2>
+              {gameOver.result === "draw" ? <p className="text-gray-400 mt-2">The game ended in a draw.</p> : gameOver.result === "none" ? <p className="text-gray-400 mt-2">The game was aborted.</p> : gameOver.reason === "abandonment" || gameOver.reason === "player_left" ? <p className="text-gray-400 mt-2">{gameOver.winner === playerColor ? "Opponent left the game. You win!" : "You left the game."}</p> : <p className="text-gray-400 mt-2">{gameOver.reason === "resignation" ? `${gameOver.result === playerColor ? "You resigned." : "Opponent resigned."}` : `${gameOver.winner === "white" ? whiteName : blackName} wins!`}</p>}
             </div>
             <div className="flex flex-col gap-3 pt-2">
-              <Link
-                href="/game"
-                className="w-full py-3 rounded-xl font-bold text-sm bg-primary-gradient text-[var(--surface-main)] hover:opacity-95 transition shadow-lg text-center"
-              >
-                Play Again
-              </Link>
-              <Link
-                href="/"
-                className="w-full py-3 rounded-xl font-bold text-sm bg-white/5 border border-[var(--surface-border)] text-gray-300 hover:bg-white/10 transition text-center"
-              >
-                Back to Home
-              </Link>
+              <Link href="/game" className="w-full py-3 rounded-xl font-bold text-sm bg-primary-gradient text-[var(--surface-main)] hover:opacity-95 transition shadow-lg text-center">Play Again</Link>
+              <Link href="/" className="w-full py-3 rounded-xl font-bold text-sm bg-white/5 border border-[var(--surface-border)] text-gray-300 hover:bg-white/10 transition text-center">Back to Home</Link>
             </div>
           </div>
         </div>
@@ -1297,30 +950,8 @@ export default function GamePage({ params }: GamePageProps) {
       {showLeaveModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="w-full max-w-sm bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl p-6 space-y-5 shadow-2xl">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-6 h-6 text-amber-400 flex-shrink-0" />
-              <div>
-                <h3 className="font-bold text-white text-base">Leave Game?</h3>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Leaving an ongoing game will count as a forfeit and you will
-                  lose the match.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowLeaveModal(false)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-300 bg-white/5 border border-[var(--surface-border)] hover:bg-white/10 transition cursor-pointer"
-              >
-                Stay & Play
-              </button>
-              <button
-                onClick={confirmLeaveGame}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500/80 hover:bg-red-500 transition cursor-pointer"
-              >
-                Leave Game
-              </button>
-            </div>
+            <div className="flex items-center gap-3"><AlertTriangle className="w-6 h-6 text-amber-400 flex-shrink-0" /><div><h3 className="font-bold text-white text-base">Leave Game?</h3><p className="text-xs text-gray-400 mt-0.5">Leaving an ongoing game will count as a forfeit and you will lose the match.</p></div></div>
+            <div className="flex gap-3"><button onClick={() => setShowLeaveModal(false)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-300 bg-white/5 border border-[var(--surface-border)] hover:bg-white/10 transition cursor-pointer">Stay & Play</button><button onClick={confirmLeaveGame} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500/80 hover:bg-red-500 transition cursor-pointer">Leave Game</button></div>
           </div>
         </div>
       )}
@@ -1328,29 +959,8 @@ export default function GamePage({ params }: GamePageProps) {
       {showResignModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="w-full max-w-sm bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl p-6 space-y-5 shadow-2xl">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-6 h-6 text-red-400 flex-shrink-0" />
-              <div>
-                <h3 className="font-bold text-white text-base">Resign Game?</h3>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  This will end the game and count as a loss.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowResignModal(false)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-300 bg-white/5 border border-[var(--surface-border)] hover:bg-white/10 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleResign}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500/80 hover:bg-red-500 transition"
-              >
-                Resign
-              </button>
-            </div>
+            <div className="flex items-center gap-3"><AlertTriangle className="w-6 h-6 text-red-400 flex-shrink-0" /><div><h3 className="font-bold text-white text-base">Resign Game?</h3><p className="text-xs text-gray-400 mt-0.5">This will end the game and count as a loss.</p></div></div>
+            <div className="flex gap-3"><button onClick={() => setShowResignModal(false)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-300 bg-white/5 border border-[var(--surface-border)] hover:bg-white/10 transition">Cancel</button><button onClick={handleResign} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500/80 hover:bg-red-500 transition">Resign</button></div>
           </div>
         </div>
       )}
@@ -1358,30 +968,8 @@ export default function GamePage({ params }: GamePageProps) {
       {showDrawModal && drawOfferedBy && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="w-full max-w-sm bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl p-6 space-y-5 shadow-2xl">
-            <div className="flex items-center gap-3">
-              <Handshake className="w-6 h-6 text-[var(--primary)] flex-shrink-0" />
-              <div>
-                <h3 className="font-bold text-white text-base">Draw Offered</h3>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {drawOfferedBy === "white" ? whiteName : blackName} is
-                  offering a draw. Do you accept?
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => handleRespondDraw(false)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-300 bg-white/5 border border-[var(--surface-border)] hover:bg-white/10 transition flex items-center justify-center gap-1.5"
-              >
-                <X className="w-4 h-4" /> Decline
-              </button>
-              <button
-                onClick={() => handleRespondDraw(true)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-[var(--surface-main)] bg-primary-gradient hover:opacity-90 transition flex items-center justify-center gap-1.5"
-              >
-                <Handshake className="w-4 h-4" /> Accept
-              </button>
-            </div>
+            <div className="flex items-center gap-3"><Handshake className="w-6 h-6 text-[var(--primary)] flex-shrink-0" /><div><h3 className="font-bold text-white text-base">Draw Offered</h3><p className="text-xs text-gray-400 mt-0.5">{drawOfferedBy === "white" ? whiteName : blackName} is offering a draw. Do you accept?</p></div></div>
+            <div className="flex gap-3"><button onClick={() => handleRespondDraw(false)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-300 bg-white/5 border border-[var(--surface-border)] hover:bg-white/10 transition flex items-center justify-center gap-1.5"><X className="w-4 h-4" /> Decline</button><button onClick={() => handleRespondDraw(true)} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-[var(--surface-main)] bg-primary-gradient hover:opacity-90 transition flex items-center justify-center gap-1.5"><Handshake className="w-4 h-4" /> Accept</button></div>
           </div>
         </div>
       )}
@@ -1390,64 +978,20 @@ export default function GamePage({ params }: GamePageProps) {
 }
 
 // Player Strip Sub-component
-interface PlayerStripProps {
-  name: string;
-  rating: number;
-  isActive: boolean;
-  captured: string[];
-  materialAdv: number;
-  time: number;
-  clockClass: string;
-  side: "white" | "black";
-  className?: string;
-}
-function PlayerStrip({
-  name,
-  rating,
-  isActive,
-  captured,
-  materialAdv,
-  time,
-  clockClass,
-  side,
-  className = "",
-}: PlayerStripProps) {
+interface PlayerStripProps { name: string; rating: number; isActive: boolean; captured: string[]; materialAdv: number; time: number; clockClass: string; side: "white" | "black"; className?: string; }
+function PlayerStrip({ name, rating, isActive, captured, materialAdv, time, clockClass, side, className = "", }: PlayerStripProps) {
   return (
-    <div
-      className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${className} ${isActive ? "bg-[var(--surface-card)] border-[var(--primary-border)] shadow-md" : "bg-[var(--surface-main)]/50 border-[var(--surface-border)]"}`}
-    >
+    <div className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${className} ${isActive ? "bg-[var(--surface-card)] border-[var(--primary-border)] shadow-md" : "bg-[var(--surface-main)]/50 border-[var(--surface-border)]"}`}>
       <div className="flex items-center gap-2.5 min-w-0">
-        <div
-          className={`w-8 h-8 rounded-full flex-shrink-0 border-2 flex items-center justify-center text-xs font-black ${side === "white" ? "bg-white text-gray-800 border-gray-300" : "bg-gray-800 text-white border-gray-600"}`}
-        >
+        <div className={`w-8 h-8 rounded-full flex-shrink-0 border-2 flex items-center justify-center text-xs font-black ${side === "white" ? "bg-white text-gray-800 border-gray-300" : "bg-gray-800 text-white border-gray-600"}`}>
           {name[0]?.toUpperCase() ?? "?"}
         </div>
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-bold text-white truncate max-w-[120px]">
-              {name}
-            </span>
-            <span className="text-[11px] text-gray-500">{rating}</span>
-          </div>
-          {captured.length > 0 && (
-            <div className="flex items-center gap-px mt-0.5 flex-wrap">
-              {captured.map((p, i) => (
-                <span key={i} className="text-xs leading-none opacity-70">
-                  {PIECE_SYMBOLS[p] || "♟"}
-                </span>
-              ))}
-              {materialAdv > 0 && (
-                <span className="text-[10px] text-gray-400 ml-1 font-medium">
-                  +{materialAdv}
-                </span>
-              )}
-            </div>
-          )}
+          <div className="flex items-center gap-1.5"><span className="text-sm font-bold text-white truncate max-w-[120px]">{name}</span><span className="text-[11px] text-gray-500">{rating}</span></div>
+          {captured.length > 0 && <div className="flex items-center gap-px mt-0.5 flex-wrap">{captured.map((p, i) => <span key={i} className="text-xs leading-none opacity-70">{PIECE_SYMBOLS[p] || "♟"}</span>)}{materialAdv > 0 && <span className="text-[10px] text-gray-400 ml-1 font-medium">+{materialAdv}</span>}</div>}
         </div>
       </div>
-      <div
-        className={`px-3 py-1.5 rounded-lg font-mono text-base tabular-nums ${clockClass} ${isActive ? "bg-[var(--primary-muted)] border border-[var(--primary-border)]" : "bg-[var(--surface-main)]/60 border border-[var(--surface-border)]"}`}
-      >
+      <div className={`px-3 py-1.5 rounded-lg font-mono text-base tabular-nums ${clockClass} ${isActive ? "bg-[var(--primary-muted)] border border-[var(--primary-border)]" : "bg-[var(--surface-main)]/60 border border-[var(--surface-border)]"}`}>
         {formatTime(time)}
       </div>
     </div>
