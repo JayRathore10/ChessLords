@@ -283,7 +283,7 @@
   - Calculate rating changes after rated games.
   - Update player ratings.
 
-- [ ] Post-Game Statistics Sync
+- [x] Post-Game Statistics Sync
 
   - Update:
 
