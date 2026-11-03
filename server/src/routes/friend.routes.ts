@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { getFriendsData, sendFriendRequest, respondToRequest } from '../controllers/friend.controller';
-import { authMiddleware } from '../middleware/auth.middleware';
+import { isUserLoggedIn } from '../middleware/auth.middleware';
 
 const router = Router();
 
-router.use(authMiddleware);
+router.use(isUserLoggedIn);
 router.get('/', getFriendsData);
 router.post('/request', sendFriendRequest);
 router.post('/respond', respondToRequest);
