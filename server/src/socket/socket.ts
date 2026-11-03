@@ -2,6 +2,7 @@ import { Server } from "socket.io";
 import { setupMatchmakingSocket } from "./matchmaking.socket";
 import { handleGameDisconnect, setupGameSocket } from "./game.socket";
 import { setupChatSocket } from "./chat.socket";
+import { setupSocialSocket } from "./social.socket";
 import { socketAuthMiddleware } from "../middleware/socketAuth.middleware";
 
 export const setupSocket = (io: Server) => {
@@ -16,6 +17,7 @@ export const setupSocket = (io: Server) => {
     setupMatchmakingSocket(io, socket);
     setupGameSocket(io, socket);
     setupChatSocket(io, socket);
+    setupSocialSocket(io, socket)
 
     socket.on("disconnect", () => {
       console.log("Player disconnected:", socket.id);
