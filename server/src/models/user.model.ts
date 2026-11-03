@@ -1,4 +1,3 @@
-
 import mongoose, { Document, Types } from "mongoose";
 
 export interface RatingHistoryEntry {
@@ -31,10 +30,6 @@ export interface UserInterface extends Document {
   gamesDrawn: number;
 
   ratingHistory: RatingHistoryEntry[];
-
-  // Friends
-  friends: Types.ObjectId[];
-  friendRequests: Types.ObjectId[];
 
   // Account status
   isOnline: boolean;
@@ -166,22 +161,6 @@ const userSchema = new mongoose.Schema<UserInterface>(
       ],
       default: [],
     },
-
-    // Friends
-    friends: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-
-    // Incoming friend requests
-    friendRequests: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
 
     // Account status
     isOnline: {
