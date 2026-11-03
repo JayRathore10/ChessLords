@@ -32,6 +32,10 @@ export interface UserInterface extends Document {
 
   ratingHistory: RatingHistoryEntry[];
 
+  // Friends
+  friends: Types.ObjectId[];
+  friendRequests: Types.ObjectId[];
+
   // Account status
   isOnline: boolean;
   lastSeen?: Date;
@@ -162,6 +166,22 @@ const userSchema = new mongoose.Schema<UserInterface>(
       ],
       default: [],
     },
+
+    // Friends
+    friends: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    // Incoming friend requests
+    friendRequests: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
 
     // Account status
     isOnline: {
