@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { Send, MessageCircle } from "lucide-react";
+import { Send, MessageCircle, Bell, BellOff } from "lucide-react";
 import { socket } from "@/lib/socket";
 
 type MessageType = "quick" | "emoji" | "custom";
@@ -35,7 +35,7 @@ const QUICK_MESSAGES = [
   "Let's play again!",
 ];
 
-const EMOJIS = ["👍", "😂", "👏", "😮", "😢", "🤔", "❤️", "🔥", "😎", "🙌"];
+const EMOJIS = ["👍", "😂", "🤔", "👀", "🔥", "🤝", "🙏", "😅", "👏", "🤯"];
 
 export default function GameChat({
   gameId,
@@ -47,8 +47,18 @@ export default function GameChat({
   const [input, setInput] = useState("");
   const [activeTab, setActiveTab] = useState<"quick" | "emoji">("quick");
   const [chatError, setChatError] = useState("");
+  
+  // Mute Controls
+  const [isMuted, setIsMuted] = useState(false);
+  const isMutedRef = useRef(isMuted);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const optimisticIdRef = useRef(0);
+
+  // Keep ref in sync for the socket listener closure
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
 
   useEffect(() => {
     if (!enabled || !playerColor) return;
@@ -56,14 +66,11 @@ export default function GameChat({
     const handleChatHistory = (history: ChatMessage[]) => {
       setMessages((previous) => {
         const combined = new Map<string, ChatMessage>();
-
         previous.forEach((item) => combined.set(item._id, item));
         history.forEach((item) => combined.set(item._id, item));
-
         return Array.from(combined.values()).sort(
           (a, b) =>
-            new Date(a.createdAt).getTime() -
-            new Date(b.createdAt).getTime()
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
       });
     };
@@ -71,32 +78,29 @@ export default function GameChat({
     const handleNewMessage = (newMessage: ChatMessage) => {
       if (newMessage.gameId !== gameId) return;
 
+      // Mute Control: Ignore incoming messages if we are muted and it's from the opponent
+      if (isMutedRef.current && newMessage.senderColor !== playerColor) return;
+
       setMessages((previous) => {
         if (previous.some((item) => item._id === newMessage._id)) {
           return previous;
         }
-
         return [...previous, newMessage];
       });
     };
 
     const handleChatError = (data: { message: string }) => {
       setChatError(data.message);
+      setTimeout(() => setChatError(""), 3000);
     };
 
     socket.on("chatHistory", handleChatHistory);
     socket.on("newMessage", handleNewMessage);
     socket.on("chatError", handleChatError);
 
-    // The game component enables chat after receiving gameState.
-    // At this point, the server has already joined the socket to the game.
     socket.emit("getChatHistory", { gameId });
-    const historyRetry = window.setTimeout(() => {
-      socket.emit("getChatHistory", { gameId });
-    }, 500);
 
     return () => {
-      window.clearTimeout(historyRetry);
       socket.off("chatHistory", handleChatHistory);
       socket.off("newMessage", handleNewMessage);
       socket.off("chatError", handleChatError);
@@ -109,9 +113,9 @@ export default function GameChat({
 
   const sendMessage = (text: string, messageType: MessageType) => {
     const trimmed = text.trim();
-
     if (!trimmed || !canSend || !playerColor) return;
 
+    // Optimistic UI update
     const optimisticMessage: ChatMessage = {
       _id: `local-${optimisticIdRef.current++}`,
       gameId,
@@ -160,10 +164,18 @@ export default function GameChat({
             Game Chat
           </h3>
         </div>
-
-        <span className="text-[10px] text-gray-500">
-          {canSend ? "Live" : "Read only"}
-        </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsMuted(!isMuted)}
+            title={isMuted ? "Unmute Opponent" : "Mute Opponent"}
+            className={`transition ${isMuted ? "text-red-400" : "text-gray-500 hover:text-white"}`}
+          >
+            {isMuted ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+          </button>
+          <span className="text-[10px] text-gray-500">
+            {canSend ? "Live" : "Read only"}
+          </span>
+        </div>
       </div>
 
       {/* Messages */}
@@ -178,7 +190,6 @@ export default function GameChat({
         ) : (
           messages.map((item) => {
             const isMine = item.senderColor === playerColor;
-
             return (
               <div
                 key={item._id}
@@ -199,7 +210,6 @@ export default function GameChat({
                       {formatMessageTime(item.createdAt)}
                     </span>
                   </div>
-
                   <p
                     className={`text-sm break-words whitespace-pre-wrap ${
                       item.messageType === "emoji" ? "text-2xl" : "text-gray-200"
@@ -212,7 +222,6 @@ export default function GameChat({
             );
           })
         )}
-
         <div ref={messagesEndRef} />
       </div>
 
@@ -232,7 +241,6 @@ export default function GameChat({
               >
                 Quick Messages
               </button>
-
               <button
                 type="button"
                 onClick={() => setActiveTab("emoji")}
@@ -284,11 +292,10 @@ export default function GameChat({
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder={canSend ? "Type a message..." : "Chat is read only"}
-            maxLength={500}
+            maxLength={200}
             disabled={!canSend}
             className="min-w-0 flex-1 px-3 py-2.5 rounded-xl text-sm text-white bg-[var(--surface-main)] border border-[var(--surface-border)] outline-none focus:border-[var(--primary-border)] placeholder:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60"
           />
-
           <button
             type="submit"
             disabled={!canSend || !input.trim()}
