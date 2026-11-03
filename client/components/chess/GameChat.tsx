@@ -47,12 +47,13 @@ export default function GameChat({
   const [input, setInput] = useState("");
   const [activeTab, setActiveTab] = useState<"quick" | "emoji">("quick");
   const [chatError, setChatError] = useState("");
-  
+
   // Mute Controls
   const [isMuted, setIsMuted] = useState(false);
   const isMutedRef = useRef(isMuted);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  // New strict container ref for scrolling
+  const chatScrollRef = useRef<HTMLDivElement>(null);
   const optimisticIdRef = useRef(0);
 
   // Keep ref in sync for the socket listener closure
@@ -70,7 +71,7 @@ export default function GameChat({
         history.forEach((item) => combined.set(item._id, item));
         return Array.from(combined.values()).sort(
           (a, b) =>
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
         );
       });
     };
@@ -107,8 +108,11 @@ export default function GameChat({
     };
   }, [gameId, playerColor, enabled]);
 
+  // Constrained scroll logic - replaces smooth scrollIntoView
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
   }, [messages]);
 
   const sendMessage = (text: string, messageType: MessageType) => {
@@ -155,9 +159,9 @@ export default function GameChat({
   if (!enabled) return null;
 
   return (
-    <section className="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl overflow-hidden flex flex-col min-h-[360px] max-h-[520px] lg:min-h-0 lg:flex-1">
+    <section className="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl flex flex-col h-[450px] shrink-0 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--surface-border)]">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--surface-border)] shrink-0 bg-[var(--surface-card)]">
         <div className="flex items-center gap-2">
           <MessageCircle className="w-4 h-4 text-[var(--primary)]" />
           <h3 className="text-xs font-bold text-gray-300 uppercase tracking-wider">
@@ -168,9 +172,13 @@ export default function GameChat({
           <button
             onClick={() => setIsMuted(!isMuted)}
             title={isMuted ? "Unmute Opponent" : "Mute Opponent"}
-            className={`transition ${isMuted ? "text-red-400" : "text-gray-500 hover:text-white"}`}
+            className={`transition cursor-pointer ${isMuted ? "text-red-400" : "text-gray-500 hover:text-white"}`}
           >
-            {isMuted ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+            {isMuted ? (
+              <BellOff className="w-4 h-4" />
+            ) : (
+              <Bell className="w-4 h-4" />
+            )}
           </button>
           <span className="text-[10px] text-gray-500">
             {canSend ? "Live" : "Read only"}
@@ -179,13 +187,14 @@ export default function GameChat({
       </div>
 
       {/* Messages */}
-      <div className="min-h-[150px] flex-1 overflow-y-auto p-3 space-y-3">
+      <div
+        ref={chatScrollRef}
+        className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0 bg-[var(--surface-main)]/20"
+      >
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center">
+          <div className="h-full flex flex-col items-center justify-center text-center py-4">
             <MessageCircle className="w-7 h-7 text-gray-600 mb-2" />
-            <p className="text-xs text-gray-500">
-              No messages yet. Say hello!
-            </p>
+            <p className="text-xs text-gray-500">No messages yet. Say hello!</p>
           </div>
         ) : (
           messages.map((item) => {
@@ -212,7 +221,9 @@ export default function GameChat({
                   </div>
                   <p
                     className={`text-sm break-words whitespace-pre-wrap ${
-                      item.messageType === "emoji" ? "text-2xl" : "text-gray-200"
+                      item.messageType === "emoji"
+                        ? "text-2xl"
+                        : "text-gray-200"
                     }`}
                   >
                     {item.message}
@@ -222,21 +233,20 @@ export default function GameChat({
             );
           })
         )}
-        <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick chat */}
-      <div className="border-t border-[var(--surface-border)] p-3 space-y-3 bg-[var(--surface-card)]">
+      {/* Quick chat & Input */}
+      <div className="border-t border-[var(--surface-border)] p-3 space-y-3 bg-[var(--surface-card)] shrink-0">
         {canSend && (
           <>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setActiveTab("quick")}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition ${
+                className={`flex-1 py-1.5 cursor-pointer rounded-lg text-xs font-semibold transition ${
                   activeTab === "quick"
                     ? "bg-[var(--primary-muted)] text-[var(--primary)] border border-[var(--primary-border)]"
-                    : "bg-[var(--surface-main)] text-gray-400 border border-[var(--surface-border)]"
+                    : "bg-[var(--surface-main)] text-gray-400 border border-[var(--surface-border)] hover:text-white"
                 }`}
               >
                 Quick Messages
@@ -244,10 +254,10 @@ export default function GameChat({
               <button
                 type="button"
                 onClick={() => setActiveTab("emoji")}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition ${
+                className={`flex-1 py-1.5 cursor-pointer rounded-lg text-xs font-semibold transition ${
                   activeTab === "emoji"
                     ? "bg-[var(--primary-muted)] text-[var(--primary)] border border-[var(--primary-border)]"
-                    : "bg-[var(--surface-main)] text-gray-400 border border-[var(--surface-border)]"
+                    : "bg-[var(--surface-main)] text-gray-400 border border-[var(--surface-border)] hover:text-white"
                 }`}
               >
                 Emojis
@@ -261,7 +271,7 @@ export default function GameChat({
                     key={phrase}
                     type="button"
                     onClick={() => sendMessage(phrase, "quick")}
-                    className="px-2 py-2 rounded-lg text-[11px] text-gray-300 bg-[var(--surface-main)] border border-[var(--surface-border)] hover:border-[var(--primary-border)] hover:text-white transition text-center"
+                    className="px-2 py-2 rounded-lg cursor-pointer text-[11px] text-gray-300 bg-[var(--surface-main)] border border-[var(--surface-border)] hover:border-[var(--primary-border)] hover:text-white transition text-center"
                   >
                     {phrase}
                   </button>
@@ -274,7 +284,7 @@ export default function GameChat({
                     key={emoji}
                     type="button"
                     onClick={() => sendMessage(emoji, "emoji")}
-                    className="rounded-lg py-2 text-xl bg-[var(--surface-main)] border border-[var(--surface-border)] hover:border-[var(--primary-border)] transition"
+                    className="rounded-lg py-2 cursor-pointer text-xl bg-[var(--surface-main)] border border-[var(--surface-border)] hover:border-[var(--primary-border)] transition"
                     aria-label={`Send ${emoji}`}
                   >
                     {emoji}
@@ -300,7 +310,7 @@ export default function GameChat({
             type="submit"
             disabled={!canSend || !input.trim()}
             aria-label="Send message"
-            className="p-2.5 rounded-xl bg-primary-gradient text-[var(--surface-main)] disabled:opacity-40 disabled:cursor-not-allowed transition shrink-0"
+            className="p-2.5 rounded-xl bg-primary-gradient text-[var(--surface-main)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shrink-0"
           >
             <Send className="w-4 h-4" />
           </button>

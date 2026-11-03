@@ -298,7 +298,7 @@
 
 ## Social Features
 
-- [ ] In-Game Chat
+- [x] In-Game Chat
 
   - Real-time player chat.
   - Quick greetings/emotes.
