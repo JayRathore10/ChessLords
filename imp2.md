@@ -305,7 +305,7 @@
   - Profanity filtering.
   - Mute controls.
 
-- [ ] Friendship System
+- [x] Friendship System
 
   - Friend requests.
   - Accept/reject requests.
