@@ -13,6 +13,7 @@ import MatchmakingModal from "@/components/lobby/MatchmakingModal";
 import QuickMatch from "@/components/QuickMatch/QuickMatch";
 import FriendGame from "@/components/friendGame/FriendGame";
 import PassAndPlay from "@/components/PassAndPlay/PassAndPlay";
+import FriendsSidebar from "@/components/social/FriendsSidebar"; // IMPORT ADDED
 
 import { TIME_CONTROLS } from "@/lib/timeControls";
 import { TimeControlOption } from "@/lib/timeControls";
@@ -331,77 +332,86 @@ function GameLobbyPage() {
         {/* Lobby Top Header */}
         <LobbyHeader lobbyStats={lobbyStats} />
 
-        {/* Mode Navigation Tabs */}
-        <LobbyTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+        {/* 
+          CONDITIONAL GRID LAYOUT:
+          If user is logged in, show Lobby on left and Friends on right.
+          If guest, show Lobby taking up the full width.
+        */}
+        <div className={`grid grid-cols-1 ${user ? "lg:grid-cols-[1fr_350px]" : ""} gap-8 items-start`}>
+          
+          {/* LEFT SIDE: LOBBY TABS & MODES */}
+          <div className="flex flex-col gap-6">
+            <LobbyTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
-        {/* TAB 1: QUICK MATCH / MATCHMAKING */}
-        {activeTab === "quick" && (
-          <QuickMatch
-            setGameType={setGameType}
-            gameType={gameType}
-            selectedTc={selectedTc}
-            setSelectedTc={setSelectedTc}
-            isCustomTc={isCustomTc}
-            setIsCustomTc={setIsCustomTc}
-            customMinutes={customMinutes}
-            setCustomMinutes={setCustomMinutes}
-            customIncrement={customIncrement}
-            setCustomIncrement={setCustomIncrement}
-            handleStartSearch={handleStartSearch}
-            user={user}
-          />
-        )}
-        {/* TAB 2: PLAY WITH A FRIEND (CUSTOM INVITES & ROOM CODES) */}
-        {activeTab === "friend" && (
-          <FriendGame
-            setFriendColor={setFriendColor}
-            friendColor={friendColor}
-            setSelectedTc={setSelectedTc}
-            selectedTc={selectedTc}
-            isCustomTc={isCustomTc}
-            setIsCustomTc={setIsCustomTc}
+            {/* TAB 1: QUICK MATCH / MATCHMAKING */}
+            {activeTab === "quick" && (
+              <QuickMatch
+                setGameType={setGameType}
+                gameType={gameType}
+                selectedTc={selectedTc}
+                setSelectedTc={setSelectedTc}
+                isCustomTc={isCustomTc}
+                setIsCustomTc={setIsCustomTc}
+                customMinutes={customMinutes}
+                setCustomMinutes={setCustomMinutes}
+                customIncrement={customIncrement}
+                setCustomIncrement={setCustomIncrement}
+                handleStartSearch={handleStartSearch}
+                user={user}
+              />
+            )}
+            {/* TAB 2: PLAY WITH A FRIEND (CUSTOM INVITES & ROOM CODES) */}
+            {activeTab === "friend" && (
+              <FriendGame
+                setFriendColor={setFriendColor}
+                friendColor={friendColor}
+                setSelectedTc={setSelectedTc}
+                selectedTc={selectedTc}
+                isCustomTc={isCustomTc}
+                setIsCustomTc={setIsCustomTc}
+                isCreatingRoom={isCreatingRoom}
+                setIsCreatingRoom={setIsCreatingRoom}
+                createdRoomGameId={createdRoomGameId}
+                createdRoomCode={createdRoomCode}
+                copiedLink={copiedLink}
+                setCopiedLink={setCopiedLink}
+                copiedCode={copiedCode}
+                setCopiedCode={setCopiedCode}
+                copyToClipboard={copyToClipboard}
+                handleCreateFriendRoom={handleCreateFriendRoom}
+                handleJoinFriendRoom={handleJoinFriendRoom}
+                joinRoomCodeInput={joinRoomCodeInput}
+                setJoinRoomCodeInput={setJoinRoomCodeInput}
+                isJoiningRoom={isJoiningRoom}
+                setIsJoiningRoom={setIsJoiningRoom}
+                joinRoomError={joinRoomError}
+                setJoinRoomError={setJoinRoomError}
+              />
+            )}
 
-            isCreatingRoom={isCreatingRoom}
-            setIsCreatingRoom={setIsCreatingRoom}
+            {/* TAB 3: PASS AND PLAY (LOCAL HOTSEAT MODE) */}
+            {activeTab === "pass" && (
+              <PassAndPlay
+                p1Name={p1Name}
+                setP1Name={setP1Name}
+                p2Name={p2Name}
+                setP2Name={setP2Name}
+                passPlayMinutes={passPlayMinutes}
+                setPassPlayMinutes={setPassPlayMinutes}
+                handleStartPassAndPlay={handleStartPassAndPlay}
+                isStartingPassPlay={isStartingPassPlay}
+              />
+            )}
+          </div>
 
-            createdRoomGameId={createdRoomGameId}
-            createdRoomCode={createdRoomCode}
+          {/* RIGHT SIDE: FRIENDS SIDEBAR (Only visible if logged in) */}
+          {user && (
+            <div className="w-full sticky top-24">
+              <FriendsSidebar />
+            </div>
+          )}
 
-            copiedLink={copiedLink}
-            setCopiedLink={setCopiedLink}
-
-            copiedCode={copiedCode}
-            setCopiedCode={setCopiedCode}
-
-            copyToClipboard={copyToClipboard}
-
-            handleCreateFriendRoom={handleCreateFriendRoom}
-            handleJoinFriendRoom={handleJoinFriendRoom}
-
-            joinRoomCodeInput={joinRoomCodeInput}
-            setJoinRoomCodeInput={setJoinRoomCodeInput}
-
-            isJoiningRoom={isJoiningRoom}
-            setIsJoiningRoom={setIsJoiningRoom}
-
-            joinRoomError={joinRoomError}
-            setJoinRoomError={setJoinRoomError}
-          />
-        )}
-
-        {/* TAB 3: PASS AND PLAY (LOCAL HOTSEAT MODE) */}
-        {activeTab === "pass" && (
-          <PassAndPlay
-            p1Name={p1Name}
-            setP1Name={setP1Name}
-            p2Name={p2Name}
-            setP2Name={setP2Name}
-            passPlayMinutes={passPlayMinutes}
-            setPassPlayMinutes={setPassPlayMinutes}
-            handleStartPassAndPlay={handleStartPassAndPlay}
-            isStartingPassPlay={isStartingPassPlay}
-          />
-        )}
+        </div>
       </div>
 
       {/* MATCHMAKING RADAR SEARCH MODAL / OVERLAY */}
