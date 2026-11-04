@@ -170,3 +170,23 @@ export async function checkUsername(
     };
   }
 }
+
+// --- FRIENDSHIP API ---
+
+export async function fetchFriendsData() {
+  return await apiFetch<{ friends: any[]; friendRequests: any[] }>("/friends");
+}
+
+export async function sendFriendRequest(targetUsername: string) {
+  return await apiFetch("/friends/request", {
+    method: "POST",
+    data: { targetUsername },
+  });
+}
+
+export async function respondToFriendRequest(requesterId: string, action: "accept" | "reject") {
+  return await apiFetch("/friends/respond", {
+    method: "POST",
+    data: { requesterId, action },
+  });
+}
