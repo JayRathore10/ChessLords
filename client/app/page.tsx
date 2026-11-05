@@ -60,9 +60,7 @@ export default function HomePage() {
 
 // have to add move history 
 // 5. have to add designs to the frontpage
-// and have to redesign timmer in player
 // 7. Have to add loading screen 
 // 8. Have to module the server.ts
 // 9. Have to remove the check notification and invalid move notification 
-// 10. Have to shift timmer to the side name take 
 // 11. Have to add Ai bot that play chess {easy , med , hard diff}

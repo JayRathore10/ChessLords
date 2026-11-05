@@ -312,6 +312,7 @@
   - Friends list.
   - Online status.
   - Challenge friend.
+  - Add UI
 
 - [ ] Leaderboard Backend Integration
 
