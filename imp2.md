@@ -314,7 +314,7 @@
   - Challenge friend.
   - Add UI
 
-- [ ] Leaderboard Backend Integration
+- [x] Leaderboard Backend Integration
 
   - Connect leaderboard UI to backend.
   - Sort players by rating.
