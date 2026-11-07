@@ -324,7 +324,7 @@
 
 ## UI / Customization
 
-- [ ] Board Themes
+- [x] Board Themes
 
   - Wood
   - Glass
