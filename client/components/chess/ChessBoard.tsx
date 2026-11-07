@@ -9,11 +9,24 @@ import {
   type PieceHandlerArgs,
 } from "react-chessboard";
 
+// --- THEME DEFINITIONS ---
+export type BoardTheme = "Wood" | "Glass" | "Neo" | "Classic Green" | "Dark Slate";
+
+export const THEME_COLORS: Record<BoardTheme, { light: string; dark: string }> = {
+  "Wood": { light: "#f0d9b5", dark: "#b58863" },
+  "Classic Green": { light: "#ebecd0", dark: "#739552" },
+  "Neo": { light: "#ffffff", dark: "#cfd6e1" },
+  "Dark Slate": { light: "#8a9c9c", dark: "#2f4f4f" },
+  "Glass": { light: "rgba(255, 255, 255, 0.15)", dark: "rgba(0, 0, 0, 0.3)" },
+};
+// -------------------------
+
 export interface ChessBoardProps {
   fen?: string;
   orientation?: "white" | "black";
   disabled?: boolean;
   isPassAndPlay?: boolean;
+  theme?: BoardTheme; // NEW THEME PROP
   onMove?: (from: string, to: string, promotion?: string) => boolean | void;
   lastMove?: { from: string; to: string } | null;
   className?: string;
@@ -24,10 +37,12 @@ export default function ChessBoard({
   orientation = "white",
   disabled = false,
   isPassAndPlay = false,
+  theme = "Classic Green", // DEFAULT THEME
   onMove,
   lastMove = null,
   className = "",
 }: ChessBoardProps) {
+  
   // Local chess instance for move validation & legal moves calculation
   const game = useMemo(() => {
     try {
@@ -47,7 +62,6 @@ export default function ChessBoard({
 
   // Clear selection if fen changes or board gets disabled
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedSquare(null);
     setLegalMoveSquares([]);
   }, [fen, disabled]);
@@ -80,25 +94,18 @@ export default function ChessBoard({
     const { from, to } = promotionMove;
 
     try {
-      // Validate and make the promotion move locally
       const move = game.move({
         from: from as Square,
         to: to as Square,
         promotion,
       });
 
-      console.log("Promotion move:", move);
-      if (!move) {
-        console.log("Promotion move was illegal");
-        return;
-      }
+      if (!move) return;
 
-      // Tell parent about the move
       if (onMove) {
         onMove(from, to, promotion);
       }
 
-      // Clear promotion state
       setPromotionMove(null);
       setSelectedSquare(null);
       setLegalMoveSquares([]);
@@ -115,31 +122,20 @@ export default function ChessBoard({
     if (disabled || !targetSquare) return false;
 
     try {
-      // Check promotion FIRST
       if (isPromotionMove(sourceSquare, targetSquare)) {
-        setPromotionMove({
-          from: sourceSquare,
-          to: targetSquare,
-        });
+        setPromotionMove({ from: sourceSquare, to: targetSquare });
         return false;
       }
 
-      // Normal move
-      const move = game.move({
-        from: sourceSquare,
-        to: targetSquare,
-      });
-
+      const move = game.move({ from: sourceSquare, to: targetSquare });
       if (!move) return false;
 
-      if (onMove) {
-        onMove(sourceSquare, targetSquare);
-      }
+      if (onMove) onMove(sourceSquare, targetSquare);
+      
       setSelectedSquare(null);
       setLegalMoveSquares([]);
       return true;
     } catch (error) {
-      console.error("Move error:", error);
       return false;
     }
   };
@@ -148,29 +144,17 @@ export default function ChessBoard({
   const handleSquareClick = ({ square }: SquareHandlerArgs) => {
     if (disabled) return;
 
-    // If a square was already selected and clicked target is a valid destination
     if (selectedSquare) {
       if (legalMoveSquares.includes(square)) {
         try {
-          // Promotion
           if (isPromotionMove(selectedSquare, square)) {
-            setPromotionMove({
-              from: selectedSquare,
-              to: square,
-            });
+            setPromotionMove({ from: selectedSquare, to: square });
             return;
           }
 
-          // Normal move
-          const move = game.move({
-            from: selectedSquare,
-            to: square,
-          });
-
+          const move = game.move({ from: selectedSquare, to: square });
           if (move) {
-            if (onMove) {
-              onMove(selectedSquare, square);
-            }
+            if (onMove) onMove(selectedSquare, square);
             setSelectedSquare(null);
             setLegalMoveSquares([]);
             return;
@@ -187,7 +171,6 @@ export default function ChessBoard({
       }
     }
 
-    // Check if clicked square has a piece belonging to active turn
     const pieceOnSquare = game.get(square as Square);
     const isPieceTurn = pieceOnSquare && pieceOnSquare.color === game.turn();
 
@@ -201,25 +184,20 @@ export default function ChessBoard({
     }
   };
 
-  // Only allow dragging own pieces when not disabled
   const canDragPiece = ({ piece }: PieceHandlerArgs): boolean => {
     if (disabled || !piece?.pieceType) return false;
     const isWhitePiece = piece.pieceType.startsWith("w") || piece.pieceType === piece.pieceType.toUpperCase();
     const pieceColor = isWhitePiece ? "w" : "b";
-    const activeColor = game.turn(); // 'w' or 'b'
+    const activeColor = game.turn();
 
-    if (isPassAndPlay) {
-      return pieceColor === activeColor;
-    }
+    if (isPassAndPlay) return pieceColor === activeColor;
 
-    // Allow dragging only current turn pieces matching orientation
     return (
       pieceColor === activeColor &&
       (orientation === "white" ? pieceColor === "w" : pieceColor === "b")
     );
   };
 
-  // Find King square if currently in check
   const inCheckKingSquare = useMemo<string | null>(() => {
     if (!game.inCheck()) return null;
     const currentTurn = game.turn();
@@ -238,54 +216,38 @@ export default function ChessBoard({
     return null;
   }, [game]);
 
-  // Compute square highlight styles
   const squareStyles = useMemo(() => {
     const styles: Record<string, React.CSSProperties> = {};
 
-    // 1. Last move highlights
     if (lastMove) {
-      styles[lastMove.from] = {
-        backgroundColor: "rgba(255, 255, 0, 0.35)",
-      };
-      styles[lastMove.to] = {
-        backgroundColor: "rgba(255, 255, 0, 0.4)",
-      };
+      styles[lastMove.from] = { backgroundColor: "rgba(255, 255, 0, 0.35)" };
+      styles[lastMove.to] = { backgroundColor: "rgba(255, 255, 0, 0.4)" };
     }
 
-    // 2. Selected square highlight
     if (selectedSquare) {
-      styles[selectedSquare] = {
-        backgroundColor: "rgba(105, 187, 85, 0.65)",
-      };
+      styles[selectedSquare] = { backgroundColor: "rgba(105, 187, 85, 0.65)" };
     }
 
-    // 3. Legal destination dots / capture indicators
     legalMoveSquares.forEach((sq) => {
       const targetPiece = game.get(sq as Square);
       if (targetPiece) {
-        // Target is an opponent piece: draw ring
         styles[sq] = {
           ...styles[sq],
-          background:
-            "radial-gradient(circle, rgba(0,0,0,0.1) 80%, rgba(20,85,30,0.6) 85%)",
+          background: "radial-gradient(circle, rgba(0,0,0,0.1) 80%, rgba(20,85,30,0.6) 85%)",
           borderRadius: "50%",
         };
       } else {
-        // Empty target: draw small centered dot
         styles[sq] = {
           ...styles[sq],
-          background:
-            "radial-gradient(circle, rgba(20,85,30,0.5) 25%, transparent 26%)",
+          background: "radial-gradient(circle, rgba(20,85,30,0.5) 25%, transparent 26%)",
           borderRadius: "50%",
         };
       }
     });
 
-    // 4. King in check highlight
     if (inCheckKingSquare) {
       styles[inCheckKingSquare] = {
-        background:
-          "radial-gradient(circle, rgba(255, 0, 0, 0.8) 0%, rgba(239, 68, 68, 0.4) 60%, transparent 100%)",
+        background: "radial-gradient(circle, rgba(255, 0, 0, 0.8) 0%, rgba(239, 68, 68, 0.4) 60%, transparent 100%)",
         borderRadius: "50%",
       };
     }
@@ -297,60 +259,41 @@ export default function ChessBoard({
     ? new Chess(fen).get(promotionMove.from as Square)?.color
     : null;
 
+  // Resolve current theme colors
+  const activeColors = THEME_COLORS[theme];
+
   return (
     <div
       className={`relative w-full aspect-square mx-auto shadow-2xl rounded-xl overflow-hidden bg-[#1f2228] p-1.5 sm:p-2 border border-gray-800/80 flex-shrink-0 touch-none ${className}`}
     >
-      {/* STEP 6: Promotion UI */}
       {promotionMove && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-[#1f2228] rounded-xl p-4 shadow-2xl border border-gray-700">
             <p className="text-white text-center mb-3 font-semibold">
               Promote pawn to
             </p>
             <div className="flex gap-3">
-              <button
-                onClick={() => handlePromotion("q")}
-                className={`w-16 h-16 text-5xl rounded-lg ${promotionColor === "w"
-                    ? "bg-black text-white hover:bg-gray-900"
-                    : "bg-white text-black hover:bg-gray-200"
+              {(["q", "r", "b", "n"] as const).map((piece) => (
+                <button
+                  key={piece}
+                  onClick={() => handlePromotion(piece)}
+                  className={`w-16 h-16 text-5xl rounded-lg ${
+                    promotionColor === "w"
+                      ? "bg-black text-white hover:bg-gray-900"
+                      : "bg-white text-black hover:bg-gray-200"
                   }`}
-              >
-                {promotionColor === "w" ? "♕" : "♛"}
-              </button>
-              <button
-                onClick={() => handlePromotion("r")}
-                className={`w-16 h-16 text-5xl rounded-lg ${promotionColor === "w"
-                    ? "bg-black text-white hover:bg-gray-900"
-                    : "bg-white text-black hover:bg-gray-200"
-                  }`}
-              >
-                {promotionColor === "w" ? "♖" : "♜"}
-              </button>
-              <button
-                onClick={() => handlePromotion("b")}
-                className={`w-16 h-16 text-5xl rounded-lg ${promotionColor === "w"
-                    ? "bg-black text-white hover:bg-gray-900"
-                    : "bg-white text-black hover:bg-gray-200"
-                  }`}
-              >
-                {promotionColor === "w" ? "♗" : "♝"}
-              </button>
-              <button
-                onClick={() => handlePromotion("n")}
-                className={`w-16 h-16 text-5xl rounded-lg ${promotionColor === "w"
-                    ? "bg-black text-white hover:bg-gray-900"
-                    : "bg-white text-black hover:bg-gray-200"
-                  }`}
-              >
-                {promotionColor === "w" ? "♘" : "♞"}
-              </button>
+                >
+                  {promotionColor === "w"
+                    ? { q: "♕", r: "♖", b: "♗", n: "♘" }[piece]
+                    : { q: "♛", r: "♜", b: "♝", n: "♞" }[piece]}
+                </button>
+              ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* Chess board */}
+      {/* Chess board with Dynamic Theme applied */}
       <Chessboard
         options={{
           position: fen,
@@ -363,18 +306,18 @@ export default function ChessBoard({
           showNotation: true,
           animationDurationInMs: 250,
           darkSquareStyle: {
-            backgroundColor: "#A1A3A4",
+            backgroundColor: activeColors.dark,
           },
           lightSquareStyle: {
-            backgroundColor: "#ebecd0",
+            backgroundColor: activeColors.light,
           },
           darkSquareNotationStyle: {
-            color: "#ebecd0",
+            color: activeColors.light,
             fontSize: "12px",
             fontWeight: "600",
           },
           lightSquareNotationStyle: {
-            color: "#739552",
+            color: activeColors.dark,
             fontSize: "12px",
             fontWeight: "600",
           },

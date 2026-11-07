@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import ChessBoard from "@/components/chess/ChessBoard";
 import GameChat from "@/components/chess/GameChat";
 import { Chess } from "chess.js";
+import type { BoardTheme } from "@/components/chess/ChessBoard";
 import {
   Crown,
   Flag,
@@ -152,6 +153,7 @@ export default function GamePage({ params }: GamePageProps) {
   const [isPassAndPlay, setIsPassAndPlay] = useState(false);
   const [isSpectator, setIsSpectator] = useState(false);
   const [spectatorCount, setSpectatorCount] = useState(0);
+  const [boardTheme, setBoardTheme] = useState<BoardTheme>("Neo");
 
   // Interactive History State
   const [viewingMoveIndex, setViewingMoveIndex] = useState<number | null>(null);
@@ -323,7 +325,7 @@ export default function GamePage({ params }: GamePageProps) {
       setFen(move.fen);
       setTurn(move.turn);
       setLastMove({ from: move.from, to: move.to });
-      
+
       // Determine Audio Event
       if (move.isCheckmate) {
         playSound("checkmate");
@@ -336,7 +338,7 @@ export default function GamePage({ params }: GamePageProps) {
       } else {
         playSound("move");
       }
-      
+
       if (move.move?.san) {
         setSanMoves((prev) => {
           const next = [...prev, move.move!.san!];
@@ -369,7 +371,7 @@ export default function GamePage({ params }: GamePageProps) {
           setGameOver({ result: "draw", reason: "draw" });
         }
       } else {
-        // Clear message on a normal move (removed the "Check!" message block)
+        // Clear message on a normal move
         setMessage("");
         startClock(move.turn);
       }
@@ -549,7 +551,7 @@ export default function GamePage({ params }: GamePageProps) {
     c.header("Date", new Date().toISOString().split("T")[0]);
     c.header("White", whiteName);
     c.header("Black", blackName);
-    
+
     let result = "*";
     if (gameOver) {
       if (gameOver.result === "white") result = "1-0";
@@ -616,7 +618,7 @@ export default function GamePage({ params }: GamePageProps) {
 
   const whiteClockClass = whiteTime < 30 && gameStatus === "active" && turn === "white" ? "text-red-400 font-extrabold" : "text-white font-bold";
   const blackClockClass = blackTime < 30 && gameStatus === "active" && turn === "black" ? "text-red-400 font-extrabold" : "text-white font-bold";
-  
+
   const boardOrientation = isPassAndPlay ? "white" : playerColor === "black" ? "black" : "white";
   const topPlayerColor: "white" | "black" = isPassAndPlay || playerColor !== "black" ? "black" : "white";
   const bottomPlayerColor: "white" | "black" = isPassAndPlay || playerColor !== "black" ? "white" : "black";
@@ -655,6 +657,19 @@ export default function GamePage({ params }: GamePageProps) {
           </button>
 
           <div className="flex items-center gap-2 text-xs text-gray-500">
+            {/* THEME SELECTOR DROPDOWN */}
+            <select
+              value={boardTheme}
+              onChange={(e) => setBoardTheme(e.target.value as BoardTheme)}
+              className="bg-[var(--surface-card)] border border-[var(--surface-border)] text-gray-300 text-[10px] uppercase font-bold tracking-wide rounded-full px-2 py-0.5 outline-none cursor-pointer hover:border-gray-500 transition"
+            >
+              <option value="Classic Green">Classic Green</option>
+              <option value="Wood">Wood</option>
+              <option value="Neo">Neo</option>
+              <option value="Dark Slate">Dark Slate</option>
+              <option value="Glass">Glass</option>
+            </select>
+
             {isSpectator && (
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-sky-500/15 text-sky-300 border border-sky-500/30 flex items-center gap-1">
                 <Eye className="w-3 h-3" /> Spectating
@@ -730,6 +745,7 @@ export default function GamePage({ params }: GamePageProps) {
                 fen={displayedFen}
                 orientation={boardOrientation}
                 disabled={boardDisabled}
+                theme={boardTheme}
                 isPassAndPlay={isPassAndPlay}
                 onMove={handleMakeMove}
                 lastMove={displayedLastMove}
@@ -796,7 +812,7 @@ export default function GamePage({ params }: GamePageProps) {
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                   Move History
                 </h3>
-                
+
                 {/* Export Actions + History Controls */}
                 {sanMoves.length > 0 && (
                   <div className="flex items-center gap-2">
@@ -824,7 +840,7 @@ export default function GamePage({ params }: GamePageProps) {
                          </button>
                        </div>
                     </div>
-                  
+
                     {/* Move Nav Controls */}
                     <div className="flex items-center bg-[var(--surface-main)] rounded-lg border border-[var(--surface-border)]">
                       <button
