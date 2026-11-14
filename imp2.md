@@ -351,7 +351,7 @@
 
 ## Testing
 
-- [ ] Chess Service Unit Tests
+- [x] Chess Service Unit Tests
 
   - Move validation.
   - Check.
