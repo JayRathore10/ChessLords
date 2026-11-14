@@ -339,7 +339,7 @@
   - Classic
   - 3D
 
-- [ ] Toast Notifications
+- [x] Toast Notifications
 
   - Friend requests.
   - Game challenges.
