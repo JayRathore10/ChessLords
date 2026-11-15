@@ -378,13 +378,13 @@
 
 ## Production & Deployment
 
-- [ ] Rate Limiting
+- [x] Rate Limiting
 
   - Add `express-rate-limit`.
   - Protect authentication endpoints.
   - Protect game creation endpoints.
 
-- [ ] Production Security
+- [x] Production Security
 
   - Sanitize inputs.
   - Configure production CORS.
