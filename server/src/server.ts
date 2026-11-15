@@ -18,6 +18,9 @@ import { setupSocket } from "./socket/socket";
 
 export const app = express();
 
+// Trust the reverse proxy (Crucial for rate-limiting in production!)
+app.set("trust proxy", 1);
+
 // 1. Security HTTP headers
 // Disable the strict cross-origin policy so profile images can still be loaded by the frontend
 app.use(helmet({

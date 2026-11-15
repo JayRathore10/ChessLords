@@ -364,7 +364,7 @@
   - Game routes.
   - User routes.
 
-- [ ] Socket Tests
+- [x] Socket Tests
 
   - `joinGame`
   - `makeMove`

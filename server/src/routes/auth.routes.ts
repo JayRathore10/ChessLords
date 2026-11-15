@@ -9,11 +9,14 @@ import {
   refreshTokenHandler,
 } from "../controllers/auth.controller";
 import { isUserLoggedIn } from "../middleware/auth.middleware";
+import { authLimiter } from "../middleware/rateLimiter"; // <-- IMPORT LIMITER
 
 const router = Router();
 
-router.post("/register", registerNewUser);
-router.post("/login", loginUser);
+// Apply authLimiter to login and register endpoints
+router.post("/register", authLimiter, registerNewUser);
+router.post("/login", authLimiter, loginUser);
+
 router.post("/refresh-token", refreshTokenHandler);
 router.post("/logout", isUserLoggedIn, logoutUser);
 router.get("/me", isUserLoggedIn, me);
