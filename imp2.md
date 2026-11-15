@@ -358,7 +358,7 @@
   - Checkmate.
   - Draw conditions.
 
-- [ ] API Integration Tests
+- [x] API Integration Tests
 
   - Authentication.
   - Game routes.
