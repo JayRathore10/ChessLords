@@ -16,7 +16,7 @@ import friendRoutes from "./routes/friend.routes";
 import { connectDB } from "./configs/db.config";
 import { setupSocket } from "./socket/socket";
 
-const app = express();
+export const app = express();
 
 // 1. Security HTTP headers
 // Disable the strict cross-origin policy so profile images can still be loaded by the frontend
@@ -102,7 +102,9 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-httpServer.listen(5000, () => {
-  connectDB();
-  console.log("ChessLord server running on http://localhost:5000");
-});
+if (process.env.NODE_ENV !== "test") {
+  httpServer.listen(5000, () => {
+    connectDB();
+    console.log("ChessLord server running on http://localhost:5000");
+  });
+}
