@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # 1. MongoDB Database
+  mongodb:
+    image: mongo:latest
+    container_name: chesslord_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  # 2. Express Backend
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: chesslord_server
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      # Connect to the local MongoDB container using its service name "mongodb"
+      - MONGO_URI=mongodb://mongodb:27017/chesslord
+      - CLIENT_URL=http://localhost:3000
+      - FRONTEND=http://localhost:3000
+      - JWT_SECRET=your_super_secret_jwt_key_here
+      - JWT_EXPIRE=30d
+      - JWT_COOKIE_EXPIRE=30
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  # 3. Next.js Frontend
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: chesslord_client
+    ports:
+      - "3000:3000"
+    environment:
+      # Next.js public variables need to be available at build/runtime
+      - NEXT_PUBLIC_SERVER_URL=http://localhost:5000
+      - NEXT_PUBLIC_SOCKET_URL=http://localhost:5000
+    depends_on:
+      - server
+    restart: unless-stopped
+
+# Define persistent storage for MongoDB so you don't lose users/games on restart
+volumes:
+  mongo_data:
